@@ -1,0 +1,10 @@
+.DS_Store*
+*.swp
+src/mac/xcodebuild
+src/mac/xcodebuild/*
+
+*.pbxuser
+*.perspective
+*.perspective3
+*xcuserdata*
+
