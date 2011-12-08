@@ -68,8 +68,8 @@
 //   virtual void foo() OVERRIDE;
 #if defined(COMPILER_MSVC)
 #define OVERRIDE override
-#elif defined(__clang__)
-#define OVERRIDE override
+//#elif defined(__clang__)
+//#define OVERRIDE override
 #else
 #define OVERRIDE
 #endif
