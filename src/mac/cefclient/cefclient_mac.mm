@@ -239,30 +239,49 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 
   window_info.SetAsChild(contentView, 0, 0, kWindowWidth, kWindowHeight);
   
-  std::string appPath = [[[NSBundle mainBundle] bundlePath] UTF8String];
-  std::string filePath;
+  std::string initialUrl;
+  
+  // Look for command line arguments. The first argument is always
+  // the app name. If there is a second argument, use that as the url
+  // for the main browser view.
+  NSArray *arguments = [[NSProcessInfo processInfo] arguments];
+   
+  if (arguments && [arguments count] > 1) { 
+    initialUrl = [[arguments objectAtIndex:1] UTF8String];
     
-  // Warning: this is a hack.
-  // Look for the index.html file in the following order:
-  // 1). If the app path includes "xcodebuild", assume we're running from
-  //     xcode and reach over to the brackets directory.
-  // 2). If the app path doesn't include "xcodebuild", assume we're running
-  //     from the bin/mac directory and reach over to the brackets directory.
-  //
-  // Once we determine final packaging we should look for index.html in the
-  // app bundle and provide a mechanism for specifying a specific index.html
-  // to load.
-
-  appPath = appPath.substr(0, appPath.rfind("/"));
-  if (appPath.find("xcodebuild") != std::string::npos)
-      filePath = appPath + "/../../../../brackets/src/index.html";
-  else
-      filePath = appPath + "/../../brackets/src/index.html";
+    // Make sure the initialUrl contains ".htm". When launching from
+    // the command line, the OS sometimes passes a pid as a command 
+    // line argument
+    if (initialUrl.find(".htm") == std::string::npos)
+      initialUrl = "";
+  }
+  
+  if (initialUrl == "") {    
+    std::string appPath = [[[NSBundle mainBundle] bundlePath] UTF8String];
+    std::string filePath;
       
-  std::string appUrl = "file://" + filePath;
-    
+    // Warning: this is a hack.
+    // Look for the index.html file in the following order:
+    // 1). If the app path includes "xcodebuild", assume we're running from
+    //     xcode and reach over to the brackets directory.
+    // 2). If the app path doesn't include "xcodebuild", assume we're running
+    //     from the bin/mac directory and reach over to the brackets directory.
+    //
+    // Once we determine final packaging we should look for index.html in the
+    // app bundle and provide a mechanism for specifying a specific index.html
+    // to load.
+
+    appPath = appPath.substr(0, appPath.rfind("/"));
+    if (appPath.find("xcodebuild") != std::string::npos)
+        filePath = appPath + "/../../../../brackets/src/index.html";
+    else
+        filePath = appPath + "/../../brackets/src/index.html";
+        
+    initialUrl = "file://" + filePath;
+  }
+  
   CefBrowser::CreateBrowser(window_info, g_handler.get(),
-                            appUrl, settings);
+                            initialUrl, settings);
 
   // Show the window.
   [mainWnd makeKeyAndOrderFront: nil];
