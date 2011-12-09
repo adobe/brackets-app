@@ -231,7 +231,7 @@
 		201EF3ACAA6D1C6F9271A523 /* download_handler.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = download_handler.h; sourceTree = "<group>"; };
 		214293B6148FD867006DE3C0 /* Brackets-Readme.txt */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text; path = "Brackets-Readme.txt"; sourceTree = "<group>"; };
 		214293DA149002FF006DE3C0 /* Brackets.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Brackets.app; sourceTree = BUILT_PRODUCTS_DIR; };
-		214293DC149002FF006DE3C0 /* Brackets copy-Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; name = "Brackets copy-Info.plist"; path = "/Users/glenn/Sites/brackets-app/src/mac/Brackets copy-Info.plist"; sourceTree = "<absolute>"; };
+		214293F01492C6EE006DE3C0 /* tests */ = {isa = PBXFileReference; lastKnownFileType = folder; path = tests; sourceTree = "<group>"; };
 		216AF0FB148EAE4200C276A2 /* brackets.icns */ = {isa = PBXFileReference; lastKnownFileType = image.icns; name = brackets.icns; path = ../../brackets.icns; sourceTree = "<group>"; };
 		216AF0FD148EB75F00C276A2 /* brackets_extensions.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = brackets_extensions.h; sourceTree = "<group>"; };
 		216AF0FE148EB75F00C276A2 /* brackets_extensions.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = brackets_extensions.mm; sourceTree = "<group>"; };
@@ -668,12 +668,12 @@
 		C93C9288CEA74098FF733D84 = {
 			isa = PBXGroup;
 			children = (
+				214293F01492C6EE006DE3C0 /* tests */,
 				214293B6148FD867006DE3C0 /* Brackets-Readme.txt */,
 				C77A844E0338A27E10E3B4F6 /* Source */,
 				AD5FB74ED6EF38CC02239AC3 /* Frameworks */,
 				3A2837DB3B133B0C9A10B0B2 /* Products */,
 				8C159A74C6290E98B9902B9B /* Build */,
-				214293DC149002FF006DE3C0 /* Brackets copy-Info.plist */,
 			);
 			sourceTree = "<group>";
 		};

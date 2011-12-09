@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html>
+    <head><title>File Tests</title></head>
+    <body>
+        This page tests the native file APIs in Brackets. Some tests will run automatically, others must be run manually.
+        
+        <h2>showOpenDialog</h2>
+        <script>
+            // Function signature: showOpenDialog(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback)
+            function selectSingleDirectory() {
+                brackets.file.showOpenDialog(false, true, "Select a folder", "", "", showOpenDialogCallback);
+            }
+            function selectSingleFile() {
+                brackets.file.showOpenDialog(false, false, "", "", ['js','html','css'], showOpenDialogCallback);
+            }
+            function selectMultipleDirectories() {
+                brackets.file.showOpenDialog(true, true, "Select a folder", "", "", showOpenDialogCallback);
+            }
+            function selectMultipleFiles() {
+                brackets.file.showOpenDialog(true, false, "", "", "", showOpenDialogCallback);
+            }
+            function selectSingleDirectoryFromRoot() {
+                var startDir = document.getElementById('start-dir').value;
+                brackets.file.showOpenDialog(false, true, "Select a folder", startDir, "", showOpenDialogCallback);
+            }
+            function showOpenDialogCallback(result) {
+                alert("You chose: " + JSON.stringify(result));
+            }
+        </script>
+        Show open dialog allowing user to select a single directory:
+        <button onclick="selectSingleDirectory()">Open</button><br/><br/>
+        
+        Show open dialog allowing user to select a single html, js, or css file:
+        <button onclick="selectSingleFile()">Open</button><br/><br/>
+        
+        Show open dialog allowing user to select multiple directories:
+        <button onclick="selectMultipleDirectories()">Open</button><br/><br/>
+        
+        Show open dialog allowing user to select multiple files of any type:
+        <button onclick="selectMultipleFiles()">Open</button><br/><br/>
+        
+        Show open dialog allowing user to select a directory. Starting directory: <input id='start-dir' value='/'>
+        <button onclick="selectSingleDirectoryFromRoot()">Open</button><br/><br/>
+        
+    </body>
+</html>
