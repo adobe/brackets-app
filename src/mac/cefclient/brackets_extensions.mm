@@ -133,13 +133,71 @@ public:
             retval = CefV8Value::CreateString(result);
             
             return retval;
+        } 
+        else if (name == "ShowOpenDialog") 
+        {
+            if (arguments.size() != 5 || !arguments[2]->IsString())
+                return false;
+            
+            // Grab the arguments
+            bool allowsMultipleSelection = arguments[0]->GetBoolValue();
+            bool canChooseDirectories = arguments[1]->GetBoolValue();
+            bool canChooseFiles = !canChooseDirectories;
+            std::string title = arguments[2]->GetStringValue();
+            std::string initialPath = arguments[3]->GetStringValue();
+            std::string fileTypesStr = arguments[4]->GetStringValue();
+            std::string result = "";
+            
+            NSArray* allowedFileTypes = nil;
+            
+            if (fileTypesStr != "")
+            {
+                // fileTypesStr is a Space-delimited string
+                allowedFileTypes = 
+                    [[NSString stringWithUTF8String:fileTypesStr.c_str()] 
+                        componentsSeparatedByString:@" "];
+            }
+            
+            // Initialize the dialog
+            NSOpenPanel* openPanel = [NSOpenPanel openPanel];
+            [openPanel setCanChooseFiles:canChooseFiles];
+            [openPanel setCanChooseDirectories:canChooseDirectories];
+            [openPanel setAllowsMultipleSelection:allowsMultipleSelection];
+            [openPanel setTitle: [NSString stringWithUTF8String:title.c_str()]];
+            
+            if (initialPath != "")
+                [openPanel setDirectoryURL:[NSURL URLWithString:[NSString stringWithUTF8String:initialPath.c_str()]]];
+            
+            [openPanel setAllowedFileTypes:allowedFileTypes];
+            
+            if ([openPanel runModal] == NSOKButton)
+            {
+                NSArray* filenames = [openPanel filenames];
+                int numFiles = [filenames count];
+                
+                result = "[";
+                for (int i = 0; i < numFiles; i++)
+                {
+                    result += "\"";
+                    result += [[filenames objectAtIndex:i] UTF8String];
+                    result += "\"";
+                    
+                    if (i < numFiles - 1)
+                        result += ", ";
+                }
+                result += "]";
+            }
+            
+            retval = CefV8Value::CreateString(result);
+            
+            return retval;
         }
         
         return false;
     }
     
 private:
-    IMPLEMENT_REFCOUNTING(ClientV8ExtensionHandler);
+    IMPLEMENT_REFCOUNTING(BracketsExtensionHandler);
 };
 
 
@@ -173,6 +231,14 @@ void InitBracketsExtensions()
     "   brackets.file.showOpenPanel = function(canChooseFiles, canChooseDirectories, title) {"
     "       native function ShowOpenPanel();"
     "       return ShowOpenPanel(canChooseFiles, canChooseDirectories, title);"
+    "   };"
+    "   brackets.file.showOpenDialog = function(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback) {"
+    "       native function ShowOpenDialog();"
+    "       var resultString = ShowOpenDialog(allowMultipleSelection, chooseDirectory, "
+    "                                         title || 'Open', initialPath || '', "
+    "                                         fileTypes ? fileTypes.join(' ') : '');"
+    "       var result = JSON.parse(resultString || '[]');"
+    "       callback(result);"
     "   };"
     "})();";
     
