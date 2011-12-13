@@ -51,6 +51,8 @@ if (!brackets.fs)
     brackets.fs.ERR_NOT_FOUND               = 3;
     brackets.fs.ERR_CANT_READ               = 4;
     brackets.fs.ERR_UNSUPPORTED_ENCODING    = 5;
+    brackets.fs.ERR_CANT_WRITE              = 6;
+    brackets.fs.ERR_OUT_OF_SPACE            = 7;
     
     brackets.fs.showOpenDialog = function(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback) {
        native function ShowOpenDialog();
@@ -91,5 +93,20 @@ if (!brackets.fs)
         }
         var contents = ReadFile(path, enc);
         cb(getLastError(), contents);
+    };
+    brackets.fs.writeFile = function(path, data, encoding, callback) {
+        native function WriteFile();
+        var enc, cb;
+        // encoding is optional. If omitted, use "".
+        if (typeof encoding == 'function') {
+            enc = "";
+            cb = encoding;
+        } else {
+            enc = encoding;
+            cb = callback;
+        }
+        WriteFile(path, data, enc);
+        if (cb)
+            cb(getLastError());
     };
 })();;

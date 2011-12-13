@@ -14,6 +14,8 @@ static const int ERR_INVALID_PARAMS         = 2;
 static const int ERR_NOT_FOUND              = 3;
 static const int ERR_CANT_READ              = 4;
 static const int ERR_UNSUPPORTED_ENCODING   = 5;
+static const int ERR_CANT_WRITE             = 6;
+static const int ERR_OUT_OF_SPACE           = 7;
 
 class BracketsExtensionHandler : public CefV8Handler
 {
@@ -229,6 +231,28 @@ public:
             
             errorCode = ExecuteReadFile(arguments, retval, exception);
         }
+        else if (name == "WriteFile")
+        {
+            // WriteFile(path, data, encoding)
+            //
+            // Inputs:
+            //  path - full path of file to write
+            //  data - data to write to file
+            //  encoding - 'utf8' is the only supported format for now
+            //
+            // Output:
+            //  none
+            //
+            // Error:
+            //  NO_ERROR - no error
+            //  ERR_UNKNOWN - unknown error
+            //  ERR_INVALID_PARAMS - invalid parameters
+            //  ERR_UNSUPPORTED_ENCODING - unsupported encoding value
+            //  ERR_CANT_WRITE - file could not be written
+            //  ERR_OUT_OF_SPACE - no more space for file
+            
+            errorCode = ExecuteWriteFile(arguments, retval, exception);
+        }
         else if (name == "GetLastError")
         {
             // Special case private native function to return the last error code.
@@ -371,6 +395,32 @@ public:
         return ConvertNSErrorCode(error);
     }
     
+    int ExecuteWriteFile(const CefV8ValueList& arguments,
+                       CefRefPtr<CefV8Value>& retval,
+                       CefString& exception)
+    {
+        if (arguments.size() != 3 || !arguments[0]->IsString() || !arguments[1]->IsString() || !arguments[2]->IsString())
+            return ERR_INVALID_PARAMS;
+
+        std::string pathStr = arguments[0]->GetStringValue();
+        std::string contentsStr = arguments[1]->GetStringValue();
+        std::string encodingStr = arguments[2]->GetStringValue();
+        
+        NSString* path = [NSString stringWithUTF8String:pathStr.c_str()];
+        NSString* contents = [NSString stringWithUTF8String:contentsStr.c_str()];
+        NSStringEncoding encoding;
+        NSError* error = nil;
+        
+        if (encodingStr == "" || encodingStr == "utf8")
+            encoding = NSUTF8StringEncoding;
+        else
+            return ERR_UNSUPPORTED_ENCODING; 
+            
+        [contents writeToFile:path atomically:YES encoding:encoding error:&error];
+        
+        return ConvertNSErrorCode(error);
+    }
+    
     void NSArrayToJSONString(NSArray* array, std::string& result)
     {
         int numItems = [array count];
@@ -390,6 +440,9 @@ public:
     
     int ConvertNSErrorCode(NSError* error)
     {
+        if (!error)
+            return NO_ERROR;
+            
         switch ([error code]) 
         {
             case NSFileNoSuchFileError:
@@ -401,6 +454,12 @@ public:
                 break;
             case NSFileReadInapplicableStringEncodingError:
                 return ERR_UNSUPPORTED_ENCODING;
+                break;
+            case NSFileWriteNoPermissionError:
+                return ERR_CANT_WRITE;
+                break;
+            case NSFileWriteOutOfSpaceError:
+                return ERR_OUT_OF_SPACE;
                 break;
         }
         

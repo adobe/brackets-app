@@ -163,6 +163,32 @@
                 document.write("Test reading non-existent file: ");
                 writeResult(err, brackets.fs.ERR_NOT_FOUND);
             });
+            brackets.fs.readFile(filesDir + "/file_one.txt", "utf16", function(err, contents) {
+                document.write("Try to use unsupported encoding: err = " + err);
+                writeResult(err, brackets.fs.ERR_UNSUPPORTED_ENCODING);
+            });
+            brackets.fs.readFile(42, function(err, contents) {
+                document.write("Call readFile with invalid arguments: err = " + err);
+                writeResult(err, brackets.fs.ERR_INVALID_PARAMS);
+            });
+        </script>
+        
+        <h2>writeFile</h2>
+        
+        <script>
+            var contents = "This content was generated from filetests.html";
+            brackets.fs.writeFile(filesDir + "/write_test.txt", contents, 'utf8', function(err) {
+                document.write("Writing to a new file: ");
+                writeResult(err, brackets.fs.NO_ERROR);
+            });
+            brackets.fs.writeFile(baseDir + "/cant_write_here/write_test.txt", contents, function(err) {
+                document.write("Try writing to a read-only directory: err = " + err);
+                writeResult(err, brackets.fs.ERR_CANT_WRITE);
+            });
+            brackets.fs.writeFile(42, contents, function(err) {
+                document.write("Call writeFile with invalid arguments: err = " + err);
+                writeResult(err, brackets.fs.ERR_INVALID_PARAMS);
+            });
         </script>
     </body>
 </html>
