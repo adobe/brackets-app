@@ -1,6 +1,22 @@
 <!DOCTYPE html>
 <html>
     <head><title>File Tests</title></head>
+    
+    <script>
+        function writePass() {
+            document.write("<span style='background:#0f0;padding-left:10px;padding-right:10px'>PASS</span><br/>");
+        }
+        function writeFail() {
+            document.write("<span style='background:#f00;padding-left:10px;padding-right:10px'>FAIL</span><br/>");
+        }
+        function writeResult(value, expectedValue) {
+            if (value == expectedValue)
+                writePass();
+            else
+                writeFail();
+        }
+    </script>
+    
     <body>
         This page tests the native file APIs in Brackets. Some tests will run automatically, others must be run manually.
         
@@ -8,26 +24,26 @@
         <script>
             // Function signature: showOpenDialog(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback)
             function selectSingleDirectory() {
-                brackets.file.showOpenDialog(false, true, "Select a folder", "", "", showOpenDialogCallback);
+                brackets.fs.showOpenDialog(false, true, "Select a folder", "", "", showOpenDialogCallback);
             }
             function selectSingleFile() {
-                brackets.file.showOpenDialog(false, false, "", "", ['js','html','css'], showOpenDialogCallback);
+                brackets.fs.showOpenDialog(false, false, "", "", ['js','html','css'], showOpenDialogCallback);
             }
             function selectMultipleDirectories() {
-                brackets.file.showOpenDialog(true, true, "Select a folder", "", "", showOpenDialogCallback);
+                brackets.fs.showOpenDialog(true, true, "Select a folder", "", "", showOpenDialogCallback);
             }
             function selectMultipleFiles() {
-                brackets.file.showOpenDialog(true, false, "", "", "", showOpenDialogCallback);
+                brackets.fs.showOpenDialog(true, false, "", "", "", showOpenDialogCallback);
             }
             function selectSingleDirectoryFromRoot() {
                 var startDir = document.getElementById('start-dir').value;
-                brackets.file.showOpenDialog(false, true, "Select a folder", startDir, "", showOpenDialogCallback);
+                brackets.fs.showOpenDialog(false, true, "Select a folder", startDir, "", showOpenDialogCallback);
             }
-            function showOpenDialogCallback(result) {
+            function showOpenDialogCallback(err, result) {
                 alert("You chose: " + JSON.stringify(result));
             }
 			function testNullUndefined() {
-				brackets.file.showOpenDialog(false, true, null, undefined, null, showOpenDialogCallback);
+				brackets.fs.showOpenDialog(false, true, null, undefined, null, showOpenDialogCallback);
 			}
         </script>
         Show open dialog allowing user to select a single directory:
@@ -47,5 +63,106 @@
         
 		Test passing null/undefined values to the API. The dialog should appear properly.
 		<button onclick="testNullUndefined()">Open</button><br/><br/>
+        
+        <h2>readdir</h2>
+ 
+        <script>
+            // Get window.location and remove the initial 'file://' or 'http://'
+            var baseDir = window.location.toString().substr(7); 
+            // Remove the name of this html file
+            baseDir = baseDir.substr(0, baseDir.lastIndexOf("/"));
+            
+            var filesDir = baseDir + "/files";
+            brackets.fs.readdir(filesDir, function(err, contents) {
+                if (err != 0) {
+                    document.write("Unexpected error in readdir: " + err);
+                    writeFail();
+                }
+                    
+                document.write("Checking contents of the 'files' directory: ");
+                if (contents.indexOf("file_one.txt") == -1 || contents.indexOf("file_two.txt") == -1 || contents.indexOf("file_three.txt") == -1)
+                    writeFail();
+                else
+                    writePass();
+                
+                document.write("Verify contents don't include '.' and '..': ");
+                if (contents.indexOf('.') != -1 || contents.indexOf('..') != -1)
+                    writeFail();
+                else
+                    writePass();
+            });
+            
+            // Try to read a non-existent directory
+            brackets.fs.readdir("/This/directory/doesnt/exist", function(err, contents) {
+                document.write("Test reading non-existent directory: error = " + err);
+                writeResult(err, brackets.fs.ERR_NOT_FOUND);
+            });
+            
+            // Try to read a write-only directory
+            var cantReadDir = baseDir + "/cant_read_here";
+            brackets.fs.readdir(cantReadDir, function(err, contents) {
+                document.write("Test reading non-readable directory: error = " + err);
+                writeResult(err, brackets.fs.ERR_CANT_READ);
+            });
+            
+            // Try with invalid arguments
+            brackets.fs.readdir(42, function(err, contents) {
+                document.write("Test with invalid arguments: error = " + err);
+                writeResult(err, brackets.fs.ERR_INVALID_PARAMS);
+            });
+        </script>
+        
+        <h2>stat</h2>
+        
+        <script>
+            brackets.fs.stat(filesDir, function(err, stat) {
+                if (err) {
+                    document.write("Unexpected error in stat: " + err);
+                    writeFail();
+                }
+                
+                document.write("Checking that '/files' is a directory: ");
+                writeResult(stat.isDirectory(), true);
+                document.write("Checking that '/files' is not a file: ");
+                writeResult(stat.isFile(), false);
+            });
+            brackets.fs.stat(filesDir + "/file_one.txt", function(err, stat) {
+                if (err) {
+                    document.write("Unexpected error in stat: " + err);
+                    writeFail();
+                }
+                
+                document.write("Checking that '/files/file_one.txt' is not a directory: ");
+                writeResult(stat.isDirectory(), false);
+                document.write("Checking that '/files/file_one.txt' is a file: ");
+                writeResult(stat.isFile(), true);
+            });
+            brackets.fs.stat("/This/directory/doesnt/exist", function(err, stat) {
+                document.write("Test stat with non-existent file: err = " + err);
+                writeResult(err, brackets.fs.ERR_NOT_FOUND);
+            });
+            brackets.fs.stat(42, function(err, stat) {
+                document.write("Test stat with invalid argument: err = " + err);
+                writeResult(err, brackets.fs.ERR_INVALID_PARAMS);
+            });
+        </script>
+        
+        <h2>readFile</h2>
+        
+        <script>
+            brackets.fs.readFile(filesDir + "/file_one.txt", function(err, contents) {
+                if (err) {
+                    document.write("Unexpected error in readFile: " + err);
+                    writeFail();
+                }
+                
+                document.write("Read contents of files/file_one.txt: ");
+                writeResult(contents, "Hello world");
+            });
+            brackets.fs.readFile("/This/file/doesnt/exist.txt", function(err, contents) {
+                document.write("Test reading non-existent file: ");
+                writeResult(err, brackets.fs.ERR_NOT_FOUND);
+            });
+        </script>
     </body>
 </html>
