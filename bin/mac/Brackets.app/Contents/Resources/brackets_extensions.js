@@ -2,8 +2,7 @@
 // See brackets_extentions.mm for implementation of native methods.
 //
 // Note: All file native file i/o functions are synchronous, but are exposed
-// here as asynchronous calls. The error code from the last synchronous call
-// is stored in brackets.file._lastError. 
+// here as asynchronous calls. 
 
 var brackets;
 if (!brackets)
@@ -144,7 +143,7 @@ if (!brackets.fs)
      * Reads the entire contents of a file. 
      *
      * @param path The path of the file to read.
-     * @param encoding The encoding for the file. Optional. Supported values are "" and "utf8".
+     * @param encoding The encoding for the file. The only supported encoding is 'utf8'.
      * @param callback Asynchronous callback function. The callback gets two arguments 
      *        (err, data) where data is the contents of the file.
      *        Possible error values:
@@ -160,9 +159,9 @@ if (!brackets.fs)
     brackets.fs.readFile = function(path, encoding, callback) {
         native function ReadFile();
         var enc, cb;
-        // encoding is optional. If omitted, use "".
+        // encoding is optional. If omitted, use 'utf8.
         if (typeof encoding == 'function') {
-            enc = "";
+            enc = "utf8";
             cb = encoding;
         } else {
             enc = encoding;
@@ -177,7 +176,7 @@ if (!brackets.fs)
      *
      * @param path The path of the file to write.
      * @param data The data to write to the file.
-     * @param encoding The encoding for the file. Optional. Supported values are "" and "utf8".
+     * @param encoding The encoding for the file. The only supported encoding is 'utf8'.
      * @param callback Asynchronous callback function. The callback gets one argument (err).
      *        Possible error values:
      *          NO_ERROR
@@ -192,9 +191,9 @@ if (!brackets.fs)
     brackets.fs.writeFile = function(path, data, encoding, callback) {
         native function WriteFile();
         var enc, cb;
-        // encoding is optional. If omitted, use "".
+        // encoding is optional. If omitted, use "utf8".
         if (typeof encoding == 'function') {
-            enc = "";
+            enc = "utf8";
             cb = encoding;
         } else {
             enc = encoding;
@@ -203,5 +202,25 @@ if (!brackets.fs)
         WriteFile(path, data, enc);
         if (cb)
             cb(getLastError());
+    };
+    
+    /**
+     * Set permissions for a file or directory.
+     *
+     * @param path The path of the file or directory
+     * @param mode The permissions for the file or directory, in numeric format (ie 777)
+     * @param callback Asynchronous callback function. The callback gets one argument (err).
+     *        Possible error values:
+     *          NO_ERROR
+     *          ERR_UNKNOWN
+     *          ERR_INVALID_PARAMS
+     *          ERR_CANT_WRITE
+     *
+     * @return None. This is an asynchronous call that sends all return information to the callback.
+     */
+    brackets.fs.chmod = function(path, mode, callback) {
+        native function SetPosixPermissions();
+        SetPosixPermissions(path, mode);
+        callback(getLastError());
     };
 })();;

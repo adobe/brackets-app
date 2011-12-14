@@ -133,6 +133,27 @@ public:
             
             errorCode = ExecuteWriteFile(arguments, retval, exception);
         }
+        else if (name == "SetPosixPermissions")
+        {
+            // SetPosixPermissions(path, mode)
+            //
+            // Inputs:
+            //  path - full path of file or directory
+            //  mode - permissions for file or directory, in numeric format
+            //
+            // Output:
+            //  none
+            //
+            // Errors
+            //  NO_ERROR - no error
+            //  ERR_UNKNOWN - unknown error
+            //  ERR_INVALID_PARAMS - invalid parameters
+            //  ERR_UNSUPPORTED_ENCODING - unsupported encoding value
+            //  ERR_CANT_WRITE - permissions could not be written
+            
+            errorCode = ExecuteSetPosixPermissions(arguments, retval, exception);
+            
+        }
         else if (name == "GetLastError")
         {
             // Special case private native function to return the last error code.
@@ -155,7 +176,7 @@ public:
                                CefRefPtr<CefV8Value>& retval,
                                CefString& exception)
     {
-        if (arguments.size() != 5 || !arguments[2]->IsString())
+        if (arguments.size() != 5 || !arguments[2]->IsString() || !arguments[3]->IsString() || !arguments[4]->IsString())
             return ERR_INVALID_PARAMS;
         
         // Grab the arguments
@@ -259,7 +280,7 @@ public:
         NSStringEncoding encoding;
         NSError* error = nil;
         
-        if (encodingStr == "" || encodingStr == "utf8")
+        if (encodingStr == "utf8")
             encoding = NSUTF8StringEncoding;
         else
             return ERR_UNSUPPORTED_ENCODING; 
@@ -291,12 +312,32 @@ public:
         NSStringEncoding encoding;
         NSError* error = nil;
         
-        if (encodingStr == "" || encodingStr == "utf8")
+        if (encodingStr == "utf8")
             encoding = NSUTF8StringEncoding;
         else
             return ERR_UNSUPPORTED_ENCODING; 
             
         [contents writeToFile:path atomically:YES encoding:encoding error:&error];
+        
+        return ConvertNSErrorCode(error);
+    }
+    
+    int ExecuteSetPosixPermissions(const CefV8ValueList& arguments,
+                       CefRefPtr<CefV8Value>& retval,
+                       CefString& exception)
+    {
+        if (arguments.size() != 2 || !arguments[0]->IsString() || !arguments[1]->IsInt())
+            return ERR_INVALID_PARAMS;
+        
+        std::string pathStr = arguments[0]->GetStringValue();
+        int mode = arguments[1]->GetIntValue();
+        NSError* error = nil;
+        
+        NSString* path = [NSString stringWithUTF8String:pathStr.c_str()];
+        NSDictionary* attrs = [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:mode] forKey:NSFilePosixPermissions];
+        
+        if ([[NSFileManager defaultManager] setAttributes:attrs ofItemAtPath:path error:&error])
+            return NO_ERROR;
         
         return ConvertNSErrorCode(error);
     }
@@ -343,7 +384,7 @@ public:
                 break;
         }
         
-        // Unkown error
+        // Unknown error
         return ERR_UNKNOWN;
     }
     

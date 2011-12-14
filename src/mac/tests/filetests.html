@@ -67,10 +67,25 @@
         <h2>readdir</h2>
  
         <script>
+            
             // Get window.location and remove the initial 'file://' or 'http://'
             var baseDir = window.location.toString().substr(7); 
             // Remove the name of this html file
             baseDir = baseDir.substr(0, baseDir.lastIndexOf("/"));
+        
+            // Pre-test setup - set mode for read-only and write-only directories
+            brackets.fs.chmod(baseDir + "/cant_read_here", 0222, function(err) {
+                if (err != 0) {
+                    document.write("Unexpected error in chmod: " + err);
+                    writeFail();
+                }
+            });
+            brackets.fs.chmod(baseDir + "/cant_write_here", 0444, function(err) {
+                if (err != 0) {
+                    document.write("Unexpected error in chmod 2: " + err);
+                    writeFail();
+                }
+            });
             
             var filesDir = baseDir + "/files";
             brackets.fs.readdir(filesDir, function(err, contents) {
@@ -181,6 +196,14 @@
                 document.write("Writing to a new file: ");
                 writeResult(err, brackets.fs.NO_ERROR);
             });
+            brackets.fs.readFile(filesDir + "/write_test.txt", function(err, newContent) {
+                if (err) {
+                    document.write("Unexpected error in readFile(2): " + err);
+                    writeFail();
+                }
+                document.write("Verifying contents written to file: ");
+                writeResult(newContent, contents);
+            });
             brackets.fs.writeFile(baseDir + "/cant_write_here/write_test.txt", contents, function(err) {
                 document.write("Try writing to a read-only directory: err = " + err);
                 writeResult(err, brackets.fs.ERR_CANT_WRITE);
@@ -188,6 +211,23 @@
             brackets.fs.writeFile(42, contents, function(err) {
                 document.write("Call writeFile with invalid arguments: err = " + err);
                 writeResult(err, brackets.fs.ERR_INVALID_PARAMS);
+            });
+        </script>
+
+        <script>
+        
+            // Reset mode for read-only and write-only directories
+            brackets.fs.chmod(baseDir + "/cant_read_here", 0777, function(err) {
+                if (err != 0) {
+                    document.write("Unexpected error in chmod: " + err);
+                    writeFail();
+                }
+            });
+            brackets.fs.chmod(baseDir + "/cant_write_here", 0777, function(err) {
+                if (err != 0) {
+                    document.write("Unexpected error in chmod 2: " + err);
+                    writeFail();
+                }
             });
         </script>
     </body>
