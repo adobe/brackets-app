@@ -165,7 +165,7 @@
         <h2>readFile</h2>
         
         <script>
-            brackets.fs.readFile(filesDir + "/file_one.txt", function(err, contents) {
+            brackets.fs.readFile(filesDir + "/file_one.txt", "utf8", function(err, contents) {
                 if (err) {
                     document.write("Unexpected error in readFile: " + err);
                     writeFail();
@@ -174,7 +174,7 @@
                 document.write("Read contents of files/file_one.txt: ");
                 writeResult(contents, "Hello world");
             });
-            brackets.fs.readFile("/This/file/doesnt/exist.txt", function(err, contents) {
+            brackets.fs.readFile("/This/file/doesnt/exist.txt", "utf8", function(err, contents) {
                 document.write("Test reading non-existent file: ");
                 writeResult(err, brackets.fs.ERR_NOT_FOUND);
             });
@@ -182,7 +182,7 @@
                 document.write("Try to use unsupported encoding: err = " + err);
                 writeResult(err, brackets.fs.ERR_UNSUPPORTED_ENCODING);
             });
-            brackets.fs.readFile(42, function(err, contents) {
+            brackets.fs.readFile(42, [], function(err, contents) {
                 document.write("Call readFile with invalid arguments: err = " + err);
                 writeResult(err, brackets.fs.ERR_INVALID_PARAMS);
             });
@@ -192,11 +192,11 @@
         
         <script>
             var contents = "This content was generated from filetests.html";
-            brackets.fs.writeFile(filesDir + "/write_test.txt", contents, 'utf8', function(err) {
-                document.write("Writing to a new file: ");
+            brackets.fs.writeFile(filesDir + "/write_test.txt", contents, "utf8", function(err) {
+                document.write("Writing to a file: ");
                 writeResult(err, brackets.fs.NO_ERROR);
             });
-            brackets.fs.readFile(filesDir + "/write_test.txt", function(err, newContent) {
+            brackets.fs.readFile(filesDir + "/write_test.txt", "utf8", function(err, newContent) {
                 if (err) {
                     document.write("Unexpected error in readFile(2): " + err);
                     writeFail();
@@ -204,11 +204,11 @@
                 document.write("Verifying contents written to file: ");
                 writeResult(newContent, contents);
             });
-            brackets.fs.writeFile(baseDir + "/cant_write_here/write_test.txt", contents, function(err) {
+            brackets.fs.writeFile(baseDir + "/cant_write_here/write_test.txt", contents, "utf8", function(err) {
                 document.write("Try writing to a read-only directory: err = " + err);
                 writeResult(err, brackets.fs.ERR_CANT_WRITE);
             });
-            brackets.fs.writeFile(42, contents, function(err) {
+            brackets.fs.writeFile(42, contents, 2, function(err) {
                 document.write("Call writeFile with invalid arguments: err = " + err);
                 writeResult(err, brackets.fs.ERR_INVALID_PARAMS);
             });

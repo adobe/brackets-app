@@ -158,17 +158,8 @@ if (!brackets.fs)
      */
     brackets.fs.readFile = function(path, encoding, callback) {
         native function ReadFile();
-        var enc, cb;
-        // encoding is optional. If omitted, use 'utf8.
-        if (typeof encoding == 'function') {
-            enc = "utf8";
-            cb = encoding;
-        } else {
-            enc = encoding;
-            cb = callback;
-        }
-        var contents = ReadFile(path, enc);
-        cb(getLastError(), contents);
+        var contents = ReadFile(path, encoding);
+        callback(getLastError(), contents);
     };
     
     /**
@@ -190,18 +181,9 @@ if (!brackets.fs)
      */
     brackets.fs.writeFile = function(path, data, encoding, callback) {
         native function WriteFile();
-        var enc, cb;
-        // encoding is optional. If omitted, use "utf8".
-        if (typeof encoding == 'function') {
-            enc = "utf8";
-            cb = encoding;
-        } else {
-            enc = encoding;
-            cb = callback;
-        }
-        WriteFile(path, data, enc);
-        if (cb)
-            cb(getLastError());
+        WriteFile(path, data, encoding);
+        if (callback)
+            callback(getLastError());
     };
     
     /**
