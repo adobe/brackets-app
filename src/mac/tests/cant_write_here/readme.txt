@@ -1,0 +1,1 @@
+This directory is marked read only. Attempts to write files here should fail.
