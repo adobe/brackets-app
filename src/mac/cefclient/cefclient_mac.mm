@@ -26,8 +26,8 @@ char szWorkingDir[512];   // The current working directory
 #define URLBAR_HEIGHT  32
 
 // Content area size for newly created windows.
-const int kWindowWidth = 1200;
-const int kWindowHeight = 900;
+const int kWindowWidth = 1000;
+const int kWindowHeight = 700;
 
 // Memory AutoRelease pool.
 static NSAutoreleasePool* g_autopool = nil;
