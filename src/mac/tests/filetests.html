@@ -214,6 +214,49 @@
             });
         </script>
 
+        <h2>unlink</h2>
+        <script>
+            // Write a file
+            var tmpFile = filesDir + "/temp.txt";
+            brackets.fs.writeFile(tmpFile, contents, "utf8", function(err) {
+                if (err) {
+                    document.write("Unexpected error in writeFile(3): " + err);
+                    writeFail();
+                }
+            });
+            // Verify contents
+            brackets.fs.readFile(tmpFile, "utf8", function(err, newContent) {
+                if (err) {
+                    document.write("Unexpected error in readFile(3): " + err);
+                    writeFail();
+                }
+                if (newContent != contents) {
+                    document.write("File contents don't match");
+                    writeFail();
+                }
+            });
+            // Remove the file
+            brackets.fs.unlink(tmpFile, function(err) {
+                if (err) {
+                    document.write("Unexpected error in unlink: " + err);
+                    writeFail();
+                }
+            });
+            // Verify it is gone
+            brackets.fs.stat(tmpFile, function(err, stat) {
+                document.write("Verify file is removed: ");
+                writeResult(err, brackets.fs.ERR_NOT_FOUND);
+            });
+            brackets.fs.unlink("/this/file/doesnt/exist.txt", function(err) {
+                document.write("Try removing non-existent file: ");
+                writeResult(err, brackets.fs.ERR_NOT_FOUND);
+            });
+            brackets.fs.unlink(filesDir, function(err) {
+                document.write("Try to unlink a directory. Should return error. ");
+                writeResult(err, brackets.fs.ERR_NOT_FILE);
+            });
+        </script>
+        
         <script>
         
             // Reset mode for read-only and write-only directories
