@@ -60,19 +60,29 @@ if (!brackets.fs)
     brackets.fs.ERR_OUT_OF_SPACE            = 7;
     
     /**
+     * @constant Specified path does not point to a file.
+     */
+    brackets.fs.ERR_NOT_FILE                = 8;
+    
+    /**
+     * @constant Specified path does not point to a directory.
+     */
+    brackets.fs.ERR_NOT_DIRECTORY           = 9;
+    
+    /**
      * Display the OS File Open dialog, allowing the user to select
      * files or directories.
      *
-     * @param allowMultipleSelection If true, multiple files/directories can be selected.
-     * @param chooseDirectory If true, only directories can be selected. If false, only 
+     * @param {boolean} allowMultipleSelection If true, multiple files/directories can be selected.
+     * @param {boolean} chooseDirectory If true, only directories can be selected. If false, only 
      *        files can be selected.
-     * @param title Tile of the open dialog.
-     * @param initialPath Initial path to display in the dialog. Pass NULL or "" to 
+     * @param {string} title Tile of the open dialog.
+     * @param {string} initialPath Initial path to display in the dialog. Pass NULL or "" to 
      *        display the last path chosen.
-     * @param fileTypes Array of strings specifying the selectable file extensions. 
+     * @param {Array.<string>} fileTypes Array of strings specifying the selectable file extensions. 
      *        These strings should not contain '.'. This parameter is ignored when 
      *        chooseDirectory=true.
-     * @param callback Asynchronous callback function. The callback gets two arguments 
+     * @param {function(err, selection)} callback Asynchronous callback function. The callback gets two arguments 
      *        (err, selection) where selection is an array of the names of the selected files.
      *        Possible error values:
      *          NO_ERROR
@@ -92,8 +102,8 @@ if (!brackets.fs)
     /**
      * Reads the contents of a directory. 
      *
-     * @param path The path of the directory to read.
-     * @param callback Asynchronous callback function. The callback gets two arguments 
+     * @param {string} path The path of the directory to read.
+     * @param {function(err, files)} callback Asynchronous callback function. The callback gets two arguments 
      *        (err, files) where files is an array of the names of the files
      *        in the directory excluding '.' and '..'.
      *        Possible error values:
@@ -115,8 +125,8 @@ if (!brackets.fs)
     /**
      * Get information for the selected file or directory.
      *
-     * @param path The path of the file or directory to read.
-     * @param callback Asynchronous callback function. The callback gets two arguments 
+     * @param {string} path The path of the file or directory to read.
+     * @param {function(err, stats)} callback Asynchronous callback function. The callback gets two arguments 
      *        (err, stats) where stats is an object with isFile() and isDirectory() functions.
      *        Possible error values:
      *          NO_ERROR
@@ -142,9 +152,9 @@ if (!brackets.fs)
     /**
      * Reads the entire contents of a file. 
      *
-     * @param path The path of the file to read.
-     * @param encoding The encoding for the file. The only supported encoding is 'utf8'.
-     * @param callback Asynchronous callback function. The callback gets two arguments 
+     * @param {string} path The path of the file to read.
+     * @param {string} encoding The encoding for the file. The only supported encoding is 'utf8'.
+     * @param {function(err, data)} callback Asynchronous callback function. The callback gets two arguments 
      *        (err, data) where data is the contents of the file.
      *        Possible error values:
      *          NO_ERROR
@@ -165,10 +175,10 @@ if (!brackets.fs)
     /**
      * Write data to a file, replacing the file if it already exists. 
      *
-     * @param path The path of the file to write.
-     * @param data The data to write to the file.
-     * @param encoding The encoding for the file. The only supported encoding is 'utf8'.
-     * @param callback Asynchronous callback function. The callback gets one argument (err).
+     * @param {string} path The path of the file to write.
+     * @param {string} data The data to write to the file.
+     * @param {string} encoding The encoding for the file. The only supported encoding is 'utf8'.
+     * @param {function(err)} callback Asynchronous callback function. The callback gets one argument (err).
      *        Possible error values:
      *          NO_ERROR
      *          ERR_UNKNOWN
@@ -189,9 +199,9 @@ if (!brackets.fs)
     /**
      * Set permissions for a file or directory.
      *
-     * @param path The path of the file or directory
-     * @param mode The permissions for the file or directory, in numeric format (ie 777)
-     * @param callback Asynchronous callback function. The callback gets one argument (err).
+     * @param {string} path The path of the file or directory
+     * @param {number} mode The permissions for the file or directory, in numeric format (ie 0777)
+     * @param {function(err)} callback Asynchronous callback function. The callback gets one argument (err).
      *        Possible error values:
      *          NO_ERROR
      *          ERR_UNKNOWN
@@ -203,6 +213,32 @@ if (!brackets.fs)
     brackets.fs.chmod = function(path, mode, callback) {
         native function SetPosixPermissions();
         SetPosixPermissions(path, mode);
+        callback(getLastError());
+    };
+    
+    /**
+     * Delete a file.
+     *
+     * @param {string} path The path of the file to delete
+     * @param {function(err)} callback Asynchronous callback function. The callback gets one argument (err).
+     *        Possible error values:
+     *          NO_ERROR
+     *          ERR_UNKNOWN
+     *          ERR_INVALID_PARAMS
+     *          ERR_NOT_FOUND
+     *          ERR_NOT_FILE
+     *
+     * @return None. This is an asynchronous call that sends all return information to the callback.
+     */
+    brackets.fs.unlink = function(path, callback) {
+        native function DeleteFileOrDirectory();
+        native function IsDirectory();
+        // Unlink can only delete files
+        if (IsDirectory(path)) {
+            callback(brackets.fs.ERR_NOT_FILE);
+            return;
+        }
+        DeleteFileOrDirectory(path);
         callback(getLastError());
     };
 })();;
