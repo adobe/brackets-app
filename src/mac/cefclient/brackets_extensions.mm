@@ -16,6 +16,8 @@ static const int ERR_CANT_READ              = 4;
 static const int ERR_UNSUPPORTED_ENCODING   = 5;
 static const int ERR_CANT_WRITE             = 6;
 static const int ERR_OUT_OF_SPACE           = 7;
+static const int ERR_NOT_FILE               = 8;
+static const int ERR_NOT_DIRECTORY          = 9;
 
 class BracketsExtensionHandler : public CefV8Handler
 {
@@ -148,11 +150,30 @@ public:
             //  NO_ERROR - no error
             //  ERR_UNKNOWN - unknown error
             //  ERR_INVALID_PARAMS - invalid parameters
+            //  ERR_NOT_FOUND - can't file file/directory
             //  ERR_UNSUPPORTED_ENCODING - unsupported encoding value
             //  ERR_CANT_WRITE - permissions could not be written
             
             errorCode = ExecuteSetPosixPermissions(arguments, retval, exception);
             
+        }
+        else if (name == "DeleteFileOrDirectory")
+        {
+            // DeleteFileOrDirectory(path)
+            //
+            // Inputs:
+            //  path - full path of file or directory
+            //
+            // Ouput:
+            //  none
+            //
+            // Errors
+            //  NO_ERROR - no error
+            //  ERR_UNKNOWN - unknown error
+            //  ERR_INVALID_PARAMS - invalid parameters
+            //  ERR_NOT_FOUND - can't file file/directory
+            
+            errorCode = ExecuteDeleteFileOrDirectory(arguments, retval, exception);
         }
         else if (name == "GetLastError")
         {
@@ -337,6 +358,24 @@ public:
         NSDictionary* attrs = [NSDictionary dictionaryWithObject:[NSNumber numberWithInt:mode] forKey:NSFilePosixPermissions];
         
         if ([[NSFileManager defaultManager] setAttributes:attrs ofItemAtPath:path error:&error])
+            return NO_ERROR;
+        
+        return ConvertNSErrorCode(error);
+    }
+    
+    int ExecuteDeleteFileOrDirectory(const CefV8ValueList& arguments,
+                       CefRefPtr<CefV8Value>& retval,
+                       CefString& exception)
+    {
+        if (arguments.size() != 1 || !arguments[0]->IsString())
+            return ERR_INVALID_PARAMS;
+        
+        std::string pathStr = arguments[0]->GetStringValue();
+        NSError* error = nil;
+        
+        NSString* path = [NSString stringWithUTF8String:pathStr.c_str()];
+        
+        if ([[NSFileManager defaultManager] removeItemAtPath:path error:&error])
             return NO_ERROR;
         
         return ConvertNSErrorCode(error);
