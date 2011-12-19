@@ -118,6 +118,7 @@ if (!brackets.fs)
     brackets.fs.readdir = function(path, callback) {
         native function ReadDir();
         var resultString = ReadDir(path);
+        console.log( resultString );
         var result = JSON.parse(resultString || '[]');
         callback(getLastError(), result);
     };
