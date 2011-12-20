@@ -118,6 +118,16 @@ if (!brackets.fs)
     brackets.fs.readdir = function(path, callback) {
         native function ReadDir();
         var resultString = ReadDir(path);
+ 
+        // File paths can have special characters, so escape them before parsing to JSON
+        resultString = resultString.replace(/\r/g, "\\r")
+                                    .replace(/\n/g, "\\n")
+                                     .replace(/\&/g, "\\&")
+                                    .replace(/\'/g, "\\'")
+                                    .replace(/\t/g, "\\t")
+                                    //.replace(/\b/g, "\\b")  \\ TODO: leaving this in screws up Brackets launch. I don't know why
+                                     .replace(/\f/g, "\\f");
+
         var result = JSON.parse(resultString || '[]');
         callback(getLastError(), result);
     };
