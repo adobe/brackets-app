@@ -380,17 +380,47 @@ public:
         
         return ConvertNSErrorCode(error);
     }
+
+    // Escapes characters that have special meaning in JSON
+    void EscapeJSONString(const std::string& str, std::string& result) {
+        result = "";
+        
+        for(size_t pos = 0; pos != str.size(); ++pos) {
+                switch(str[pos]) {
+                    case '\a':  result.append("\\a");   break;
+                    case '\b':  result.append("\\b");   break;
+                    case '\f':  result.append("\\f");   break;
+                    case '\n':  result.append("\\n");   break;
+                    case '\r':  result.append("\\r");   break;
+                    case '\t':  result.append("\\t");   break;
+                    case '\v':  result.append("\\v");   break;
+                    // Note: single quotes are OK for JSON
+                    case '\"':  result.append("\\\"");  break; // double quote
+                    case '\\':  result.append("\\\\");  break; // backsplash
+                        
+                        
+                default:   result.append( 1, str[pos]); break;
+                        
+            }
+        }
+    }
+
     
     void NSArrayToJSONString(NSArray* array, std::string& result)
-    {
+    {        
         int numItems = [array count];
+        std::string escapedStr = "";
         
         result = "[";
+        std::string item;
         for (int i = 0; i < numItems; i++)
         {
             result += "\"";
-            result += [[array objectAtIndex:i] UTF8String];
-            result += "\"";
+            
+            item = [[array objectAtIndex:i] UTF8String];
+            EscapeJSONString(item, escapedStr);
+            
+            result += escapedStr + "\"";
             
             if (i < numItems - 1)
                 result += ", ";
