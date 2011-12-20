@@ -396,7 +396,7 @@ public:
                     case '\v':  result.append("\\v");   break;
                     // Note: single quotes are OK for JSON
                     case '\"':  result.append("\\\"");  break; // double quote
-                    case '\\':  result.append("\\\\");  break; // backsplash
+                    case '\\':  result.append("\\\\");  break; // backslash
                         
                         
                 default:   result.append( 1, str[pos]); break;
