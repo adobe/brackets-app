@@ -342,6 +342,14 @@ int main(int argc, char* argv[])
 
   // Initialize CEF.
   CefSettings settings;
+  
+  // Set persistence cache "~/Library/Application Support/com.adobe.Brackets.cefCache"
+  NSString *libraryDirectory = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) objectAtIndex:0];
+  NSString *bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];   
+  NSString *cefCacheDirectory = [NSString stringWithFormat:@"%@/%@.cefCache", libraryDirectory, bundleIdentifier];
+  std::string cachePath = [cefCacheDirectory UTF8String];
+  
+  CefString(&settings.cache_path).FromASCII(cachePath.c_str());
 
   // Use the Chinese language locale.
   // CefString(&settings.locale).FromASCII("zh-cn");
@@ -362,7 +370,6 @@ int main(int argc, char* argv[])
   // Don't put anything below this line because it won't be executed.
   return 0;
 }
-
 
 // Global functions
 
