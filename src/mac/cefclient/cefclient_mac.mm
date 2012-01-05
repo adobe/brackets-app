@@ -343,7 +343,7 @@ int main(int argc, char* argv[])
   // Initialize CEF.
   CefSettings settings;
   
-  // Set persistence cache "~/Library/Caches/com.adobe.Brackets.cefCache"
+  // Set persistence cache "~/Library/Application Support/com.adobe.Brackets.cefCache"
   NSString *libraryDirectory = [NSSearchPathForDirectoriesInDomains(NSApplicationSupportDirectory, NSUserDomainMask, YES) objectAtIndex:0];
   NSString *bundleIdentifier = [[NSBundle mainBundle] bundleIdentifier];   
   NSString *cefCacheDirectory = [NSString stringWithFormat:@"%@/%@.cefCache", libraryDirectory, bundleIdentifier];
