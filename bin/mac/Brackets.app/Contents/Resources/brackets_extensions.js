@@ -92,11 +92,13 @@ if (!brackets.fs)
      */
     brackets.fs.showOpenDialog = function(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback) {
        native function ShowOpenDialog();
-       var resultString = ShowOpenDialog(allowMultipleSelection, chooseDirectory, 
-                                         title || 'Open', initialPath || '', 
-                                         fileTypes ? fileTypes.join(' ') : '');
-       var result = JSON.parse(resultString || '[]');
-       callback(getLastError(), result);
+       setTimeout(function() {
+           var resultString = ShowOpenDialog(allowMultipleSelection, chooseDirectory, 
+                                             title || 'Open', initialPath || '', 
+                                             fileTypes ? fileTypes.join(' ') : '');
+           var result = JSON.parse(resultString || '[]');
+           callback(getLastError(), result);
+       }, 0);
     };
     
     /**
