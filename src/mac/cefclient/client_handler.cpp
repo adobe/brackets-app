@@ -264,8 +264,8 @@ bool ClientHandler::GetPrintHeaderFooter(CefRefPtr<CefBrowser> browser,
   return false;
 }
 
-void ClientHandler::OnContextCreated(CefRefPtr<CefBrowser> browser, 
-                                     CefRefPtr<CefFrame> frame, 
+void ClientHandler::OnContextCreated(CefRefPtr<CefBrowser> browser,
+                                     CefRefPtr<CefFrame> frame,
                                      CefRefPtr<CefV8Context> context)
 {
   REQUIRE_UI_THREAD();
