@@ -148,6 +148,13 @@ static NSAutoreleasePool* g_autopool = nil;
   }
 }
 
+- (void)windowDidResignKey:(NSNotification *)notification {
+  if(g_handler.get() && g_handler->GetBrowserHwnd()) {
+    // Remove focus from the browser window.
+    g_handler->GetBrowser()->SetFocus(false);
+  }
+}
+
 // Called when the window is about to close. Perform the self-destruction
 // sequence by getting rid of the window. By returning YES, we allow the window
 // to be removed from the screen.
@@ -300,6 +307,17 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 }
 
 - (IBAction)showDevTools:(id)sender {
+  // If Dev tools window is already open, make it active
+  NSArray* windows = [NSApp windows];
+  for (unsigned int i = 0; i < windows.count; i++) {
+    NSWindow* window = [windows objectAtIndex:i];
+    NSString* title = [window title];
+    NSRange range = [title rangeOfString:@"Developer Tools"];
+    if (range.location != NSNotFound) {
+      [window makeKeyAndOrderFront:self];
+      return;
+    }
+  }
   if(g_handler.get() && g_handler->GetBrowserHwnd()) {
     CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
     browser->ShowDevTools();
@@ -354,7 +372,7 @@ int main(int argc, char* argv[])
   // Use the Chinese language locale.
   // CefString(&settings.locale).FromASCII("zh-cn");
 
-  CefInitialize(settings);
+  CefInitialize(settings, nil);
 
   // Initialize Brackets extensions
   InitBracketsExtensions();

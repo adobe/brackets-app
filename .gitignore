@@ -7,4 +7,4 @@ src/mac/xcodebuild/*
 *.perspective
 *.perspective3
 *xcuserdata*
-
+*.esproj

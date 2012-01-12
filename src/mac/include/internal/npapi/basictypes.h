@@ -351,6 +351,13 @@ inline void ignore_result(const T&) {
 //       static MyClass my_variable_name(base::LINKER_INITIALIZED);
 namespace base {
 enum LinkerInitialized { LINKER_INITIALIZED };
+
+// Use these to declare and define a static local variable (static T;) so that
+// it is leaked so that its destructors are not called at exit. If you need
+// thread-safe initialization, use base/lazy_instance.h instead.
+#define CR_DEFINE_STATIC_LOCAL(type, name, arguments) \
+  static type& name = *new type arguments
+
 }  // base
 
 #endif  // BASE_BASICTYPES_H_
