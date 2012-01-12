@@ -51,10 +51,12 @@ extern "C" {
 
 ///
 // This function should be called on the main application thread to initialize
-// CEF when the application is started.  A return value of true (1) indicates
-// that it succeeded and false (0) indicates that it failed.
+// CEF when the application is started. The |application| parameter may be NULL.
+// A return value of true (1) indicates that it succeeded and false (0)
+// indicates that it failed.
 ///
-CEF_EXPORT int cef_initialize(const struct _cef_settings_t* settings);
+CEF_EXPORT int cef_initialize(const struct _cef_settings_t* settings,
+    struct _cef_app_t* application);
 
 ///
 // This function should be called on the main application thread to shut down
@@ -81,6 +83,13 @@ CEF_EXPORT void cef_do_message_loop_work();
 // will block until a quit message is received by the system.
 ///
 CEF_EXPORT void cef_run_message_loop();
+
+///
+// Quit the CEF message loop that was started by calling cef_run_message_loop().
+// This function should only be called on the main application thread and only
+// if cef_run_message_loop() was used.
+///
+CEF_EXPORT void cef_quit_message_loop();
 
 ///
 // Register a new V8 extension with the specified JavaScript extension code and
@@ -157,7 +166,9 @@ CEF_EXPORT int cef_register_extension(const cef_string_t* extension_name,
 // 2.1 of RFC 1123. These URLs will be canonicalized to "scheme://host/path" in
 // the simplest case and "scheme://username:password@host:port/path" in the most
 // explicit case. For example, "scheme:host/path" and "scheme:///host/path" will
-// both be canonicalized to "scheme://host/path".
+// both be canonicalized to "scheme://host/path". The origin of a standard
+// scheme URL is the combination of scheme, host and port (i.e.,
+// "scheme://host:port" in the most explicit case).
 //
 // For non-standard scheme URLs only the "scheme:" component is parsed and
 // canonicalized. The remainder of the URL will be passed to the handler as-is.
@@ -165,8 +176,14 @@ CEF_EXPORT int cef_register_extension(const cef_string_t* extension_name,
 // scheme URLs cannot be used as a target for form submission.
 //
 // If |is_local| is true (1) the scheme will be treated as local (i.e., with the
-// same security rules as those applied to "file" URLs). This means that normal
-// pages cannot link to or access URLs of this scheme.
+// same security rules as those applied to "file" URLs). Normal pages cannot
+// link to or access local URLs. Also, by default, local URLs can only perform
+// XMLHttpRequest calls to the same URL (origin + path) that originated the
+// request. To allow XMLHttpRequest calls from a local URL to other URLs with
+// the same origin set the CefSettings.file_access_from_file_urls_allowed value
+// to true (1). To allow XMLHttpRequest calls from a local URL to all origins
+// set the CefSettings.universal_access_from_file_urls_allowed value to true
+// (1).
 //
 // If |is_display_isolated| is true (1) the scheme will be treated as display-
 // isolated. This means that pages cannot display these URLs unless they are
@@ -206,7 +223,7 @@ CEF_EXPORT int cef_clear_scheme_handler_factories();
 // Add an entry to the cross-origin access whitelist.
 //
 // The same-origin policy restricts how scripts hosted from different origins
-// (scheme + domain) can communicate. By default, scripts can only access
+// (scheme + domain + port) can communicate. By default, scripts can only access
 // resources with the same origin. Scripts hosted on the HTTP and HTTPS schemes
 // (but no other schemes) can use the "Access-Control-Allow-Origin" header to
 // allow cross-origin requests. For example, https://source.example.com can make
@@ -225,9 +242,14 @@ CEF_EXPORT int cef_clear_scheme_handler_factories();
 // |source_origin| URL (like http://www.example.com) will be allowed access to
 // all resources hosted on the specified |target_protocol| and |target_domain|.
 // If |allow_target_subdomains| is true (1) access will also be allowed to all
-// subdomains of the target domain. This function may be called on any thread.
-// Returns false (0) if |source_origin| is invalid or the whitelist cannot be
-// accessed.
+// subdomains of the target domain.
+//
+// This function cannot be used to bypass the restrictions on local or display
+// isolated schemes. See the comments on CefRegisterCustomScheme for more
+// information.
+//
+// This function may be called on any thread. Returns false (0) if
+// |source_origin| is invalid or the whitelist cannot be accessed.
 ///
 CEF_EXPORT int cef_add_cross_origin_whitelist_entry(
     const cef_string_t* source_origin, const cef_string_t* target_protocol,
@@ -839,7 +861,7 @@ typedef struct _cef_frame_t
       int startLine);
 
   ///
-  // Returns true (1) if this is the main frame.
+  // Returns true (1) if this is the main (top-level) frame.
   ///
   int (CEF_CALLBACK *is_main)(struct _cef_frame_t* self);
 
@@ -850,10 +872,26 @@ typedef struct _cef_frame_t
   int (CEF_CALLBACK *is_focused)(struct _cef_frame_t* self);
 
   ///
-  // Returns this frame's name.
+  // Returns the name for this frame. If the frame has an assigned name (for
+  // example, set via the iframe "name" attribute) then that value will be
+  // returned. Otherwise a unique name will be constructed based on the frame
+  // parent hierarchy. The main (top-level) frame will always have an NULL name
+  // value.
   ///
   // The resulting string must be freed by calling cef_string_userfree_free().
   cef_string_userfree_t (CEF_CALLBACK *get_name)(struct _cef_frame_t* self);
+
+  ///
+  // Returns the globally unique identifier for this frame. This function should
+  // only be called on the UI thread.
+  ///
+  long long (CEF_CALLBACK *get_identifier)(struct _cef_frame_t* self);
+
+  ///
+  // Returns the parent of this frame or NULL if this is the main (top-level)
+  // frame. This function should only be called on the UI thread.
+  ///
+  struct _cef_frame_t* (CEF_CALLBACK *get_parent)(struct _cef_frame_t* self);
 
   ///
   // Returns the URL currently loaded in this frame. This function should only
@@ -881,6 +919,41 @@ typedef struct _cef_frame_t
       struct _cef_frame_t* self);
 
 } cef_frame_t;
+
+
+///
+// Implement this structure to handle proxy resolution events.
+///
+typedef struct _cef_proxy_handler_t
+{
+  // Base structure.
+  cef_base_t base;
+
+  ///
+  // Called to retrieve proxy information for the specified |url|.
+  ///
+  void (CEF_CALLBACK *get_proxy_for_url)(struct _cef_proxy_handler_t* self,
+      const cef_string_t* url, struct _cef_proxy_info_t* proxy_info);
+
+} cef_proxy_handler_t;
+
+
+///
+// Implement this structure to provide handler implementations.
+///
+typedef struct _cef_app_t
+{
+  // Base structure.
+  cef_base_t base;
+
+  ///
+  // Return the handler for proxy events. If not handler is returned the default
+  // system handler will be used.
+  ///
+  struct _cef_proxy_handler_t* (CEF_CALLBACK *get_proxy_handler)(
+      struct _cef_app_t* self);
+
+} cef_app_t;
 
 
 ///
@@ -1026,6 +1099,15 @@ typedef struct _cef_request_handler_t
       struct _cef_request_t* request, cef_string_t* redirectUrl,
       struct _cef_stream_reader_t** resourceStream,
       struct _cef_response_t* response, int loadFlags);
+
+  ///
+  // Called on the IO thread when a resource load is redirected. The |old_url|
+  // parameter will contain the old URL. The |new_url| parameter will contain
+  // the new URL and can be changed if desired.
+  ///
+  void (CEF_CALLBACK *on_resource_redirect)(struct _cef_request_handler_t* self,
+      struct _cef_browser_t* browser, const cef_string_t* old_url,
+      cef_string_t* new_url);
 
   ///
   // Called on the UI thread after a response to the resource request is
@@ -1231,7 +1313,7 @@ typedef struct _cef_menu_handler_t
   ///
   int (CEF_CALLBACK *on_before_menu)(struct _cef_menu_handler_t* self,
       struct _cef_browser_t* browser,
-      const struct _cef_handler_menuinfo_t* menuInfo);
+      const struct _cef_menu_info_t* menuInfo);
 
   ///
   // Called to optionally override the default text for a context menu item.
@@ -1239,7 +1321,7 @@ typedef struct _cef_menu_handler_t
   // alternate text.
   ///
   void (CEF_CALLBACK *get_menu_label)(struct _cef_menu_handler_t* self,
-      struct _cef_browser_t* browser, enum cef_handler_menuid_t menuId,
+      struct _cef_browser_t* browser, enum cef_menu_id_t menuId,
       cef_string_t* label);
 
   ///
@@ -1247,7 +1329,7 @@ typedef struct _cef_menu_handler_t
   // false (0) to execute the default action or true (1) to cancel the action.
   ///
   int (CEF_CALLBACK *on_menu_action)(struct _cef_menu_handler_t* self,
-      struct _cef_browser_t* browser, enum cef_handler_menuid_t menuId);
+      struct _cef_browser_t* browser, enum cef_menu_id_t menuId);
 
 } cef_menu_handler_t;
 
@@ -1362,22 +1444,32 @@ typedef struct _cef_jsdialog_handler_t
 
 
 ///
-// Implement this structure to handle JavaScript binding. The functions of this
+// Implement this structure to handle V8 context events. The functions of this
 // structure will be called on the UI thread.
 ///
-typedef struct _cef_jsbinding_handler_t
+typedef struct _cef_v8context_handler_t
 {
   // Base structure.
   cef_base_t base;
 
   ///
-  // Called for adding values to a frame's JavaScript 'window' object.
+  // Called immediately after the V8 context for a frame has been created. To
+  // retrieve the JavaScript 'window' object use the
+  // cef_v8context_t::get_global() function.
   ///
-  void (CEF_CALLBACK *on_jsbinding)(struct _cef_jsbinding_handler_t* self,
+  void (CEF_CALLBACK *on_context_created)(struct _cef_v8context_handler_t* self,
       struct _cef_browser_t* browser, struct _cef_frame_t* frame,
-      struct _cef_v8value_t* object);
+      struct _cef_v8context_t* context);
 
-} cef_jsbinding_handler_t;
+  ///
+  // Called immediately before the V8 context for a frame is released. No
+  // references to the context should be kept after this function is called.
+  ///
+  void (CEF_CALLBACK *on_context_released)(
+      struct _cef_v8context_handler_t* self, struct _cef_browser_t* browser,
+      struct _cef_frame_t* frame, struct _cef_v8context_t* context);
+
+} cef_v8context_handler_t;
 
 
 ///
@@ -1428,13 +1520,14 @@ typedef struct _cef_render_handler_t
   ///
   // Called when an element should be painted. |type| indicates whether the
   // element is the view or the popup widget. |buffer| contains the pixel data
-  // for the whole image. |dirtyRect| indicates the portion of the image that
-  // has been repainted. On Windows |buffer| will be width*height*4 bytes in
-  // size and represents a BGRA image with an upper-left origin.
+  // for the whole image. |dirtyRects| contains the set of rectangles that need
+  // to be repainted. On Windows |buffer| will be width*height*4 bytes in size
+  // and represents a BGRA image with an upper-left origin.
   ///
   void (CEF_CALLBACK *on_paint)(struct _cef_render_handler_t* self,
       struct _cef_browser_t* browser, enum cef_paint_element_type_t type,
-      const cef_rect_t* dirtyRect, const void* buffer);
+      size_t dirtyRectsCount, cef_rect_t const* dirtyRects,
+      const void* buffer);
 
   ///
   // Called when the browser window's cursor has changed.
@@ -1546,9 +1639,9 @@ typedef struct _cef_client_t
       struct _cef_client_t* self);
 
   ///
-  // Return the handler for JavaScript binding events.
+  // Return the handler for V8 context events.
   ///
-  struct _cef_jsbinding_handler_t* (CEF_CALLBACK *get_jsbinding_handler)(
+  struct _cef_v8context_handler_t* (CEF_CALLBACK *get_v8context_handler)(
       struct _cef_client_t* self);
 
   ///
@@ -1684,8 +1777,8 @@ typedef struct _cef_post_data_t
   ///
   // Retrieve the post data elements.
   ///
-  struct _cef_post_data_element_t* (CEF_CALLBACK *get_elements)(
-      struct _cef_post_data_t* self, int elementIndex);
+  void (CEF_CALLBACK *get_elements)(struct _cef_post_data_t* self,
+      size_t* elementsCount, struct _cef_post_data_element_t** elements);
 
   ///
   // Remove the specified post data element.  Returns true (1) if the removal
@@ -2054,6 +2147,13 @@ typedef struct _cef_v8context_t
   ///
   int (CEF_CALLBACK *exit)(struct _cef_v8context_t* self);
 
+  ///
+  // Returns true (1) if this object is pointing to the same handle as |that|
+  // object.
+  ///
+  int (CEF_CALLBACK *is_same)(struct _cef_v8context_t* self,
+      struct _cef_v8context_t* that);
+
 } cef_v8context_t;
 
 
@@ -2067,6 +2167,11 @@ CEF_EXPORT cef_v8context_t* cef_v8context_get_current_context();
 ///
 CEF_EXPORT cef_v8context_t* cef_v8context_get_entered_context();
 
+///
+// Returns true (1) if V8 is currently inside a context.
+///
+CEF_EXPORT int cef_v8context_in_context();
+
 
 ///
 // Structure that should be implemented to handle V8 function calls. The
@@ -2078,14 +2183,15 @@ typedef struct _cef_v8handler_t
   cef_base_t base;
 
   ///
-  // Execute with the specified argument list and return value. Return true (1)
-  // if the function was handled. To invoke V8 callback functions outside the
-  // scope of this function you need to keep references to the current V8
-  // context (cef_v8context_t) along with any necessary callback objects.
+  // Handle execution of the function identified by |name|. |object| is the
+  // receiver ('this' object) of the function. |arguments| is the list of
+  // arguments passed to the function. If execution succeeds set |retval| to the
+  // function return value. If execution fails set |exception| to the exception
+  // that will be thrown. Return true (1) if execution was handled.
   ///
   int (CEF_CALLBACK *execute)(struct _cef_v8handler_t* self,
       const cef_string_t* name, struct _cef_v8value_t* object,
-      size_t argumentCount, struct _cef_v8value_t* const* arguments,
+      size_t argumentsCount, struct _cef_v8value_t* const* arguments,
       struct _cef_v8value_t** retval, cef_string_t* exception);
 
 } cef_v8handler_t;
@@ -2102,9 +2208,10 @@ typedef struct _cef_v8accessor_t
   cef_base_t base;
 
   ///
-  // Called to get an accessor value. |name| is the name of the property being
-  // accessed. |object| is the This() object from V8's AccessorInfo structure.
-  // |retval| is the value to return for this property. Return true (1) if
+  // Handle retrieval the accessor value identified by |name|. |object| is the
+  // receiver ('this' object) of the accessor. If retrieval succeeds set
+  // |retval| to the return value. If retrieval fails set |exception| to the
+  // exception that will be thrown. Return true (1) if accessor retrieval was
   // handled.
   ///
   int (CEF_CALLBACK *get)(struct _cef_v8accessor_t* self,
@@ -2112,16 +2219,80 @@ typedef struct _cef_v8accessor_t
       struct _cef_v8value_t** retval, cef_string_t* exception);
 
   ///
-  // Called to set an accessor value. |name| is the name of the property being
-  // accessed. |value| is the new value being assigned to this property.
-  // |object| is the This() object from V8's AccessorInfo structure. Return true
-  // (1) if handled.
+  // Handle assignment of the accessor value identified by |name|. |object| is
+  // the receiver ('this' object) of the accessor. |value| is the new value
+  // being assigned to the accessor. If assignment fails set |exception| to the
+  // exception that will be thrown. Return true (1) if accessor assignment was
+  // handled.
   ///
   int (CEF_CALLBACK *set)(struct _cef_v8accessor_t* self,
       const cef_string_t* name, struct _cef_v8value_t* object,
       struct _cef_v8value_t* value, cef_string_t* exception);
 
 } cef_v8accessor_t;
+
+
+///
+// Structure representing a V8 exception.
+///
+typedef struct _cef_v8exception_t
+{
+  // Base structure.
+  cef_base_t base;
+
+  ///
+  // Returns the exception message.
+  ///
+  // The resulting string must be freed by calling cef_string_userfree_free().
+  cef_string_userfree_t (CEF_CALLBACK *get_message)(
+      struct _cef_v8exception_t* self);
+
+  ///
+  // Returns the line of source code that the exception occurred within.
+  ///
+  // The resulting string must be freed by calling cef_string_userfree_free().
+  cef_string_userfree_t (CEF_CALLBACK *get_source_line)(
+      struct _cef_v8exception_t* self);
+
+  ///
+  // Returns the resource name for the script from where the function causing
+  // the error originates.
+  ///
+  // The resulting string must be freed by calling cef_string_userfree_free().
+  cef_string_userfree_t (CEF_CALLBACK *get_script_resource_name)(
+      struct _cef_v8exception_t* self);
+
+  ///
+  // Returns the 1-based number of the line where the error occurred or 0 if the
+  // line number is unknown.
+  ///
+  int (CEF_CALLBACK *get_line_number)(struct _cef_v8exception_t* self);
+
+  ///
+  // Returns the index within the script of the first character where the error
+  // occurred.
+  ///
+  int (CEF_CALLBACK *get_start_position)(struct _cef_v8exception_t* self);
+
+  ///
+  // Returns the index within the script of the last character where the error
+  // occurred.
+  ///
+  int (CEF_CALLBACK *get_end_position)(struct _cef_v8exception_t* self);
+
+  ///
+  // Returns the index within the line of the first character where the error
+  // occurred.
+  ///
+  int (CEF_CALLBACK *get_start_column)(struct _cef_v8exception_t* self);
+
+  ///
+  // Returns the index within the line of the last character where the error
+  // occurred.
+  ///
+  int (CEF_CALLBACK *get_end_column)(struct _cef_v8exception_t* self);
+
+} cef_v8exception_t;
 
 
 ///
@@ -2322,20 +2493,36 @@ typedef struct _cef_v8value_t
       struct _cef_v8value_t* self);
 
   ///
-  // Execute the function using the current V8 context.
+  // Execute the function using the current V8 context. This function should
+  // only be called from within the scope of a cef_v8handler_t or
+  // cef_v8accessor_t callback, or in combination with calling enter() and
+  // exit() on a stored cef_v8context_t reference. |object| is the receiver
+  // ('this' object) of the function. |arguments| is the list of arguments that
+  // will be passed to the function. If execution succeeds |retval| will be set
+  // to the function return value. If execution fails |exception| will be set to
+  // the exception that was thrown. If |rethrow_exception| is true (1) any
+  // exception will also be re- thrown. This function returns false (0) if
+  // called incorrectly.
   ///
   int (CEF_CALLBACK *execute_function)(struct _cef_v8value_t* self,
-      struct _cef_v8value_t* object, size_t argumentCount,
+      struct _cef_v8value_t* object, size_t argumentsCount,
       struct _cef_v8value_t* const* arguments, struct _cef_v8value_t** retval,
-      cef_string_t* exception);
+      struct _cef_v8exception_t** exception, int rethrow_exception);
 
   ///
-  // Execute the function using the specified V8 context.
+  // Execute the function using the specified V8 context. |object| is the
+  // receiver ('this' object) of the function. |arguments| is the list of
+  // arguments that will be passed to the function. If execution succeeds
+  // |retval| will be set to the function return value. If execution fails
+  // |exception| will be set to the exception that was thrown. If
+  // |rethrow_exception| is true (1) any exception will also be re-thrown. This
+  // function returns false (0) if called incorrectly.
   ///
   int (CEF_CALLBACK *execute_function_with_context)(struct _cef_v8value_t* self,
       struct _cef_v8context_t* context, struct _cef_v8value_t* object,
-      size_t argumentCount, struct _cef_v8value_t* const* arguments,
-      struct _cef_v8value_t** retval, cef_string_t* exception);
+      size_t argumentsCount, struct _cef_v8value_t* const* arguments,
+      struct _cef_v8value_t** retval, struct _cef_v8exception_t** exception,
+      int rethrow_exception);
 
 } cef_v8value_t;
 
@@ -2376,23 +2563,36 @@ CEF_EXPORT cef_v8value_t* cef_v8value_create_date(const cef_time_t* date);
 CEF_EXPORT cef_v8value_t* cef_v8value_create_string(const cef_string_t* value);
 
 ///
-// Create a new cef_v8value_t object of type object.
+// Create a new cef_v8value_t object of type object. This function should only
+// be called from within the scope of a cef_v8context_tHandler, cef_v8handler_t
+// or cef_v8accessor_t callback, or in combination with calling enter() and
+// exit() on a stored cef_v8context_t reference.
 ///
 CEF_EXPORT cef_v8value_t* cef_v8value_create_object(cef_base_t* user_data);
 
 ///
-// Create a new cef_v8value_t object of type object with accessors.
+// Create a new cef_v8value_t object of type object with accessors. This
+// function should only be called from within the scope of a
+// cef_v8context_tHandler, cef_v8handler_t or cef_v8accessor_t callback, or in
+// combination with calling enter() and exit() on a stored cef_v8context_t
+// reference.
 ///
 CEF_EXPORT cef_v8value_t* cef_v8value_create_object_with_accessor(
     cef_base_t* user_data, cef_v8accessor_t* accessor);
 
 ///
-// Create a new cef_v8value_t object of type array.
+// Create a new cef_v8value_t object of type array. This function should only be
+// called from within the scope of a cef_v8context_tHandler, cef_v8handler_t or
+// cef_v8accessor_t callback, or in combination with calling enter() and exit()
+// on a stored cef_v8context_t reference.
 ///
 CEF_EXPORT cef_v8value_t* cef_v8value_create_array();
 
 ///
-// Create a new cef_v8value_t object of type function.
+// Create a new cef_v8value_t object of type function. This function should only
+// be called from within the scope of a cef_v8context_tHandler, cef_v8handler_t
+// or cef_v8accessor_t callback, or in combination with calling enter() and
+// exit() on a stored cef_v8context_t reference.
 ///
 CEF_EXPORT cef_v8value_t* cef_v8value_create_function(const cef_string_t* name,
     cef_v8handler_t* handler);
@@ -3443,6 +3643,123 @@ typedef struct _cef_drag_data_t
       cef_string_list_t names);
 
 } cef_drag_data_t;
+
+
+///
+// Structure used to create and/or parse command line arguments. Arguments with
+// '--', '-' and, on Windows, '/' prefixes are considered switches. Switches
+// will always precede any arguments without switch prefixes. Switches can
+// optionally have a value specified using the '=' delimiter (e.g.
+// "-switch=value"). An argument of "--" will terminate switch parsing with all
+// subsequent tokens, regardless of prefix, being interpreted as non-switch
+// arguments. Switch names are considered case-insensitive. This structure can
+// be used before cef_initialize() is called.
+///
+typedef struct _cef_command_line_t
+{
+  // Base structure.
+  cef_base_t base;
+
+  ///
+  // Initialize the command line with the specified |argc| and |argv| values.
+  // The first argument must be the name of the program. This function is only
+  // supported on non-Windows platforms.
+  ///
+  void (CEF_CALLBACK *init_from_argv)(struct _cef_command_line_t* self,
+      int argc, const char* const* argv);
+
+  ///
+  // Initialize the command line with the string returned by calling
+  // GetCommandLineW(). This function is only supported on Windows.
+  ///
+  void (CEF_CALLBACK *init_from_string)(struct _cef_command_line_t* self,
+      const cef_string_t* command_line);
+
+  ///
+  // Constructs and returns the represented command line string. Use this
+  // function cautiously because quoting behavior is unclear.
+  ///
+  // The resulting string must be freed by calling cef_string_userfree_free().
+  cef_string_userfree_t (CEF_CALLBACK *get_command_line_string)(
+      struct _cef_command_line_t* self);
+
+  ///
+  // Get the program part of the command line string (the first item).
+  ///
+  // The resulting string must be freed by calling cef_string_userfree_free().
+  cef_string_userfree_t (CEF_CALLBACK *get_program)(
+      struct _cef_command_line_t* self);
+
+  ///
+  // Set the program part of the command line string (the first item).
+  ///
+  void (CEF_CALLBACK *set_program)(struct _cef_command_line_t* self,
+      const cef_string_t* program);
+
+  ///
+  // Returns true (1) if the command line has switches.
+  ///
+  int (CEF_CALLBACK *has_switches)(struct _cef_command_line_t* self);
+
+  ///
+  // Returns true (1) if the command line contains the given switch.
+  ///
+  int (CEF_CALLBACK *has_switch)(struct _cef_command_line_t* self,
+      const cef_string_t* name);
+
+  ///
+  // Returns the value associated with the given switch. If the switch has no
+  // value or isn't present this function returns the NULL string.
+  ///
+  // The resulting string must be freed by calling cef_string_userfree_free().
+  cef_string_userfree_t (CEF_CALLBACK *get_switch_value)(
+      struct _cef_command_line_t* self, const cef_string_t* name);
+
+  ///
+  // Returns the map of switch names and values. If a switch has no value an
+  // NULL string is returned.
+  ///
+  void (CEF_CALLBACK *get_switches)(struct _cef_command_line_t* self,
+      cef_string_map_t switches);
+
+  ///
+  // Add a switch to the end of the command line. If the switch has no value
+  // pass an NULL value string.
+  ///
+  void (CEF_CALLBACK *append_switch)(struct _cef_command_line_t* self,
+      const cef_string_t* name);
+
+  ///
+  // Add a switch with the specified value to the end of the command line.
+  ///
+  void (CEF_CALLBACK *append_switch_with_value)(
+      struct _cef_command_line_t* self, const cef_string_t* name,
+      const cef_string_t* value);
+
+  ///
+  // True if there are remaining command line arguments.
+  ///
+  int (CEF_CALLBACK *has_arguments)(struct _cef_command_line_t* self);
+
+  ///
+  // Get the remaining command line arguments.
+  ///
+  void (CEF_CALLBACK *get_arguments)(struct _cef_command_line_t* self,
+      cef_string_list_t arguments);
+
+  ///
+  // Add an argument to the end of the command line.
+  ///
+  void (CEF_CALLBACK *append_argument)(struct _cef_command_line_t* self,
+      const cef_string_t* argument);
+
+} cef_command_line_t;
+
+
+///
+// Create a new cef_command_line_t instance.
+///
+CEF_EXPORT cef_command_line_t* cef_command_line_create();
 
 
 #ifdef __cplusplus

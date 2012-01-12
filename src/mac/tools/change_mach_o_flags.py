@@ -1,78 +1,77 @@
-#!/usr/bin/python
-
+#!/usr/bin/env python
 # Copyright (c) 2011 The Chromium Authors. All rights reserved.
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# Usage: change_mach_o_flags.py [--executable-heap] [--no-pie] <executable_path>
-#
-# Arranges for the executable at |executable_path| to have its data (heap)
-# pages protected to prevent execution on Mac OS X 10.7 ("Lion"), and to have
-# the PIE (position independent executable) bit set to enable ASLR (address
-# space layout randomization). With --executable-heap or --no-pie, the
-# respective bits are cleared instead of set, making the heap executable or
-# disabling PIE/ASLR.
-#
-# This script is able to operate on thin (single-architecture) Mach-O files
-# and fat (universal, multi-architecture) files. When operating on fat files,
-# it will set or clear the bits for each architecture contained therein.
-#
-# NON-EXECUTABLE HEAP
-#
-# Traditionally in Mac OS X, 32-bit processes did not have data pages set to
-# prohibit execution. Although user programs could call mprotect and
-# mach_vm_protect to deny execution of code in data pages, the kernel would
-# silently ignore such requests without updating the page tables, and the
-# hardware would happily execute code on such pages. 64-bit processes were
-# always given proper hardware protection of data pages. This behavior was
-# controllable on a system-wide level via the vm.allow_data_exec sysctl, which
-# is set by default to 1. The bit with value 1 (set by default) allows code
-# execution on data pages for 32-bit processes, and the bit with value 2
-# (clear by default) does the same for 64-bit processes.
-#
-# In Mac OS X 10.7, executables can "opt in" to having hardware protection
-# against code execution on data pages applied. This is done by setting a new
-# bit in the |flags| field of an executable's |mach_header|. When
-# MH_NO_HEAP_EXECUTION is set, proper protections will be applied, regardless
-# of the setting of vm.allow_data_exec. See xnu-1699.22.73/osfmk/vm/vm_map.c
-# override_nx and xnu-1699.22.73/bsd/kern/mach_loader.c load_machfile.
-#
-# The Apple toolchain has been revised to set the MH_NO_HEAP_EXECUTION when
-# producing executables, provided that -allow_heap_execute is not specified
-# at link time. Only linkers shipping with Xcode 4.0 and later (ld64-123.2 and
-# later) have this ability. See ld64-123.2.1/src/ld/Options.cpp
-# Options::reconfigureDefaults() and
-# ld64-123.2.1/src/ld/HeaderAndLoadCommands.hpp
-# HeaderAndLoadCommandsAtom<A>::flags().
-#
-# This script sets the MH_NO_HEAP_EXECUTION bit on Mach-O executables. It is
-# intended for use with executables produced by a linker that predates Apple's
-# modifications to set this bit itself. It is also useful for setting this bit
-# for non-i386 executables, including x86_64 executables. Apple's linker only
-# sets it for 32-bit i386 executables, presumably under the assumption that
-# the value of vm.allow_data_exec is set in stone. However, if someone were to
-# change vm.allow_data_exec to 2 or 3, 64-bit x86_64 executables would run
-# without hardware protection against code execution on data pages. This
-# script can set the bit for x86_64 executables, guaranteeing that they run
-# with appropriate protection even when vm.allow_data_exec has been tampered
-# with.
-#
-# POSITION-INDEPENDENT EXECUTABLES/ADDRESS SPACE LAYOUT RANDOMIZATION
-#
-# This script sets or clears the MH_PIE bit in an executable's Mach-O header,
-# enabling or disabling position independence on Mac OS X 10.5 and later.
-# Processes running position-independent executables have varying levels of
-# ASLR protection depending on the OS release. The main executable's load
-# address, shared library load addresess, and the heap and stack base
-# addresses may be randomized. Position-independent executables are produced
-# by supplying the -pie flag to the linker (or defeated by supplying -no_pie).
-# Executables linked with a deployment target of 10.7 or higher have PIE on
-# by default.
-#
-# This script is never strictly needed during the build to enable PIE, as all
-# linkers used are recent enough to support -pie. However, it's used to
-# disable the PIE bit as needed on already-linked executables.
+"""Usage: change_mach_o_flags.py [--executable-heap] [--no-pie] <executablepath>
 
+Arranges for the executable at |executable_path| to have its data (heap)
+pages protected to prevent execution on Mac OS X 10.7 ("Lion"), and to have
+the PIE (position independent executable) bit set to enable ASLR (address
+space layout randomization). With --executable-heap or --no-pie, the
+respective bits are cleared instead of set, making the heap executable or
+disabling PIE/ASLR.
+
+This script is able to operate on thin (single-architecture) Mach-O files
+and fat (universal, multi-architecture) files. When operating on fat files,
+it will set or clear the bits for each architecture contained therein.
+
+NON-EXECUTABLE HEAP
+
+Traditionally in Mac OS X, 32-bit processes did not have data pages set to
+prohibit execution. Although user programs could call mprotect and
+mach_vm_protect to deny execution of code in data pages, the kernel would
+silently ignore such requests without updating the page tables, and the
+hardware would happily execute code on such pages. 64-bit processes were
+always given proper hardware protection of data pages. This behavior was
+controllable on a system-wide level via the vm.allow_data_exec sysctl, which
+is set by default to 1. The bit with value 1 (set by default) allows code
+execution on data pages for 32-bit processes, and the bit with value 2
+(clear by default) does the same for 64-bit processes.
+
+In Mac OS X 10.7, executables can "opt in" to having hardware protection
+against code execution on data pages applied. This is done by setting a new
+bit in the |flags| field of an executable's |mach_header|. When
+MH_NO_HEAP_EXECUTION is set, proper protections will be applied, regardless
+of the setting of vm.allow_data_exec. See xnu-1699.22.73/osfmk/vm/vm_map.c
+override_nx and xnu-1699.22.73/bsd/kern/mach_loader.c load_machfile.
+
+The Apple toolchain has been revised to set the MH_NO_HEAP_EXECUTION when
+producing executables, provided that -allow_heap_execute is not specified
+at link time. Only linkers shipping with Xcode 4.0 and later (ld64-123.2 and
+later) have this ability. See ld64-123.2.1/src/ld/Options.cpp
+Options::reconfigureDefaults() and
+ld64-123.2.1/src/ld/HeaderAndLoadCommands.hpp
+HeaderAndLoadCommandsAtom<A>::flags().
+
+This script sets the MH_NO_HEAP_EXECUTION bit on Mach-O executables. It is
+intended for use with executables produced by a linker that predates Apple's
+modifications to set this bit itself. It is also useful for setting this bit
+for non-i386 executables, including x86_64 executables. Apple's linker only
+sets it for 32-bit i386 executables, presumably under the assumption that
+the value of vm.allow_data_exec is set in stone. However, if someone were to
+change vm.allow_data_exec to 2 or 3, 64-bit x86_64 executables would run
+without hardware protection against code execution on data pages. This
+script can set the bit for x86_64 executables, guaranteeing that they run
+with appropriate protection even when vm.allow_data_exec has been tampered
+with.
+
+POSITION-INDEPENDENT EXECUTABLES/ADDRESS SPACE LAYOUT RANDOMIZATION
+
+This script sets or clears the MH_PIE bit in an executable's Mach-O header,
+enabling or disabling position independence on Mac OS X 10.5 and later.
+Processes running position-independent executables have varying levels of
+ASLR protection depending on the OS release. The main executable's load
+address, shared library load addresess, and the heap and stack base
+addresses may be randomized. Position-independent executables are produced
+by supplying the -pie flag to the linker (or defeated by supplying -no_pie).
+Executables linked with a deployment target of 10.7 or higher have PIE on
+by default.
+
+This script is never strictly needed during the build to enable PIE, as all
+linkers used are recent enough to support -pie. However, it's used to
+disable the PIE bit as needed on already-linked executables.
+"""
 
 import optparse
 import os
@@ -267,8 +266,8 @@ def main(me, args):
     raise MachOError, '%s is not a Mach-O or fat file' % executable_file
 
   executable_file.close()
-
   return 0
+
 
 if __name__ == '__main__':
   sys.exit(main(sys.argv[0], sys.argv[1:]))
