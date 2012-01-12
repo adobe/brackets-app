@@ -43,13 +43,14 @@
 #error Please add support for your platform in build/build_config.h
 #endif
 
-#if defined(OS_LINUX) || defined(OS_FREEBSD) || defined(OS_OPENBSD) || \
-    defined(OS_SOLARIS)
-#define USE_X11 1  // Use X for graphics.
-#endif
-
 #if defined(USE_OPENSSL) && defined(USE_NSS)
 #error Cannot use both OpenSSL and NSS
+#endif
+
+// For access to standard BSD features, use OS_BSD instead of a
+// more specific macro.
+#if defined(OS_FREEBSD) || defined(OS_OPENBSD)
+#define OS_BSD 1
 #endif
 
 // For access to standard POSIXish features, use OS_POSIX instead of a
@@ -58,6 +59,11 @@
     defined(OS_OPENBSD) || defined(OS_SOLARIS) || defined(OS_ANDROID) ||  \
     defined(OS_NACL)
 #define OS_POSIX 1
+#endif
+
+#if defined(OS_POSIX) && !defined(OS_MACOSX) && !defined(OS_ANDROID) && \
+    !defined(OS_NACL)
+#define USE_X11 1  // Use X for graphics.
 #endif
 
 // Use tcmalloc

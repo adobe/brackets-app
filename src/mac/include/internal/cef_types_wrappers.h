@@ -190,6 +190,25 @@ inline bool operator!=(const CefRect& a, const CefRect& b)
 }
 
 
+struct CefPrintOptionsTraits {
+  typedef cef_print_options_t struct_type;
+
+  static inline void init(struct_type* s) {}
+  static inline void clear(struct_type* s) {}
+
+  static inline void set(const struct_type* src, struct_type* target, bool copy)
+  {
+    *target = *src;
+  }
+};
+
+///
+// Class representing print options.
+///
+typedef CefStructBase<CefPrintOptionsTraits> CefPrintOptions;
+
+
+
 struct CefPopupFeaturesTraits {
   typedef cef_popup_features_t struct_type;
 
@@ -324,6 +343,7 @@ struct CefBrowserSettingsTraits {
   {
     target->drag_drop_disabled = src->drag_drop_disabled;
     target->load_drops_disabled = src->load_drops_disabled;
+    target->history_disabled = src->history_disabled;
 
     cef_string_set(src->standard_font_family.str,
         src->standard_font_family.length, &target->standard_font_family, copy);
@@ -396,6 +416,7 @@ struct CefBrowserSettingsTraits {
     target->accelerated_drawing_disabled = src->accelerated_drawing_disabled;
     target->accelerated_plugins_disabled = src->accelerated_plugins_disabled;
     target->developer_tools_disabled = src->developer_tools_disabled;
+    target->fullscreen_enabled = src->fullscreen_enabled;
   }
 };
 
@@ -525,5 +546,117 @@ struct CefCookieTraits {
 // Class representing a cookie.
 ///
 typedef CefStructBase<CefCookieTraits> CefCookie;
+
+
+struct CefMenuInfoTraits {
+  typedef cef_menu_info_t struct_type;
+
+  static inline void init(struct_type* s) {}
+
+  static inline void clear(struct_type* s)
+  {
+    cef_string_clear(&s->linkUrl);
+    cef_string_clear(&s->imageUrl);
+    cef_string_clear(&s->pageUrl);
+    cef_string_clear(&s->frameUrl);
+    cef_string_clear(&s->selectionText);
+    cef_string_clear(&s->misspelledWord);
+    cef_string_clear(&s->securityInfo);
+  }
+
+  static inline void set(const struct_type* src, struct_type* target, bool copy)
+  {
+    target->typeFlags = src->typeFlags;
+    target->x = src->x;
+    target->y = src->y;
+
+    cef_string_set(src->linkUrl.str, src->linkUrl.length,
+        &target->linkUrl, copy);
+    cef_string_set(src->imageUrl.str, src->imageUrl.length,
+        &target->imageUrl, copy);
+    cef_string_set(src->pageUrl.str, src->pageUrl.length,
+        &target->pageUrl, copy);
+    cef_string_set(src->frameUrl.str, src->frameUrl.length,
+        &target->frameUrl, copy);
+    cef_string_set(src->selectionText.str, src->selectionText.length,
+        &target->selectionText, copy);
+    cef_string_set(src->misspelledWord.str, src->misspelledWord.length,
+        &target->misspelledWord, copy);
+    cef_string_set(src->securityInfo.str, src->securityInfo.length,
+        &target->securityInfo, copy);
+
+    target->editFlags = src->editFlags;
+  }
+};
+
+///
+// Class representing menu info.
+///
+typedef CefStructBase<CefMenuInfoTraits> CefMenuInfo;
+
+
+struct CefProxyInfoTraits {
+  typedef cef_proxy_info_t struct_type;
+
+  static inline void init(struct_type* s) {}
+  
+  static inline void clear(struct_type* s)
+  {
+    cef_string_clear(&s->proxyList);
+  }
+
+  static inline void set(const struct_type* src, struct_type* target, bool copy)
+  {
+    target->proxyType = src->proxyType;
+    cef_string_set(src->proxyList.str, src->proxyList.length,
+        &target->proxyList, copy);
+  }
+};
+
+///
+// Class representing the results of proxy resolution.
+///
+class CefProxyInfo : public CefStructBase<CefProxyInfoTraits>
+{
+public:
+  ///
+  // Use a direction connection instead of a proxy.
+  ///
+  void UseDirect()
+  {
+    proxyType = PROXY_TYPE_DIRECT;
+  }
+
+  ///
+  // Use one or more named proxy servers specified in WinHTTP format. Each proxy
+  // server is of the form:
+  //
+  // [<scheme>"://"]<server>[":"<port>]
+  //
+  // Multiple values may be separated by semicolons or whitespace. For example,
+  // "foo1:80;foo2:80".
+  ///
+  void UseNamedProxy(const CefString& proxy_uri_list)
+  {
+    proxyType = PROXY_TYPE_NAMED;
+    (CefString(&proxyList)) = proxy_uri_list;
+  }
+
+  ///
+  // Use one or more named proxy servers specified in PAC script format. For
+  // example, "PROXY foobar:99; SOCKS fml:2; DIRECT".
+  ///
+  void UsePacString(const CefString& pac_string)
+  {
+    proxyType = PROXY_TYPE_PAC_STRING;
+    (CefString(&proxyList)) = pac_string;
+  }
+
+  bool IsDirect() const { return proxyType == PROXY_TYPE_DIRECT; }
+  bool IsNamedProxy() const { return proxyType == PROXY_TYPE_NAMED; }
+  bool IsPacString() const { return proxyType == PROXY_TYPE_PAC_STRING; }
+
+  CefString ProxyList() const { return CefString(&proxyList); }
+};
 
 #endif // _CEF_TYPES_WRAPPERS_H
