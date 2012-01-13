@@ -264,7 +264,7 @@ public:
             return NO_ERROR; 
         }
         
-        return ConvertNSErrorCode(error);
+        return ConvertNSErrorCode(error, true);
     }
     
     int ExecuteIsDirectory(const CefV8ValueList& arguments,
@@ -314,7 +314,7 @@ public:
             return NO_ERROR;
         }
         
-        return ConvertNSErrorCode(error);
+        return ConvertNSErrorCode(error, true);
     }
     
     int ExecuteWriteFile(const CefV8ValueList& arguments,
@@ -336,11 +336,20 @@ public:
         if (encodingStr == "utf8")
             encoding = NSUTF8StringEncoding;
         else
-            return ERR_UNSUPPORTED_ENCODING; 
-            
-        [contents writeToFile:path atomically:YES encoding:encoding error:&error];
-        
-        return ConvertNSErrorCode(error);
+            return ERR_UNSUPPORTED_ENCODING;
+		
+		const NSData* encodedContents = [ contents dataUsingEncoding:encoding ];
+		NSUInteger len = [ encodedContents length ];
+		NSOutputStream* oStream = [NSOutputStream outputStreamToFileAtPath:path append:NO ];
+		
+		[ oStream open ];
+		NSInteger res = [ oStream write:(const uint8_t*)[encodedContents bytes] maxLength:len];
+		[ oStream close ];
+		
+		if (res == -1) {
+			error = [ oStream streamError ];
+		}        
+        return ConvertNSErrorCode(error, false);
     }
     
     int ExecuteSetPosixPermissions(const CefV8ValueList& arguments,
@@ -360,7 +369,7 @@ public:
         if ([[NSFileManager defaultManager] setAttributes:attrs ofItemAtPath:path error:&error])
             return NO_ERROR;
         
-        return ConvertNSErrorCode(error);
+        return ConvertNSErrorCode(error, false);
     }
     
     int ExecuteDeleteFileOrDirectory(const CefV8ValueList& arguments,
@@ -378,7 +387,7 @@ public:
         if ([[NSFileManager defaultManager] removeItemAtPath:path error:&error])
             return NO_ERROR;
         
-        return ConvertNSErrorCode(error);
+        return ConvertNSErrorCode(error, false);
     }
 
     // Escapes characters that have special meaning in JSON
@@ -428,10 +437,32 @@ public:
         result += "]";
     }
     
-    int ConvertNSErrorCode(NSError* error)
+    int ConvertNSErrorCode(NSError* error, bool isReading)
     {
         if (!error)
             return NO_ERROR;
+		
+		if( [[error domain] isEqualToString: NSPOSIXErrorDomain] )
+		{
+			switch ([error code]) 
+			{
+				case ENOENT:
+					return ERR_NOT_FOUND;
+					break;
+				case EPERM:
+				case EACCES:
+					return (isReading ? ERR_CANT_READ : ERR_CANT_WRITE);
+					break;
+				case EROFS:
+					return ERR_CANT_WRITE;
+					break;
+				case ENOSPC:
+					return ERR_OUT_OF_SPACE;
+					break;
+			}
+			
+		}
+		
             
         switch ([error code]) 
         {
