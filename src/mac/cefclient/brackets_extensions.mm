@@ -337,18 +337,18 @@ public:
             encoding = NSUTF8StringEncoding;
         else
             return ERR_UNSUPPORTED_ENCODING;
-		
-		const NSData* encodedContents = [ contents dataUsingEncoding:encoding ];
-		NSUInteger len = [ encodedContents length ];
-		NSOutputStream* oStream = [NSOutputStream outputStreamToFileAtPath:path append:NO ];
-		
-		[ oStream open ];
-		NSInteger res = [ oStream write:(const uint8_t*)[encodedContents bytes] maxLength:len];
-		[ oStream close ];
-		
-		if (res == -1) {
-			error = [ oStream streamError ];
-		}        
+        
+        const NSData* encodedContents = [ contents dataUsingEncoding:encoding ];
+        NSUInteger len = [ encodedContents length ];
+        NSOutputStream* oStream = [NSOutputStream outputStreamToFileAtPath:path append:NO ];
+        
+        [ oStream open ];
+        NSInteger res = [ oStream write:(const uint8_t*)[encodedContents bytes] maxLength:len];
+        [ oStream close ];
+        
+        if (res == -1) {
+            error = [ oStream streamError ];
+        }        
         return ConvertNSErrorCode(error, false);
     }
     
@@ -441,28 +441,28 @@ public:
     {
         if (!error)
             return NO_ERROR;
-		
-		if( [[error domain] isEqualToString: NSPOSIXErrorDomain] )
-		{
-			switch ([error code]) 
-			{
-				case ENOENT:
-					return ERR_NOT_FOUND;
-					break;
-				case EPERM:
-				case EACCES:
-					return (isReading ? ERR_CANT_READ : ERR_CANT_WRITE);
-					break;
-				case EROFS:
-					return ERR_CANT_WRITE;
-					break;
-				case ENOSPC:
-					return ERR_OUT_OF_SPACE;
-					break;
-			}
-			
-		}
-		
+        
+        if( [[error domain] isEqualToString: NSPOSIXErrorDomain] )
+        {
+            switch ([error code]) 
+            {
+                case ENOENT:
+                    return ERR_NOT_FOUND;
+                    break;
+                case EPERM:
+                case EACCES:
+                    return (isReading ? ERR_CANT_READ : ERR_CANT_WRITE);
+                    break;
+                case EROFS:
+                    return ERR_CANT_WRITE;
+                    break;
+                case ENOSPC:
+                    return ERR_OUT_OF_SPACE;
+                    break;
+            }
+            
+        }
+        
             
         switch ([error code]) 
         {
