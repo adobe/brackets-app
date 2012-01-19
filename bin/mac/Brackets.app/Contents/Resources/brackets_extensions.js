@@ -11,8 +11,8 @@ if (!brackets.fs)
     brackets.fs = {};
 (function() {
     // Internal function to get the last error code.
+    native function GetLastError();
     function getLastError() {
-        native function GetLastError();
         return GetLastError();
     }
     
@@ -90,8 +90,9 @@ if (!brackets.fs)
      *
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
+    native function ShowOpenDialog();
     brackets.fs.showOpenDialog = function(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback) {
-       native function ShowOpenDialog();
+      
        setTimeout(function() {
            var resultString = ShowOpenDialog(allowMultipleSelection, chooseDirectory, 
                                              title || 'Open', initialPath || '', 
@@ -117,8 +118,8 @@ if (!brackets.fs)
      *                 
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
+    native function ReadDir();
     brackets.fs.readdir = function(path, callback) {
-        native function ReadDir();
         var resultString = ReadDir(path);
         var result = JSON.parse(resultString || '[]');
         callback(getLastError(), result);
@@ -138,8 +139,8 @@ if (!brackets.fs)
      *                 
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
+    native function IsDirectory();
     brackets.fs.stat = function(path, callback) {
-        native function IsDirectory();
         var isDir = IsDirectory(path);
         callback(getLastError(), {
             isFile: function() {
@@ -168,8 +169,8 @@ if (!brackets.fs)
      *                 
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
+    native function ReadFile();
     brackets.fs.readFile = function(path, encoding, callback) {
-        native function ReadFile();
         var contents = ReadFile(path, encoding);
         callback(getLastError(), contents);
     };
@@ -191,8 +192,8 @@ if (!brackets.fs)
      *                 
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
+    native function WriteFile();
     brackets.fs.writeFile = function(path, data, encoding, callback) {
-        native function WriteFile();
         WriteFile(path, data, encoding);
         if (callback)
             callback(getLastError());
@@ -212,8 +213,9 @@ if (!brackets.fs)
      *
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
+    native function SetPosixPermissions();
     brackets.fs.chmod = function(path, mode, callback) {
-        native function SetPosixPermissions();
+        
         SetPosixPermissions(path, mode);
         callback(getLastError());
     };
@@ -232,9 +234,9 @@ if (!brackets.fs)
      *
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
+    native function DeleteFileOrDirectory();
+    native function IsDirectory();
     brackets.fs.unlink = function(path, callback) {
-        native function DeleteFileOrDirectory();
-        native function IsDirectory();
         // Unlink can only delete files
         if (IsDirectory(path)) {
             callback(brackets.fs.ERR_NOT_FILE);
