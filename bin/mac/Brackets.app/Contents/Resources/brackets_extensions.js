@@ -92,7 +92,6 @@ if (!brackets.fs)
      */
     native function ShowOpenDialog();
     brackets.fs.showOpenDialog = function(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback) {
-      
        setTimeout(function() {
            var resultString = ShowOpenDialog(allowMultipleSelection, chooseDirectory, 
                                              title || 'Open', initialPath || '', 
@@ -215,7 +214,6 @@ if (!brackets.fs)
      */
     native function SetPosixPermissions();
     brackets.fs.chmod = function(path, mode, callback) {
-        
         SetPosixPermissions(path, mode);
         callback(getLastError());
     };
