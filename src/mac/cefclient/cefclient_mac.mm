@@ -307,6 +307,18 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 }
 
 - (IBAction)showDevTools:(id)sender {
+  // TODO: This command should be re-implemented as folows:
+  // 1. Grab the active window.
+  // 2. If it is a dev tools window, do nothing
+  // 3. If the active window has an associated dev tools window,
+  //    bring that window to the front.
+  // 4. If the active window does not have an associated dev
+  //    tools window, open one.
+  
+  // This is very different from the current implementation that
+  // only works with the main window, and doesn't allow dev tools
+  // to target popup windows.
+  
   // If Dev tools window is already open, make it active
   NSArray* windows = [NSApp windows];
   for (unsigned int i = 0; i < windows.count; i++) {
@@ -318,6 +330,10 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
       return;
     }
   }
+  // If there are no open windows, don't open the dev tools.
+  if (windows.count == 0)
+    return;
+    
   if(g_handler.get() && g_handler->GetBrowserHwnd()) {
     CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
     browser->ShowDevTools();
