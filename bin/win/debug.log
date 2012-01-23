@@ -1,4 +1,0 @@
-[0121/100845:INFO:CONSOLE(0)] "less: parsed file:///C:/Users/Glenn/brackets-app/brackets/src/brackets.less successfully.," source: file:///C:/Users/Glenn/brackets-app/brackets/src/thirdparty/less-1.1.5.min.js(15)
-[0121/100845:INFO:CONSOLE(0)] "less: css for file:///C:/Users/Glenn/brackets-app/brackets/src/brackets.less generated in 62ms," source: file:///C:/Users/Glenn/brackets-app/brackets/src/thirdparty/less-1.1.5.min.js(15)
-[0121/100845:INFO:CONSOLE(0)] "less: css generated in 78ms," source: file:///C:/Users/Glenn/brackets-app/brackets/src/thirdparty/less-1.1.5.min.js(15)
-[0121/100850:INFO:CONSOLE(0)] "PreferenceManager.savePreferences(): Failed to save data for clientID com.adobe.brackets.ProjectManager," source: file:///C:/Users/Glenn/brackets-app/brackets/src/PreferencesManager.js(101)
