@@ -17,3 +17,6 @@ src/mac/xcodebuild/*
 *.vcxproj.user
 src/win/Release/obj/*
 src/win/Debug/obj/*
+src/win/ipch/*
+*.log
+
