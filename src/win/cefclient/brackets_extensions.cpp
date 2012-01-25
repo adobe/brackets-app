@@ -208,6 +208,7 @@ public:
         bool canChooseDirectories = arguments[1]->GetBoolValue();
         bool canChooseFiles = !canChooseDirectories;
         std::string title = arguments[2]->GetStringValue();
+		std::wstring wtitle = StringToWString(title);
         std::string initialPath = arguments[3]->GetStringValue();
         std::string fileTypesStr = arguments[4]->GetStringValue();
 		std::string selectedFilenames = "";
@@ -221,7 +222,7 @@ public:
 
 		if (canChooseDirectories) {
 			BROWSEINFO bi = {0};
-			bi.lpszTitle = StringToWString(title).c_str();
+			bi.lpszTitle = wtitle.c_str();
 			LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
 			if (pidl != 0) {
 				if (SHGetPathFromIDList(pidl, szFile)) {
@@ -454,10 +455,6 @@ public:
 
 	void FixFilename(std::string& filename)
 	{
-		// TODO: Figure out why there is a leading '/' and fix it!
-		if (filename[0] == '/')
-			filename = filename.substr(1);
-
 		// Convert '/' to '\'
 		for (unsigned int i = 0; i < filename.length(); i++) {
 			if (filename[i] == '/')
@@ -494,7 +491,7 @@ public:
                     case '\v':  result.append("\\v");   break;
                     // Note: single quotes are OK for JSON
                     case '\"':  result.append("\\\"");  break; // double quote
-                    case '\\':  result.append("\\\\");  break; // backslash                        
+                    case '\\':  result.append("/");  break; // backslash                        
                         
                 default:   result.append( 1, str[pos]); break;
                         
@@ -520,81 +517,6 @@ public:
 			return ERR_UNKNOWN;
 		}
 	}
-
-    /*
-    void NSArrayToJSONString(NSArray* array, std::string& result)
-    {        
-        int numItems = [array count];
-        std::string escapedStr = "";
-        
-        result = "[";
-        std::string item;
-        for (int i = 0; i < numItems; i++)
-        {
-            result += "\"";
-            
-            item = [[array objectAtIndex:i] UTF8String];
-            EscapeJSONString(item, escapedStr);
-            
-            result += escapedStr + "\"";
-            
-            if (i < numItems - 1)
-                result += ", ";
-        }
-        result += "]";
-    }
-    
-    int ConvertNSErrorCode(NSError* error, bool isReading)
-    {
-        if (!error)
-            return NO_ERROR;
-        
-        if( [[error domain] isEqualToString: NSPOSIXErrorDomain] )
-        {
-            switch ([error code]) 
-            {
-                case ENOENT:
-                    return ERR_NOT_FOUND;
-                    break;
-                case EPERM:
-                case EACCES:
-                    return (isReading ? ERR_CANT_READ : ERR_CANT_WRITE);
-                    break;
-                case EROFS:
-                    return ERR_CANT_WRITE;
-                    break;
-                case ENOSPC:
-                    return ERR_OUT_OF_SPACE;
-                    break;
-            }
-            
-        }
-        
-            
-        switch ([error code]) 
-        {
-            case NSFileNoSuchFileError:
-            case NSFileReadNoSuchFileError:
-                return ERR_NOT_FOUND;
-                break;
-            case NSFileReadNoPermissionError:
-                return ERR_CANT_READ;
-                break;
-            case NSFileReadInapplicableStringEncodingError:
-                return ERR_UNSUPPORTED_ENCODING;
-                break;
-            case NSFileWriteNoPermissionError:
-                return ERR_CANT_WRITE;
-                break;
-            case NSFileWriteOutOfSpaceError:
-                return ERR_OUT_OF_SPACE;
-                break;
-        }
-        
-        // Unknown error
-        return ERR_UNKNOWN;
-    }
-   */
 
 private:
     int lastError;

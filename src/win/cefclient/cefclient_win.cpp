@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include <shellapi.h>
+#include <ShlObj.h>
 
 #define MAX_LOADSTRING 100
 #define MAX_URL_LENGTH  255
@@ -72,7 +73,14 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
   // Populate the settings based on command line arguments.
   AppGetSettings(settings, app);
 
-  // TODO: Set persistance cache
+  // Brackets: Set persistance cache
+  wchar_t dataPath[MAX_PATH];
+  SHGetFolderPath(NULL, CSIDL_APPDATA, NULL, SHGFP_TYPE_CURRENT, dataPath);
+  
+  std::wstring cachePath = dataPath;
+  cachePath += L"\\Brackets\\cefCache";
+
+  CefString(&settings.cache_path).FromWString(cachePath);
 
   // Initialize CEF.
   CefInitialize(settings, app);
@@ -387,7 +395,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		*pStr = NULL;
 		wcscat(pStr, L"brackets-app\\brackets\\src\\index.html");
 
-        // Creat the new child browser window
+		pStr = initialUrl;
+		while (*pStr) {
+			if (*pStr == '\\')
+				*pStr = '/';
+			pStr++;
+		}
+
+        // Create the new child browser window
         CefBrowser::CreateBrowser(info,
             static_cast<CefRefPtr<CefClient> >(g_handler),
             initialUrl, settings);
