@@ -217,6 +217,11 @@ if (!brackets.fs)
         SetPosixPermissions(path, mode);
         callback(getLastError());
     };
+
+    /** TODO
+     */
+    native function GetFileModificationTime();
+    brackets.fs.getFileModTime
     
     /**
      * Delete a file.

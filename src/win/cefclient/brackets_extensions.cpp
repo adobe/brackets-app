@@ -159,6 +159,11 @@ public:
             errorCode = ExecuteSetPosixPermissions(arguments, retval, exception);
             
         }
+		else if ( name == "GetFileModificationTime")
+		{
+			// TODO COMMENTS
+			errorCode = ExecuteGetFileModificationTime( arguments, retval, exception);
+		}
         else if (name == "DeleteFileOrDirectory")
         {
             // DeleteFileOrDirectory(path)
@@ -415,6 +420,22 @@ public:
 		CloseHandle(hFile);
 		return error;
     }
+
+	ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
+                       CefRefPtr<CefV8Value>& retval,
+                       CefString& exception)
+	{
+		if (arguments.size() != 1 || !arguments[0]->IsString())
+            return ERR_INVALID_PARAMS;
+
+		std::string pathStr = arguments[0]->GetStringValue();
+		FixFilename(pathStr);
+
+		struct _stat buffer;
+		int result = _stat(StringToWString(pathStr).c_str(), &buffer);
+
+			 
+	}
     
     int ExecuteSetPosixPermissions(const CefV8ValueList& arguments,
                        CefRefPtr<CefV8Value>& retval,
