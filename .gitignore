@@ -8,3 +8,15 @@ src/mac/xcodebuild/*
 *.perspective3
 *xcuserdata*
 *.esproj
+
+*.pdb
+*.ilk
+*.sdf
+*.opensdf
+*.suo
+*.vcxproj.user
+src/win/Release/obj/*
+src/win/Debug/obj/*
+src/win/ipch/*
+*.log
+
