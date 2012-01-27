@@ -218,10 +218,10 @@ if (!brackets.fs)
         callback(getLastError());
     };
 
-    /** TODO
+    /** In progress
      */
-    native function GetFileModificationTime();
-    brackets.fs.getFileModTime
+   /* native function GetFileModificationTime();
+    brackets.fs.getFileModTime*/
     
     /**
      * Delete a file.

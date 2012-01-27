@@ -162,7 +162,7 @@ public:
 		else if ( name == "GetFileModificationTime")
 		{
 			// TODO COMMENTS
-			errorCode = ExecuteGetFileModificationTime( arguments, retval, exception);
+			//errorCode = ExecuteGetFileModificationTime( arguments, retval, exception);
 		}
         else if (name == "DeleteFileOrDirectory")
         {
@@ -421,6 +421,7 @@ public:
 		return error;
     }
 
+	/* In progress:
 	ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
                        CefRefPtr<CefV8Value>& retval,
                        CefString& exception)
@@ -435,7 +436,7 @@ public:
 		int result = _stat(StringToWString(pathStr).c_str(), &buffer);
 
 			 
-	}
+	}*/
     
     int ExecuteSetPosixPermissions(const CefV8ValueList& arguments,
                        CefRefPtr<CefV8Value>& retval,
