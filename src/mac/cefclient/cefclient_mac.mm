@@ -204,6 +204,21 @@ CefRefPtr<CefBrowser> GetBrowserForWindow(const NSWindow* wnd) {
   return browser;
 }
 
+bool IsDevToolsBrowser( CefRefPtr<CefBrowser> browser ) {
+  if( !browser ) { 
+    return false;
+  }
+  
+  CefRefPtr<CefFrame> frame = browser->GetMainFrame();
+  if( !frame ) {
+    return false;
+  }
+  
+  std::string url = frame->GetURL();
+  const char * chromeProtocol = "chrome-devtools";
+  return ( 0 == strncmp(url.c_str(), chromeProtocol, strlen(chromeProtocol)) );
+}
+
 // Receives notifications from the application. Will delete itself when done.
 @interface ClientAppDelegate : NSObject
 - (void)createApp:(id)object;
@@ -324,19 +339,8 @@ CefRefPtr<CefBrowser> GetBrowserForWindow(const NSWindow* wnd) {
 }
 
 - (IBAction)showDevTools:(id)sender {
-  // If Dev tools window is already open, make it active
-  NSArray* windows = [NSApp windows];
-  for (unsigned int i = 0; i < windows.count; i++) {
-    NSWindow* window = [windows objectAtIndex:i];
-    NSString* title = [window title];
-    NSRange range = [title rangeOfString:@"Developer Tools"];
-    if (range.location != NSNotFound) {
-      [window makeKeyAndOrderFront:self];
-      return;
-    }
-  }
-  if(g_handler.get() && g_handler->GetBrowserHwnd()) {
-    CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
+  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  if(browser && !IsDevToolsBrowser(browser)) {
     browser->ShowDevTools();
   }
 }
