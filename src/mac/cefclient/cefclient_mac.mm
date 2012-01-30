@@ -189,6 +189,21 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
   return button;
 }
 
+CefRefPtr<CefBrowser> GetBrowserForWindow(const NSWindow* wnd) {
+  CefRefPtr<CefBrowser> browser = NULL;
+  if(g_handler.get() && wnd) {
+    //go through all the browsers looking for a browser within this window
+    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
+    for( ClientHandler::BrowserWindowMap::const_iterator i = browsers.begin() ; i != browsers.end() && browser == NULL ; i++ ) {
+      NSView* browserView = i->first;
+      if( browserView && [browserView window] == wnd ) {
+        browser = i->second;
+      }
+    }
+  }
+  return browser;
+}
+
 // Receives notifications from the application. Will delete itself when done.
 @interface ClientAppDelegate : NSObject
 - (void)createApp:(id)object;
@@ -302,31 +317,22 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 
 
 - (IBAction)reload:(id)sender {
-    if (g_handler.get() && g_handler->GetBrowserHwnd())
-        g_handler->GetBrowser()->Reload();
+  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  if(browser) {
+    browser->Reload();
+  }
 }
 
 - (IBAction)showDevTools:(id)sender {
-  // If Dev tools window is already open, make it active
-  NSArray* windows = [NSApp windows];
-  for (unsigned int i = 0; i < windows.count; i++) {
-    NSWindow* window = [windows objectAtIndex:i];
-    NSString* title = [window title];
-    NSRange range = [title rangeOfString:@"Developer Tools"];
-    if (range.location != NSNotFound) {
-      [window makeKeyAndOrderFront:self];
-      return;
-    }
-  }
-  if(g_handler.get() && g_handler->GetBrowserHwnd()) {
-    CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
+  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  if(browser) {
     browser->ShowDevTools();
   }
 }
 
 - (IBAction)hideDevTools:(id)sender {
-  if(g_handler.get() && g_handler->GetBrowserHwnd()) {
-    CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
+  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  if(browser) {
     browser->CloseDevTools();
   }
 }

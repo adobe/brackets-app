@@ -40,6 +40,8 @@ void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
     m_Browser = browser;
     m_BrowserHwnd = browser->GetWindowHandle();
   }
+
+  m_OpenBrowserWindowMap[browser->GetWindowHandle()] = browser;
 }
 
 bool ClientHandler::DoClose(CefRefPtr<CefBrowser> browser)
@@ -70,6 +72,8 @@ void ClientHandler::OnBeforeClose(CefRefPtr<CefBrowser> browser)
     // Free the browser pointer so that the browser can be destroyed
     m_Browser = NULL;
   }
+  
+  m_OpenBrowserWindowMap.erase( browser->GetWindowHandle() );
 }
 
 void ClientHandler::OnLoadStart(CefRefPtr<CefBrowser> browser,
@@ -196,6 +200,16 @@ bool ClientHandler::OnConsoleMessage(CefRefPtr<CefBrowser> browser,
 
     if(first_message)
       SendNotification(NOTIFY_CONSOLE_MESSAGE);
+  }
+
+  if( browser ) 
+  {
+    //auto show console if something is Uncaught
+    std::string strMsg(message);
+    const char * err = "Uncaught ";
+    if( 0 == strncmp(strMsg.c_str(), err, strlen(err) ) ) {
+      browser->ShowDevTools();
+    }
   }
 
   return false;
