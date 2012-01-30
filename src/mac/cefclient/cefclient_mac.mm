@@ -324,8 +324,19 @@ CefRefPtr<CefBrowser> GetBrowserForWindow(const NSWindow* wnd) {
 }
 
 - (IBAction)showDevTools:(id)sender {
-  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
-  if(browser) {
+  // If Dev tools window is already open, make it active
+  NSArray* windows = [NSApp windows];
+  for (unsigned int i = 0; i < windows.count; i++) {
+    NSWindow* window = [windows objectAtIndex:i];
+    NSString* title = [window title];
+    NSRange range = [title rangeOfString:@"Developer Tools"];
+    if (range.location != NSNotFound) {
+      [window makeKeyAndOrderFront:self];
+      return;
+    }
+  }
+  if(g_handler.get() && g_handler->GetBrowserHwnd()) {
+    CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
     browser->ShowDevTools();
   }
 }
