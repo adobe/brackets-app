@@ -161,8 +161,21 @@ public:
         }
 		else if ( name == "GetFileModificationTime")
 		{
-			// TODO COMMENTS
-			//errorCode = ExecuteGetFileModificationTime( arguments, retval, exception);
+			// Returns the time stamp for a file or directory
+			// 
+			// Inputs:
+            //  path - full path of file or directory
+			//
+			// Outputs:
+			// Integer - timestamp of file
+			// 
+			// Possible error values:
+			//    NO_ERROR
+			//    ERR_UNKNOWN
+			//    ERR_INVALID_PARAMS
+			//    ERR_NOT_FOUND
+			 
+			errorCode = ExecuteGetFileModificationTime( arguments, retval, exception);
 		}
         else if (name == "DeleteFileOrDirectory")
         {
@@ -308,7 +321,7 @@ public:
 			} while (FindNextFile(hFind, &ffd) != 0);
 		} 
 		else {
-			return ConvertErrorCode(GetLastError());
+			return ConvertWinErrorCode(GetLastError());
 		}
 
 		result += "]";
@@ -329,7 +342,7 @@ public:
 		DWORD dwAttr = GetFileAttributes(StringToWString(pathStr).c_str());
 
 		if (dwAttr == INVALID_FILE_ATTRIBUTES) {
-			return ConvertErrorCode(GetLastError()); 
+			return ConvertWinErrorCode(GetLastError()); 
 		}
 
 		retval = CefV8Value::CreateBool((dwAttr & FILE_ATTRIBUTE_DIRECTORY) != 0);
@@ -356,7 +369,7 @@ public:
 		DWORD dwAttr;
 		dwAttr = GetFileAttributes(wPathStr.c_str());
 		if (INVALID_FILE_ATTRIBUTES == dwAttr)
-			return ConvertErrorCode(GetLastError());
+			return ConvertWinErrorCode(GetLastError());
 
 		if (dwAttr & FILE_ATTRIBUTE_DIRECTORY)
 			return ERR_CANT_READ;
@@ -366,7 +379,7 @@ public:
 		int error = NO_ERROR;
 
 		if (INVALID_HANDLE_VALUE == hFile)
-			return ConvertErrorCode(GetLastError()); 
+			return ConvertWinErrorCode(GetLastError()); 
 
 		DWORD dwFileSize = GetFileSize(hFile, NULL);
 		DWORD dwBytesRead;
@@ -379,7 +392,7 @@ public:
 			if (!buffer)
 				error = ERR_UNKNOWN;
 			else
-				error = ConvertErrorCode(GetLastError());
+				error = ConvertWinErrorCode(GetLastError());
 		}
 		CloseHandle(hFile);
 		if (buffer)
@@ -409,20 +422,20 @@ public:
 		int error = NO_ERROR;
 
 		if (INVALID_HANDLE_VALUE == hFile)
-			return ConvertErrorCode(GetLastError(), false); 
+			return ConvertWinErrorCode(GetLastError(), false); 
 
 		// TODO: Should write to temp file
 		// TODO: Encoding
 		if (!WriteFile(hFile, contentsStr.c_str(), contentsStr.length(), &dwBytesWritten, NULL)) {
-			error = ConvertErrorCode(GetLastError(), false);
+			error = ConvertWinErrorCode(GetLastError(), false);
 		}
 
 		CloseHandle(hFile);
 		return error;
     }
 
-	/* In progress:
-	ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
+
+	int ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
                        CefRefPtr<CefV8Value>& retval,
                        CefString& exception)
 	{
@@ -432,11 +445,21 @@ public:
 		std::string pathStr = arguments[0]->GetStringValue();
 		FixFilename(pathStr);
 
-		struct _stat buffer;
-		int result = _stat(StringToWString(pathStr).c_str(), &buffer);
+		/* Alternative implementation
+		WIN32_FILE_ATTRIBUTE_DATA attribData;
+		GET_FILEEX_INFO_LEVELS FileInfosLevel;
+		GetFileAttributesEx( StringToWString(pathStr).c_str(), GetFileExInfoStandard, &attribData);*/
 
-			 
-	}*/
+
+		struct _stat buffer;
+		if(_wstat(StringToWString(pathStr).c_str(), &buffer) == -1) {
+			return ConvertErrnoCode(errno); 
+		}
+
+		retval = CefV8Value::CreateDate(buffer.st_mtime);
+
+		return NO_ERROR;
+	}
     
     int ExecuteSetPosixPermissions(const CefV8ValueList& arguments,
                        CefRefPtr<CefV8Value>& retval,
@@ -450,10 +473,7 @@ public:
 		FixFilename(pathStr);
 
 		if (_wchmod(StringToWString(pathStr).c_str(), mode) == -1) {
-			if (errno == ENOENT)
-				return ERR_NOT_FOUND;
-			else
-				return ERR_UNKNOWN;
+			return ConvertErrnoCode(errno); 
 		}
 
 		return NO_ERROR;
@@ -470,7 +490,7 @@ public:
 		FixFilename(pathStr);
 
 		if (!DeleteFile(StringToWString(pathStr).c_str()))
-			return ConvertErrorCode(GetLastError());
+			return ConvertWinErrorCode(GetLastError());
 
 		return NO_ERROR;
     }
@@ -521,7 +541,25 @@ public:
         }
     }
 
-	int ConvertErrorCode(int errorCode, bool isReading = true)
+	// Maps errors from errno.h and WinError.h to the brackets error codes
+	// found in brackets_extensions.js
+	int ConvertErrnoCode(int errorCode, bool isReading = true)
+	{
+		switch (errorCode) {
+		case NO_ERROR:
+			return NO_ERROR;
+		case EINVAL:
+			return ERR_INVALID_PARAMS;
+		case ENOENT:
+			return ERR_NOT_FOUND;
+		default:
+			return ERR_UNKNOWN;
+		}
+	}
+
+	// Maps errors from  WinError.h to the brackets error codes
+	// found in brackets_extensions.js
+	int ConvertWinErrorCode(int errorCode, bool isReading = true)
 	{
 		switch (errorCode) {
 		case NO_ERROR:
