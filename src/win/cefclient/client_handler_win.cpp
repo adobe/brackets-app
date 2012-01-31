@@ -75,11 +75,12 @@ LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         switch (wmId)
         {
         case IDM_CLOSE:
-          DestroyWindow(hWnd);
-          return 0;
+			if(browser.get())
+				browser->CloseBrowser();
+			return 0;
         case IDC_NAV_RELOAD:  // Reload button
           if(browser.get())
-            browser->Reload();
+            browser->ReloadIgnoreCache();
           return 0;
         case ID_TESTS_DEVTOOLS_SHOW:
           if (browser.get())
