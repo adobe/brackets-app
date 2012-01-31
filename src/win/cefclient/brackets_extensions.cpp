@@ -167,7 +167,7 @@ public:
             //  path - full path of file or directory
 			//
 			// Outputs:
-			// Integer - timestamp of file
+			// Date - timestamp of file
 			// 
 			// Possible error values:
 			//    NO_ERROR
