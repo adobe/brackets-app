@@ -22,8 +22,8 @@ bool ClientHandler::OnBeforePopup(CefRefPtr<CefBrowser> parentBrowser,
 {
   REQUIRE_UI_THREAD();
 
+   std::string urlStr = url;
 #ifdef TEST_REDIRECT_POPUP_URLS
-  std::string urlStr = url;
   if(urlStr.find("chrome-devtools:") == std::string::npos) {
     // Show all popup windows excluding DevTools in the current window.
     windowInfo.m_dwStyle &= ~WS_VISIBLE;
@@ -31,8 +31,119 @@ bool ClientHandler::OnBeforePopup(CefRefPtr<CefBrowser> parentBrowser,
   }
 #endif // TEST_REDIRECT_POPUP_URLS
 
+  //ensure all non-dev tools windows get a menu bar
+  if(windowInfo.m_hMenu == NULL && urlStr.find("chrome-devtools:") == std::string::npos) {
+    windowInfo.m_hMenu = LoadMenu( GetModuleHandle(NULL), MAKEINTRESOURCE(IDC_CEFCLIENT_POPUP) 	);
+  }
+
   return false;
 }
+
+extern CefRefPtr<ClientHandler> g_handler;
+namespace {
+
+CefRefPtr<CefBrowser> GetBrowserForWindow(HWND wnd) {
+  CefRefPtr<CefBrowser> browser = NULL;
+  if(g_handler.get() && wnd) {
+    //go through all the browsers looking for a browser within this window
+    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
+    ClientHandler::BrowserWindowMap::const_iterator i = browsers.find(wnd);
+    if( i != browsers.end() ) {
+      browser = i->second;
+    }
+  }
+  return browser;
+}
+
+static WNDPROC g_popupWndOldProc = NULL;
+//BRACKETS: added so our popup windows can have a menu bar too
+//
+//  FUNCTION: PopupWndProc(HWND, UINT, WPARAM, LPARAM)
+//
+//  PURPOSE:  Handle commands from the menus.
+LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
+{
+  //For now, we are only interest in WM_COMMAND's that we know are in our menus
+  switch (message)
+  {
+    case WM_COMMAND:
+      {
+        CefRefPtr<CefBrowser> browser = GetBrowserForWindow(hWnd);
+        int wmId    = LOWORD(wParam);
+        int wmEvent = HIWORD(wParam);
+        // Parse the menu selections:
+        switch (wmId)
+        {
+        case IDM_CLOSE:
+          DestroyWindow(hWnd);
+          return 0;
+        case IDC_NAV_RELOAD:  // Reload button
+          if(browser.get())
+            browser->Reload();
+          return 0;
+        case ID_TESTS_DEVTOOLS_SHOW:
+          if (browser.get())
+            browser->ShowDevTools();
+          return 0;
+        case ID_TESTS_DEVTOOLS_CLOSE:
+          if (browser.get())
+            browser->CloseDevTools();
+          return 0;
+        }
+      }
+      break;
+  }
+
+  if (g_popupWndOldProc) 
+    return (LRESULT)CallWindowProc(g_popupWndOldProc, hWnd, message, wParam, lParam);
+  return DefWindowProc(hWnd, message, wParam, lParam);
+}
+
+void AttachWindProcToPopup(HWND wnd)
+{
+  if( !wnd ) {
+    return;
+  }
+
+  if( !::GetMenu(wnd) ) {
+    return; //no menu, no need for the proc
+  }
+
+  WNDPROC curProc = reinterpret_cast<WNDPROC>(GetWindowLongPtr(wnd, GWLP_WNDPROC));
+
+  //if this is the first time, assume the above checks are all we need, otherwise
+  //it had better be the same proc we pulled before
+  if(!g_popupWndOldProc) {
+    g_popupWndOldProc = curProc;
+  }
+  else if( g_popupWndOldProc != curProc ) {
+    return;
+  }
+
+  SetWindowLongPtr(wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(PopupWndProc)); 
+}
+
+}
+
+void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
+{
+  REQUIRE_UI_THREAD();
+
+  AutoLock lock_scope(this);
+  if(!m_Browser.get())
+  {
+    // We need to keep the main child window, but not popup windows
+    m_Browser = browser;
+    m_BrowserHwnd = browser->GetWindowHandle();
+  }
+  else
+  {
+    AttachWindProcToPopup(browser->GetWindowHandle());
+  }
+
+  m_OpenBrowserWindowMap[browser->GetWindowHandle()] = browser;
+}
+
 
 bool ClientHandler::OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
                                      CefRefPtr<CefRequest> request,

@@ -29,7 +29,7 @@ ClientHandler::~ClientHandler()
 {
 }
 
-
+/* BRACKETS: moved to client_handler_win.cpp
 void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 {
   REQUIRE_UI_THREAD();
@@ -42,6 +42,7 @@ void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
     m_BrowserHwnd = browser->GetWindowHandle();
   }
 }
+*/
 
 bool ClientHandler::DoClose(CefRefPtr<CefBrowser> browser)
 {
@@ -57,6 +58,8 @@ bool ClientHandler::DoClose(CefRefPtr<CefBrowser> browser)
     // the parent above.)
     return true;
   }
+
+  m_OpenBrowserWindowMap.erase( browser->GetWindowHandle() );
 
   // A popup browser window is not contained in another window, so we can let
   // these windows close by themselves.
@@ -197,6 +200,15 @@ bool ClientHandler::OnConsoleMessage(CefRefPtr<CefBrowser> browser,
 
     if(first_message)
       SendNotification(NOTIFY_CONSOLE_MESSAGE);
+  }
+
+  if( browser ) {
+    //auto show console if something is Uncaught
+    std::string strMsg(message);
+    const char * err = "Uncaught ";
+    if( 0 == strncmp(strMsg.c_str(), err, strlen(err) ) ) {
+      browser->ShowDevTools();
+    }
   }
 
   return false;
