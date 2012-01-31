@@ -151,7 +151,6 @@ if (!brackets.fs)
             isDirectory: function() {
                 return isDir;
             },
-
             mtime: modtime
         });
     };
