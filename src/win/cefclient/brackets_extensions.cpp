@@ -306,6 +306,8 @@ public:
 // TODO?:				EscapeJSONString(filename, filename);
 				result += "\"" + filename + "\"";
 			} while (FindNextFile(hFind, &ffd) != 0);
+
+			FindClose(hFind);
 		} 
 		else {
 			return ConvertErrorCode(GetLastError());
