@@ -189,6 +189,50 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
   return button;
 }
 
+CefRefPtr<CefBrowser> GetBrowserForWindow(const NSWindow* wnd) {
+  CefRefPtr<CefBrowser> browser = NULL;
+  if(g_handler.get() && wnd) {
+    //go through all the browsers looking for a browser within this window
+    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
+    for( ClientHandler::BrowserWindowMap::const_iterator i = browsers.begin() ; i != browsers.end() && browser == NULL ; i++ ) {
+      NSView* browserView = i->first;
+      if( browserView && [browserView window] == wnd ) {
+        browser = i->second;
+      }
+    }
+  }
+  return browser;
+}
+
+bool IsDevToolsBrowser( CefRefPtr<CefBrowser> browser ) {
+  if( !browser ) { 
+    return false;
+  }
+  
+  CefRefPtr<CefFrame> frame = browser->GetMainFrame();
+  if( !frame ) {
+    return false;
+  }
+  
+  std::string url = frame->GetURL();
+  const char * chromeProtocol = "chrome-devtools";
+  return ( 0 == strncmp(url.c_str(), chromeProtocol, strlen(chromeProtocol)) );
+}
+
+CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBrowser) {
+  CefRefPtr<CefBrowser> browser = NULL;
+  if(g_handler.get() && parentBrowser) {
+    //go through all the browsers looking for the one that was opened by the parentBrowser
+    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
+    for( ClientHandler::BrowserWindowMap::const_iterator i = browsers.begin() ; i != browsers.end() && browser == NULL ; i++ ) {
+      if( IsDevToolsBrowser(i->second) && parentBrowser->GetWindowHandle() == i->second->GetOpenerWindowHandle() ) {
+        browser = i->second;
+      }
+    }
+  }
+  return browser;
+}
+
 // Receives notifications from the application. Will delete itself when done.
 @interface ClientAppDelegate : NSObject
 - (void)createApp:(id)object;
@@ -302,47 +346,28 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 
 
 - (IBAction)reload:(id)sender {
-    if (g_handler.get() && g_handler->GetBrowserHwnd())
-        g_handler->GetBrowser()->Reload();
+  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  if(browser) {
+    browser->Reload();
+  }
 }
 
 - (IBAction)showDevTools:(id)sender {
-  // TODO: This command should be re-implemented as folows:
-  // 1. Grab the active window.
-  // 2. If it is a dev tools window, do nothing
-  // 3. If the active window has an associated dev tools window,
-  //    bring that window to the front.
-  // 4. If the active window does not have an associated dev
-  //    tools window, open one.
-  
-  // This is very different from the current implementation that
-  // only works with the main window, and doesn't allow dev tools
-  // to target popup windows.
-  
-  // If Dev tools window is already open, make it active
-  NSArray* windows = [NSApp windows];
-  for (unsigned int i = 0; i < windows.count; i++) {
-    NSWindow* window = [windows objectAtIndex:i];
-    NSString* title = [window title];
-    NSRange range = [title rangeOfString:@"Developer Tools"];
-    if (range.location != NSNotFound) {
-      [window makeKeyAndOrderFront:self];
-      return;
-    }
+  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  CefRefPtr<CefBrowser> popup = GetDevToolsPopupForBrowser(browser);
+  if( popup ) {
+    NSView* view = popup->GetWindowHandle();
+    NSWindow* wnd = [view window];
+    [wnd makeKeyAndOrderFront:self];
   }
-  // If there are no open windows, don't open the dev tools.
-  if (windows.count == 0)
-    return;
-    
-  if(g_handler.get() && g_handler->GetBrowserHwnd()) {
-    CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
+  else if(browser && !IsDevToolsBrowser(browser)) {
     browser->ShowDevTools();
   }
 }
 
 - (IBAction)hideDevTools:(id)sender {
-  if(g_handler.get() && g_handler->GetBrowserHwnd()) {
-    CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
+  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  if(browser) {
     browser->CloseDevTools();
   }
 }
