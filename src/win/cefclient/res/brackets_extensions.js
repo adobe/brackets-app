@@ -154,6 +154,15 @@ if (!brackets.fs)
             mtime: modtime
         });
     };
+
+
+    /**
+     * TODO comments
+     */
+     native function QuitApplication();
+     brackets.QuitApplication = function() {
+        QuitApplication();
+     };
     
     /**
      * Reads the entire contents of a file. 
