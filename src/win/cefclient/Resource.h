@@ -16,6 +16,7 @@
 #define IDI_BRACKETS                    107
 #define IDI_BRACKETS_SMALL              108
 #define IDC_CEFCLIENT                   109
+#define IDC_CEFCLIENT_POPUP             110
 #define IDR_MAINFRAME                   128
 #define IDC_NAV_BACK                    200
 #define IDC_NAV_FORWARD                 201
@@ -53,6 +54,7 @@
 #define ID_TESTS_OSRAPP                 32793
 #define ID_TESTS_MODALDIALOG            32794
 #define ID_TESTS_JAVASCRIPT_PERFORMANCE 32795
+#define IDM_CLOSE                       32795
 #define ID_TESTS_TRANSPARENT_POPUP      32796
 #define ID_TESTS_TRANSPARENT_OSRAPP     32797
 #define ID_TESTS_JAVASCRIPT_INVOKE      32798
@@ -80,7 +82,7 @@
 #ifndef APSTUDIO_READONLY_SYMBOLS
 #define _APS_NO_MFC                     1
 #define _APS_NEXT_RESOURCE_VALUE        130
-#define _APS_NEXT_COMMAND_VALUE         32795
+#define _APS_NEXT_COMMAND_VALUE         32796
 #define _APS_NEXT_CONTROL_VALUE         1000
 #define _APS_NEXT_SYMED_VALUE           110
 #endif
