@@ -77,6 +77,19 @@ BEGIN
     END
 END
 
+IDC_CEFCLIENT_POPUP MENU
+BEGIN
+    POPUP "&File"
+    BEGIN
+        MENUITEM "&Close",                      IDM_CLOSE
+    END
+    POPUP "&View"
+    BEGIN
+        MENUITEM "&Reload",                     IDC_NAV_RELOAD
+        MENUITEM "&Show Developer Tools",       ID_TESTS_DEVTOOLS_SHOW
+    END
+END
+
 
 /////////////////////////////////////////////////////////////////////////////
 //
