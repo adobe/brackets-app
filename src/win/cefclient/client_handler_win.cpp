@@ -33,7 +33,7 @@ bool ClientHandler::OnBeforePopup(CefRefPtr<CefBrowser> parentBrowser,
 
   //ensure all non-dev tools windows get a menu bar
   if(windowInfo.m_hMenu == NULL && urlStr.find("chrome-devtools:") == std::string::npos) {
-    windowInfo.m_hMenu = LoadMenu( GetModuleHandle(NULL), MAKEINTRESOURCE(IDC_CEFCLIENT_POPUP) 	);
+    windowInfo.m_hMenu = ::LoadMenu( GetModuleHandle(NULL), MAKEINTRESOURCE(IDC_CEFCLIENT_POPUP) 	);
   }
 
   return false;
@@ -96,8 +96,8 @@ LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
   }
 
   if (g_popupWndOldProc) 
-    return (LRESULT)CallWindowProc(g_popupWndOldProc, hWnd, message, wParam, lParam);
-  return DefWindowProc(hWnd, message, wParam, lParam);
+    return (LRESULT)::CallWindowProc(g_popupWndOldProc, hWnd, message, wParam, lParam);
+  return ::DefWindowProc(hWnd, message, wParam, lParam);
 }
 
 void AttachWindProcToPopup(HWND wnd)
@@ -121,7 +121,25 @@ void AttachWindProcToPopup(HWND wnd)
     return;
   }
 
-  SetWindowLongPtr(wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(PopupWndProc)); 
+  SetWindowLongPtr(wnd, GWLP_WNDPROC, reinterpret_cast<LONG_PTR>(PopupWndProc));
+}
+
+void LoadWindowsIcons(HWND wnd)
+{
+	if( !wnd ) {
+		return;
+	}
+	//We need to load the icons after the pop up is created so they have the
+	//brackets icon instead of the generic window icon
+	HINSTANCE inst = ::GetModuleHandle(NULL);
+	HICON bigIcon = ::LoadIcon(inst, MAKEINTRESOURCE(IDI_BRACKETS));
+	HICON smIcon = ::LoadIcon(inst, MAKEINTRESOURCE(IDI_BRACKETS_SMALL));
+	if(bigIcon) {
+		::SendMessage(wnd, WM_SETICON, ICON_BIG, (LPARAM)bigIcon);
+	}
+	if(smIcon) {
+		::SendMessage(wnd, WM_SETICON, ICON_SMALL, (LPARAM)smIcon);
+	}
 }
 
 }
@@ -140,6 +158,7 @@ void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
   else
   {
     AttachWindProcToPopup(browser->GetWindowHandle());
+	LoadWindowsIcons(browser->GetWindowHandle());
   }
 
   m_OpenBrowserWindowMap[browser->GetWindowHandle()] = browser;
