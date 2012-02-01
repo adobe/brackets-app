@@ -175,6 +175,11 @@ public:
             
             errorCode = ExecuteDeleteFileOrDirectory(arguments, retval, exception);
         }
+        else if (name == "QuitApplication")
+        {
+            // TODO comments
+            errorCode = ExecuteQuitApplication(arguments, retval, exception);
+        }
         else if (name == "GetLastError")
         {
             // Special case private native function to return the last error code.
@@ -350,6 +355,19 @@ public:
             error = [ oStream streamError ];
         }        
         return ConvertNSErrorCode(error, false);
+    }
+    
+    int ExecuteQuitApplication(const CefV8ValueList& arguments,
+                               CefRefPtr<CefV8Value>& retval,
+                               CefString& exception)
+    {
+        // TODO params
+        
+        CefQuitMessageLoop();
+        
+        //[NSApp terminate:nil];
+
+        return NO_ERROR;
     }
     
     int ExecuteSetPosixPermissions(const CefV8ValueList& arguments,
