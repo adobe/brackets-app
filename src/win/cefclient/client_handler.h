@@ -159,6 +159,9 @@ public:
   CefRefPtr<CefBrowser> GetBrowser() { return m_Browser; }
   CefWindowHandle GetBrowserHwnd() { return m_BrowserHwnd; }
 
+  typedef std::map< CefWindowHandle, CefRefPtr<CefBrowser> > BrowserWindowMap;
+  const BrowserWindowMap& GetOpenBrowserWindowMap() const { return m_OpenBrowserWindowMap; }
+
   std::string GetLogFile();
 
   void SetLastDownloadFile(const std::string& fileName);
@@ -182,6 +185,9 @@ public:
 protected:
   void SetLoading(bool isLoading);
   void SetNavState(bool canGoBack, bool canGoForward);
+
+  // Browser windows that are currently open
+  BrowserWindowMap m_OpenBrowserWindowMap;
 
   // The child browser window
   CefRefPtr<CefBrowser> m_Browser;
