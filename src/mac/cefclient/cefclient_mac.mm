@@ -219,6 +219,20 @@ bool IsDevToolsBrowser( CefRefPtr<CefBrowser> browser ) {
   return ( 0 == strncmp(url.c_str(), chromeProtocol, strlen(chromeProtocol)) );
 }
 
+CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBrowser) {
+  CefRefPtr<CefBrowser> browser = NULL;
+  if(g_handler.get() && parentBrowser) {
+    //go through all the browsers looking for the one that was opened by the parentBrowser
+    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
+    for( ClientHandler::BrowserWindowMap::const_iterator i = browsers.begin() ; i != browsers.end() && browser == NULL ; i++ ) {
+      if( IsDevToolsBrowser(i->second) && parentBrowser->GetWindowHandle() == i->second->GetOpenerWindowHandle() ) {
+        browser = i->second;
+      }
+    }
+  }
+  return browser;
+}
+
 // Receives notifications from the application. Will delete itself when done.
 @interface ClientAppDelegate : NSObject
 - (void)createApp:(id)object;
@@ -340,7 +354,13 @@ bool IsDevToolsBrowser( CefRefPtr<CefBrowser> browser ) {
 
 - (IBAction)showDevTools:(id)sender {
   CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
-  if(browser && !IsDevToolsBrowser(browser)) {
+  CefRefPtr<CefBrowser> popup = GetDevToolsPopupForBrowser(browser);
+  if( popup ) {
+    NSView* view = popup->GetWindowHandle();
+    NSWindow* wnd = [view window];
+    [wnd makeKeyAndOrderFront:self];
+  }
+  else if(browser && !IsDevToolsBrowser(browser)) {
     browser->ShowDevTools();
   }
 }
