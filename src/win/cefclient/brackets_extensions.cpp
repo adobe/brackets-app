@@ -228,6 +228,7 @@ public:
 		if (canChooseDirectories) {
 			BROWSEINFO bi = {0};
 			bi.lpszTitle = wtitle.c_str();
+			bi.ulFlags = BIF_NEWDIALOGSTYLE;
 			LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
 			if (pidl != 0) {
 				if (SHGetPathFromIDList(pidl, szFile)) {
