@@ -424,8 +424,21 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
           return 0;
         case IDM_EXIT:
-          DestroyWindow(hWnd);
+			{
+
+			// Brackets: Delegate to JavaScript code to handle quit
+			// so that JavaScript can handle things like saving files
+			std::string script = "window.brackets.handleRequestQuit();";
+			CefRefPtr<CefFrame> frame = browser->GetMainFrame();
+			CefString url = frame->GetURL();
+			browser->GetMainFrame()->ExecuteJavaScript(script, url, 0);
+
+			/* Brackets: commented out default handling for IDM_EXIT below since the JavaScript
+			 *  side will confirm quiting and then call QuitApplication (handled in brackets_extensions.cpp)
+			 *  to actually quit */
+			//DestroyWindow(hWnd);
           return 0;
+			}
         case ID_WARN_CONSOLEMESSAGE:
 		/*
           if(g_handler.get()) {

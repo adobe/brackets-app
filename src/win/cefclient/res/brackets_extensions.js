@@ -9,6 +9,8 @@ if (!brackets)
    brackets = {};
 if (!brackets.fs)
     brackets.fs = {};
+if (!brackets.app)
+    brackets.app = {};
 (function() {
     // Internal function to get the last error code.
     native function GetLastError();
@@ -160,7 +162,7 @@ if (!brackets.fs)
      * TODO comments
      */
      native function QuitApplication();
-     brackets.QuitApplication = function() {
+     brackets.app.Quit = function() {
         QuitApplication();
      };
     

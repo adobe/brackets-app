@@ -594,6 +594,7 @@ public:
 		}
 	}
 
+
 private:
     int lastError;
     IMPLEMENT_REFCOUNTING(BracketsExtensionHandler);
