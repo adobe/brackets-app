@@ -7,6 +7,8 @@
 #include <ShlObj.h>
 #include <wchar.h>
 
+
+
 // Error values. These MUST be in sync with the error values
 // in brackets_extensions.js
 //static const int NO_ERROR                   = 0;
@@ -19,7 +21,6 @@ static const int ERR_CANT_WRITE             = 6;
 static const int ERR_OUT_OF_SPACE           = 7;
 static const int ERR_NOT_FILE               = 8;
 static const int ERR_NOT_DIRECTORY          = 9;
-
 
 class BracketsExtensionHandler : public CefV8Handler
 {
@@ -600,6 +601,13 @@ private:
     IMPLEMENT_REFCOUNTING(BracketsExtensionHandler);
 };
 
+void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser)
+{
+	std::string script = "window.brackets.handleRequestQuit();";
+	CefRefPtr<CefFrame> frame = browser->GetMainFrame();
+	CefString url = frame->GetURL();
+	browser->GetMainFrame()->ExecuteJavaScript(script, url, 0);
+}
 
 void InitBracketsExtensions()
 {
