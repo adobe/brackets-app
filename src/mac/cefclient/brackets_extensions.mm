@@ -365,7 +365,7 @@ public:
         
         CefQuitMessageLoop();
         
-        //[NSApp terminate:nil];
+        [NSApp stop:nil];
 
         return NO_ERROR;
     }
