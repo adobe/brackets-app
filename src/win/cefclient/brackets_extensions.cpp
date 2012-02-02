@@ -214,7 +214,7 @@ public:
         bool canChooseFiles = !canChooseDirectories;
         std::string title = arguments[2]->GetStringValue();
 		std::wstring wtitle = StringToWString(title);
-        std::string initialPath = arguments[3]->GetStringValue();
+        std::wstring initialPath = StringToWString(arguments[3]->GetStringValue());
         std::string fileTypesStr = arguments[4]->GetStringValue();
 		std::string selectedFilenames = "";
         std::string result = "";
@@ -233,7 +233,7 @@ public:
 			if (pidl != 0) {
 				if (SHGetPathFromIDList(pidl, szFile)) {
 					std::wstring strFoldername(szFile);
-					selectedFilenames = WStringToString(strFoldername).c_str();
+					selectedFilenames = WStringToString(strFoldername);
 				}
 				IMalloc* pMalloc = NULL;
 				SHGetMalloc(&pMalloc);
@@ -250,14 +250,14 @@ public:
 			ofn.lpstrFile = szFile;
 			ofn.nMaxFile = MAX_PATH;
 			ofn.lpstrFilter = L"Web Files\0*.js;*.css;*.htm;*.html\0\0"; // TODO: Use passed in file types
-			ofn.lpstrInitialDir = StringToWString(initialPath).c_str();
+			ofn.lpstrInitialDir = initialPath.c_str();
 			ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
 			if (allowsMultipleSelection)
 				ofn.Flags |= OFN_ALLOWMULTISELECT;
 
 			if (GetOpenFileName(&ofn)) {
 				std::wstring strFilename(szFile);
-				selectedFilenames = WStringToString(strFilename).c_str();
+				selectedFilenames = WStringToString(strFilename);
 			}
 		}
 
