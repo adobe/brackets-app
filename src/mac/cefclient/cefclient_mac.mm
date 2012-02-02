@@ -16,7 +16,7 @@
 
 // The global ClientHandler reference.
 extern CefRefPtr<ClientHandler> g_handler;
-static bool g_didShutdown = false;
+static bool g_isTerminating = false;
 
 char szWorkingDir[512];   // The current working directory
 
@@ -373,13 +373,25 @@ CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBro
   }
 }
 
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+  //if we're terimating, don't try to cancel it
+  if( g_isTerminating ) {
+    return NSTerminateNow;
+  }
+  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  if(browser) {
+    //If we have a browser, we'll let it handle the termination
+    DelegateQuitToBracketsJS(browser);
+    return NSTerminateCancel;
+  }
+  return NSTerminateNow;
+}
+
+
 // Sent by the default notification center immediately before the application
 // terminates.
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
-  if( g_didShutdown ) {
-    return;
-  }
-  g_didShutdown = true;
+  g_isTerminating = true;
   
   // Shut down CEF.
   g_handler = NULL;
@@ -434,7 +446,8 @@ int main(int argc, char* argv[])
   
   //if we quit the message loop programatically we need to call
   //terminate now to properly cleanup everything
-  if( !g_didShutdown ) {
+  if( !g_isTerminating ) {
+    g_isTerminating = true;
     [NSApp terminate:NULL];
   }
 

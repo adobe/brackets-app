@@ -9,6 +9,8 @@ if (!brackets)
    brackets = {};
 if (!brackets.fs)
     brackets.fs = {};
+if (!brackets.app)
+    brackets.app = {};
 (function() {
     // Internal function to get the last error code.
     native function GetLastError();
@@ -92,13 +94,13 @@ if (!brackets.fs)
      */
     native function ShowOpenDialog();
     brackets.fs.showOpenDialog = function(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback) {
-       setTimeout(function() {
+        setTimeout(function() {
            var resultString = ShowOpenDialog(allowMultipleSelection, chooseDirectory, 
                                              title || 'Open', initialPath || '', 
                                              fileTypes ? fileTypes.join(' ') : '');
            var result = JSON.parse(resultString || '[]');
            callback(getLastError(), result);
-       }, 0);
+        }, 0);
     };
     
     /**
@@ -154,10 +156,10 @@ if (!brackets.fs)
     /**
      * TODO comments
      */
-    native function QuitApplication();
-    brackets.QuitApplication = function() {
+     native function QuitApplication();
+     brackets.app.Quit = function() {
         QuitApplication();
-    };
+     };
     
     /**
      * Reads the entire contents of a file. 

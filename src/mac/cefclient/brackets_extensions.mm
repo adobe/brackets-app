@@ -526,3 +526,11 @@ void InitBracketsExtensions()
     
     [jsSource release];
 }
+
+void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser)
+{
+  std::string script = "window.brackets.handleRequestQuit();";
+  CefRefPtr<CefFrame> frame = browser->GetMainFrame();
+  CefString url = frame->GetURL();
+  browser->GetMainFrame()->ExecuteJavaScript(script, url, 0);
+}
