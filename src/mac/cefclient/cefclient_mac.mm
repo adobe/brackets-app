@@ -16,6 +16,7 @@
 
 // The global ClientHandler reference.
 extern CefRefPtr<ClientHandler> g_handler;
+static bool g_didShutdown = false;
 
 char szWorkingDir[512];   // The current working directory
 
@@ -375,6 +376,11 @@ CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBro
 // Sent by the default notification center immediately before the application
 // terminates.
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
+  if( g_didShutdown ) {
+    return;
+  }
+  g_didShutdown = true;
+  
   // Shut down CEF.
   g_handler = NULL;
   CefShutdown();
@@ -425,6 +431,12 @@ int main(int argc, char* argv[])
 
   // Run the application message loop.
   CefRunMessageLoop();
+  
+  //if we quit the message loop programatically we need to call
+  //terminate now to properly cleanup everything
+  if( !g_didShutdown ) {
+    [NSApp terminate:NULL];
+  }
 
   // Don't put anything below this line because it won't be executed.
   return 0;
