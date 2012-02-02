@@ -223,6 +223,7 @@ public:
         NSOpenPanel* openPanel = [NSOpenPanel openPanel];
         [openPanel setCanChooseFiles:canChooseFiles];
         [openPanel setCanChooseDirectories:canChooseDirectories];
+        [openPanel setCanCreateDirectories:canChooseDirectories];
         [openPanel setAllowsMultipleSelection:allowsMultipleSelection];
         [openPanel setTitle: [NSString stringWithUTF8String:title.c_str()]];
         
