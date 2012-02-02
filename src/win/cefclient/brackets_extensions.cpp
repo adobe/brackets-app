@@ -22,6 +22,9 @@ static const int ERR_OUT_OF_SPACE           = 7;
 static const int ERR_NOT_FILE               = 8;
 static const int ERR_NOT_DIRECTORY          = 9;
 
+/**
+ * Class for implementing native calls from Brackets JavaScript code to native windows functionality
+ */
 class BracketsExtensionHandler : public CefV8Handler
 {
 public:
@@ -601,14 +604,6 @@ private:
     IMPLEMENT_REFCOUNTING(BracketsExtensionHandler);
 };
 
-void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser)
-{
-	std::string script = "window.brackets.handleRequestQuit();";
-	CefRefPtr<CefFrame> frame = browser->GetMainFrame();
-	CefString url = frame->GetURL();
-	browser->GetMainFrame()->ExecuteJavaScript(script, url, 0);
-}
-
 void InitBracketsExtensions()
 {
     // Register a V8 extension with JavaScript code that calls native
@@ -639,4 +634,31 @@ void InitBracketsExtensions()
 		std::string jsSource((const char *)pBytes, dwSize);
 		CefRegisterExtension("brackets", jsSource.c_str(), new BracketsExtensionHandler());
 	}
+}
+
+
+/**
+ * Class for implementing native calls from native windows functionality to Brackets JavaScript code
+ */
+void BracketsShellAPI::DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser)
+{
+	ExecuteJavaScript(browser, "handleRequestQuit();");
+}
+
+void BracketsShellAPI::DelegateCloseToBracketsJS(CefRefPtr<CefBrowser> browser)
+{
+	ExecuteJavaScript(browser, "handleRequestClose();");
+}
+
+/**
+ * Calls the provided function call on window.brackets.shellAPI. The function should include trailing parens and
+ * parameters. For examples: "doSomething()", "doSomethingElse(paramA, paramB)"
+ * The JavaScript side of this API is defined
+ * in shellAPI.h
+ */
+void BracketsShellAPI::ExecuteJavaScript(CefRefPtr<CefBrowser> browser, const CefString& shellAPIFunction){
+	std::string jsCode = "window.brackets.shellAPI." + std::string(shellAPIFunction);
+	CefRefPtr<CefFrame> frame = browser->GetMainFrame();
+	CefString url = frame->GetURL();
+	browser->GetMainFrame()->ExecuteJavaScript(jsCode, url, 0);
 }
