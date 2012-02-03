@@ -6,6 +6,14 @@
 // Register the Brackets extension handler.
 void InitBracketsExtensions();
 
-void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser);
+class BracketsShellAPI {
+
+public:
+	static void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser);
+	static void DelegateCloseToBracketsJS(CefRefPtr<CefBrowser> browser);
+	static void ExecuteJavaScript(CefRefPtr<CefBrowser> browser, const CefString& jsCode);
+};
+
+
 
 #endif // _BRACKETS_EXTENSIONS_H

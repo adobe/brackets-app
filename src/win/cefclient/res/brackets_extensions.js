@@ -11,6 +11,7 @@ if (!brackets.fs)
     brackets.fs = {};
 if (!brackets.app)
     brackets.app = {};
+
 (function() {
     // Internal function to get the last error code.
     native function GetLastError();
@@ -258,4 +259,8 @@ if (!brackets.app)
         DeleteFileOrDirectory(path);
         callback(getLastError());
     };
+
+
+
+
 })();;
