@@ -195,11 +195,6 @@ public:
             
             errorCode = ExecuteDeleteFileOrDirectory(arguments, retval, exception);
         }
-        else if (name == "QuitApplication")
-        {
-            // TODO comments
-            errorCode = ExecuteQuitApplication(arguments, retval, exception);
-        }
         else if (name == "GetLastError")
         {
             // Special case private native function to return the last error code.
@@ -441,18 +436,6 @@ public:
         CloseHandle(hFile);
         return error;
     }
-
-    int ExecuteQuitApplication(const CefV8ValueList& arguments,
-                       CefRefPtr<CefV8Value>& retval,
-                       CefString& exception)
-    {
-        PostQuitMessage(0);
-
-        // TODO: Any errors to handle?
-
-        return NO_ERROR;
-    }
-
 
     int ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
                        CefRefPtr<CefV8Value>& retval,
