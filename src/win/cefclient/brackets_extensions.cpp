@@ -225,8 +225,7 @@ public:
         bool allowsMultipleSelection = arguments[0]->GetBoolValue();
         bool canChooseDirectories = arguments[1]->GetBoolValue();
         bool canChooseFiles = !canChooseDirectories;
-        std::string title = arguments[2]->GetStringValue();
-        std::wstring wtitle = StringToWString(title);
+        std::wstring wtitle = StringToWString(arguments[2]->GetStringValue());
         std::wstring initialPath = StringToWString(arguments[3]->GetStringValue());
         std::string fileTypesStr = arguments[4]->GetStringValue();
         std::string selectedFilenames = "";
