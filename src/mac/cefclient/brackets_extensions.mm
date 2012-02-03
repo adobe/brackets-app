@@ -530,7 +530,7 @@ void InitBracketsExtensions()
 
 void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser)
 {
-  std::string script = "window.brackets.handleRequestQuit();";
+  std::string script = "window.brackets.shellAPI.handleRequestQuit();";
   CefRefPtr<CefFrame> frame = browser->GetMainFrame();
   CefString url = frame->GetURL();
   browser->GetMainFrame()->ExecuteJavaScript(script, url, 0);
@@ -582,11 +582,20 @@ bool DelegateWindowCloseToBracketsJS(CefRefPtr<CefBrowser> browser)
     return false;
   }
   
-  if( !brackets->HasValue("handleRequestCloseWindow") ) {
+  if( !brackets->HasValue("shellAPI") ) {
     return false;
   }
   
-  CefRefPtr<CefV8Value> handleRequestCloseWindow = brackets->GetValue("handleRequestCloseWindow");
+  CefRefPtr<CefV8Value> shellAPI = brackets->GetValue("shellAPI");
+  if( !shellAPI ) {
+    return false;
+  }
+  
+  if( !shellAPI->HasValue("handleRequestCloseWindow") ) {
+    return false;
+  }
+  
+  CefRefPtr<CefV8Value> handleRequestCloseWindow = shellAPI->GetValue("handleRequestCloseWindow");
   if( !handleRequestCloseWindow ) {
     return false;
   }
