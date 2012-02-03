@@ -157,6 +157,24 @@ public:
             errorCode = ExecuteSetPosixPermissions(arguments, retval, exception);
             
         }
+        else if ( name == "GetFileModificationTime")
+        {
+            // Returns the time stamp for a file or directory
+            // 
+            // Inputs:
+            //  path - full path of file or directory
+            //
+            // Outputs:
+            // Date - timestamp of file
+            // 
+            // Possible error values:
+            //    NO_ERROR
+            //    ERR_UNKNOWN
+            //    ERR_INVALID_PARAMS
+            //    ERR_NOT_FOUND
+            
+            errorCode = ExecuteGetFileModificationTime( arguments, retval, exception);
+        }
         else if (name == "DeleteFileOrDirectory")
         {
             // DeleteFileOrDirectory(path)
@@ -351,6 +369,24 @@ public:
             error = [ oStream streamError ];
         }        
         return ConvertNSErrorCode(error, false);
+    }
+    
+    int ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
+                                       CefRefPtr<CefV8Value>& retval,
+                                       CefString& exception)
+    {
+        if (arguments.size() != 1 || !arguments[0]->IsString())
+            return ERR_INVALID_PARAMS;
+        
+        std::string pathStr = arguments[0]->GetStringValue();
+        NSString* path = [NSString stringWithUTF8String:pathStr.c_str()];
+        
+        NSError* error = nil;
+        NSDictionary* fileAttribs = [[NSFileManager defaultManager] attributesOfItemAtPath:path error:&error];
+        NSDate *modDate = [fileAttribs valueForKey:NSFileModificationDate];
+        retval = CefV8Value::CreateDate(CefTime([modDate timeIntervalSince1970]));
+        
+        return ConvertNSErrorCode(error, true);
     }
     
     int ExecuteSetPosixPermissions(const CefV8ValueList& arguments,
