@@ -28,7 +28,7 @@ ClientHandler::~ClientHandler()
 {
 }
 
-
+/* Brackets: Moved this to client_handler_mac.mm
 void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 {
   REQUIRE_UI_THREAD();
@@ -43,6 +43,7 @@ void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 
   m_OpenBrowserWindowMap[browser->GetWindowHandle()] = browser;
 }
+ */
 
 bool ClientHandler::DoClose(CefRefPtr<CefBrowser> browser)
 {

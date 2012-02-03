@@ -1,4 +1,5 @@
 #include "brackets_extensions.h"
+#include "client_handler.h"
 
 #import <Cocoa/Cocoa.h>
 
@@ -533,4 +534,116 @@ void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser)
   CefRefPtr<CefFrame> frame = browser->GetMainFrame();
   CefString url = frame->GetURL();
   browser->GetMainFrame()->ExecuteJavaScript(script, url, 0);
+}
+
+//Simple stack class to ensure calls to Enter and Exit are balanced
+class StContextScope {
+public:
+  StContextScope( const CefRefPtr<CefV8Context>& ctx )
+  : m_ctx(NULL) {
+    if( ctx && ctx->Enter() ) {
+      m_ctx = ctx;
+    }
+  }
+  
+  ~StContextScope() {
+    if(m_ctx) {
+      m_ctx->Exit();
+    }
+  }
+  
+  const CefRefPtr<CefV8Context>& GetContext() const { 
+    return m_ctx;
+  }
+  
+private:
+  CefRefPtr<CefV8Context> m_ctx;
+  
+};
+
+bool DelegateWindowCloseToBracketsJS(CefRefPtr<CefBrowser> browser)
+{
+  //We're going to test and see if "window.brackets.handleRequestCloseWindow" is there
+  //and if it is, we're going to call it.
+  CefRefPtr<CefFrame> frame = browser->GetMainFrame();  
+  StContextScope ctx( frame->GetV8Context() );
+  if( !ctx.GetContext() ) {
+    return false;
+  }
+  
+  CefRefPtr<CefV8Value> win = ctx.GetContext()->GetGlobal();
+
+  if( !win->HasValue("brackets") ) {
+    return false;
+  }
+  
+  CefRefPtr<CefV8Value> brackets = win->GetValue("brackets");
+  if( !brackets ) {
+    return false;
+  }
+  
+  if( !brackets->HasValue("handleRequestCloseWindow") ) {
+    return false;
+  }
+  
+  CefRefPtr<CefV8Value> handleRequestCloseWindow = brackets->GetValue("handleRequestCloseWindow");
+  if( !handleRequestCloseWindow ) {
+    return false;
+  }
+  
+  if( !handleRequestCloseWindow->IsFunction() ) {
+    return false;
+  }
+  
+  CefV8ValueList args;
+  CefRefPtr<CefV8Value> retval;
+  CefRefPtr<CefV8Exception> e;
+  bool called = handleRequestCloseWindow->ExecuteFunction(brackets, args, retval, e, false);
+  return called;
+}
+
+bool IsDevToolsBrowser( CefRefPtr<CefBrowser> browser ) {
+  if( !browser ) { 
+    return false;
+  }
+  
+  CefRefPtr<CefFrame> frame = browser->GetMainFrame();
+  if( !frame ) {
+    return false;
+  }
+  
+  std::string url = frame->GetURL();
+  const char * chromeProtocol = "chrome-devtools";
+  return ( 0 == strncmp(url.c_str(), chromeProtocol, strlen(chromeProtocol)) );
+}
+
+extern CefRefPtr<ClientHandler> g_handler;
+
+CefRefPtr<CefBrowser> GetBrowserForWindow(const BracketsMainWindowHandle wnd) {
+  CefRefPtr<CefBrowser> browser = NULL;
+  if(g_handler.get() && wnd) {
+    //go through all the browsers looking for a browser within this window
+    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
+    for( ClientHandler::BrowserWindowMap::const_iterator i = browsers.begin() ; i != browsers.end() && browser == NULL ; i++ ) {
+      NSView* browserView = i->first;
+      if( browserView && [browserView window] == wnd ) {
+        browser = i->second;
+      }
+    }
+  }
+  return browser;
+}
+
+CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBrowser) {
+  CefRefPtr<CefBrowser> browser = NULL;
+  if(g_handler.get() && parentBrowser) {
+    //go through all the browsers looking for the one that was opened by the parentBrowser
+    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
+    for( ClientHandler::BrowserWindowMap::const_iterator i = browsers.begin() ; i != browsers.end() && browser == NULL ; i++ ) {
+      if( IsDevToolsBrowser(i->second) && parentBrowser->GetWindowHandle() == i->second->GetOpenerWindowHandle() ) {
+        browser = i->second;
+      }
+    }
+  }
+  return browser;
 }

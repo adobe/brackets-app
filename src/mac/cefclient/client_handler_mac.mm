@@ -8,6 +8,7 @@
 #include "client_handler.h"
 #include "resource_util.h"
 #include "string_util.h"
+#include "brackets_extensions.h"
 #include "NSAlert+SynchronousSheet.h"
 #import <Cocoa/Cocoa.h>
 #import <sstream>
@@ -233,6 +234,69 @@ bool ClientHandler::OnJSPrompt(CefRefPtr<CefBrowser> browser,
     retval = buttonClicked == NSAlertFirstButtonReturn;
     
     return true; 
+}
+
+// Receives notifications from controls and the browser window. Will delete
+// itself when done.
+@interface PopupClientWindowDelegate : NSObject <NSWindowDelegate>
+- (BOOL)windowShouldClose:(id)window;
+@end
+
+@implementation PopupClientWindowDelegate
+
+// Called when the window is about to close. Perform the self-destruction
+// sequence by getting rid of the window. By returning YES, we allow the window
+// to be removed from the screen.
+CefRefPtr<CefBrowser> GetBrowserForWindow(const NSWindow* wnd);
+
+- (BOOL)windowShouldClose:(id)window {  
+  //if we're terimating, don't try to cancel it
+  CefRefPtr<CefBrowser> browser = GetBrowserForWindow(window);
+  if(browser && !IsDevToolsBrowser(browser)) {
+    //If we have a browser, we'll let it handle the window closing (for now same a quit)
+    if( DelegateWindowCloseToBracketsJS(browser) ) {
+      return NO;
+    }
+  }
+  
+  // Clean ourselves up after clearing the stack of anything that might have the
+  // window on it.
+  [self performSelectorOnMainThread:@selector(cleanup:)
+                         withObject:window
+                      waitUntilDone:NO];
+  
+  return YES;
+}
+
+// Deletes itself.
+- (void)cleanup:(id)window {  
+  [self release];
+}
+
+@end
+
+void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
+{
+  REQUIRE_UI_THREAD();
+  
+  AutoLock lock_scope(this);
+  if(!m_Browser.get())
+  {
+    // We need to keep the main child window, but not popup windows
+    m_Browser = browser;
+    m_BrowserHwnd = browser->GetWindowHandle();
+  }
+  else {
+    //On mac we set a window delegate so we can trap window close and relay it back to the browser
+    NSWindow* wnd = [browser->GetWindowHandle() window];
+    if( ![wnd delegate] ) {
+      PopupClientWindowDelegate* delegate = [[PopupClientWindowDelegate alloc] init];
+      [wnd setDelegate:delegate];
+    }
+  }
+  
+  
+  m_OpenBrowserWindowMap[browser->GetWindowHandle()] = browser;
 }
 
 
