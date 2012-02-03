@@ -159,11 +159,24 @@ public:
             errorCode = ExecuteSetPosixPermissions(arguments, retval, exception);
             
         }
-		else if ( name == "GetFileModificationTime")
-		{
-			// TODO COMMENTS
-			//errorCode = ExecuteGetFileModificationTime( arguments, retval, exception);
-		}
+        else if ( name == "GetFileModificationTime")
+        {
+            // Returns the time stamp for a file or directory
+            // 
+            // Inputs:
+            //  path - full path of file or directory
+            //
+            // Outputs:
+            // Date - timestamp of file
+            // 
+            // Possible error values:
+            //    NO_ERROR
+            //    ERR_UNKNOWN
+            //    ERR_INVALID_PARAMS
+            //    ERR_NOT_FOUND
+             
+            errorCode = ExecuteGetFileModificationTime( arguments, retval, exception);
+        }
         else if (name == "DeleteFileOrDirectory")
         {
             // DeleteFileOrDirectory(path)
@@ -213,65 +226,66 @@ public:
         bool canChooseDirectories = arguments[1]->GetBoolValue();
         bool canChooseFiles = !canChooseDirectories;
         std::string title = arguments[2]->GetStringValue();
-		std::wstring wtitle = StringToWString(title);
+        std::wstring wtitle = StringToWString(title);
         std::wstring initialPath = StringToWString(arguments[3]->GetStringValue());
         std::string fileTypesStr = arguments[4]->GetStringValue();
-		std::string selectedFilenames = "";
+        std::string selectedFilenames = "";
         std::string result = "";
 
-		wchar_t szFile[MAX_PATH];
-		szFile[0] = 0;
+        wchar_t szFile[MAX_PATH];
+        szFile[0] = 0;
 
-		// TODO: This method should be using IFileDialog instead of the
-		// outdated SHGetPathFromIDList and GetOpenFileName.
+        // TODO: This method should be using IFileDialog instead of the
+        // outdated SHGetPathFromIDList and GetOpenFileName.
 
-		if (canChooseDirectories) {
-			BROWSEINFO bi = {0};
-			bi.lpszTitle = wtitle.c_str();
-			bi.ulFlags = BIF_NEWDIALOGSTYLE;
-			LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
-			if (pidl != 0) {
-				if (SHGetPathFromIDList(pidl, szFile)) {
-					std::wstring strFoldername(szFile);
-					selectedFilenames = WStringToString(strFoldername);
-				}
-				IMalloc* pMalloc = NULL;
-				SHGetMalloc(&pMalloc);
-				if (pMalloc) {
-					pMalloc->Free(pidl);
-					pMalloc->Release();
-				}
-			}
-		} else {
-			OPENFILENAME ofn;
+        if (canChooseDirectories) {
+            BROWSEINFO bi = {0};
+            bi.lpszTitle = wtitle.c_str();
+            bi.ulFlags = BIF_NEWDIALOGSTYLE;
+            LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
+            if (pidl != 0) {
+                if (SHGetPathFromIDList(pidl, szFile)) {
+                    std::wstring strFoldername(szFile);
+                    selectedFilenames = WStringToString(strFoldername);
+                }
+                IMalloc* pMalloc = NULL;
+                SHGetMalloc(&pMalloc);
+                if (pMalloc) {
+                    pMalloc->Free(pidl);
+                    pMalloc->Release();
+                }
+            }
+        } else {
+            OPENFILENAME ofn;
 
-			ZeroMemory(&ofn, sizeof(ofn));
-			ofn.lStructSize = sizeof(ofn);
-			ofn.lpstrFile = szFile;
-			ofn.nMaxFile = MAX_PATH;
-			ofn.lpstrFilter = L"Web Files\0*.js;*.css;*.htm;*.html\0\0"; // TODO: Use passed in file types
-			ofn.lpstrInitialDir = initialPath.c_str();
-			ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
-			if (allowsMultipleSelection)
-				ofn.Flags |= OFN_ALLOWMULTISELECT;
+            ZeroMemory(&ofn, sizeof(ofn));
+            ofn.lStructSize = sizeof(ofn);
+            ofn.lpstrFile = szFile;
+            ofn.nMaxFile = MAX_PATH;
+            ofn.lpstrFilter = L"Web Files\0*.js;*.css;*.htm;*.html\0\0"; // TODO: Use passed in file types
+            ofn.lpstrInitialDir = initialPath.c_str();
+            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+            if (allowsMultipleSelection)
+                ofn.Flags |= OFN_ALLOWMULTISELECT;
 
-			if (GetOpenFileName(&ofn)) {
-				std::wstring strFilename(szFile);
-				selectedFilenames = WStringToString(strFilename);
-			}
-		}
+            if (GetOpenFileName(&ofn)) {
+                std::wstring strFilename(szFile);
+                selectedFilenames = WStringToString(strFilename);
+            }
+        }
 
-		// TODO: Handle multiple select
-		if (selectedFilenames.length() > 0) {
-			std::string escapedFilenames;
-			EscapeJSONString(selectedFilenames, escapedFilenames);
-			result = "[\"" + escapedFilenames + "\"]";
-		}
-		else {
-			result = "[]";
-		}
+        // TODO: Handle multiple select
+        if (selectedFilenames.length() > 0) {
+            std::string escapedFilenames;
+            EscapeJSONString(selectedFilenames, escapedFilenames);
+            result = "[\"" + escapedFilenames + "\"]";
+        }
+        else {
+            result = "[]";
+        }
 
-		retval = CefV8Value::CreateString(result);
+        retval = CefV8Value::CreateString(result);
+
         return NO_ERROR;
     }
     
@@ -285,38 +299,38 @@ public:
         std::string pathStr = arguments[0]->GetStringValue();
         std::string result = "[";
 
-		FixFilename(pathStr);
-		pathStr += "\\*";
+        FixFilename(pathStr);
+        pathStr += "\\*";
 
-		WIN32_FIND_DATA ffd;
-		HANDLE hFind = FindFirstFile(StringToWString(pathStr).c_str(), &ffd);
+        WIN32_FIND_DATA ffd;
+        HANDLE hFind = FindFirstFile(StringToWString(pathStr).c_str(), &ffd);
 
-		if (hFind != INVALID_HANDLE_VALUE) {
-			BOOL bAddedOne = false;
-			do {
-				// Ignore '.' and '..'
-				if (!wcscmp(ffd.cFileName, L".") || !wcscmp(ffd.cFileName, L".."))
-					continue;
+        if (hFind != INVALID_HANDLE_VALUE) {
+            BOOL bAddedOne = false;
+            do {
+                // Ignore '.' and '..'
+                if (!wcscmp(ffd.cFileName, L".") || !wcscmp(ffd.cFileName, L".."))
+                    continue;
 
-				if (bAddedOne)
-					result += ",";
-				else
-					bAddedOne = TRUE;
-				std::wstring wfilename = ffd.cFileName;
-				std::string filename = WStringToString(wfilename);
-// TODO?:				EscapeJSONString(filename, filename);
-				result += "\"" + filename + "\"";
-			} while (FindNextFile(hFind, &ffd) != 0);
+                if (bAddedOne)
+                    result += ",";
+                else
+                    bAddedOne = TRUE;
+                std::wstring wfilename = ffd.cFileName;
+                std::string filename = WStringToString(wfilename);
+// TODO?:                EscapeJSONString(filename, filename);
+                result += "\"" + filename + "\"";
+            } while (FindNextFile(hFind, &ffd) != 0);
 
-			FindClose(hFind);
-		} 
-		else {
-			return ConvertErrorCode(GetLastError());
-		}
+            FindClose(hFind);
+        } 
+        else {
+            return ConvertWinErrorCode(GetLastError());
+        }
 
-		result += "]";
-		retval = CefV8Value::CreateString(result);
-		return NO_ERROR;
+        result += "]";
+        retval = CefV8Value::CreateString(result);
+        return NO_ERROR;
     }
     
     int ExecuteIsDirectory(const CefV8ValueList& arguments,
@@ -327,16 +341,16 @@ public:
             return ERR_INVALID_PARAMS;
         
         std::string pathStr = arguments[0]->GetStringValue();
-		FixFilename(pathStr);
+        FixFilename(pathStr);
 
-		DWORD dwAttr = GetFileAttributes(StringToWString(pathStr).c_str());
+        DWORD dwAttr = GetFileAttributes(StringToWString(pathStr).c_str());
 
-		if (dwAttr == INVALID_FILE_ATTRIBUTES) {
-			return ConvertErrorCode(GetLastError()); 
-		}
+        if (dwAttr == INVALID_FILE_ATTRIBUTES) {
+            return ConvertWinErrorCode(GetLastError()); 
+        }
 
-		retval = CefV8Value::CreateBool((dwAttr & FILE_ATTRIBUTE_DIRECTORY) != 0);
-		return NO_ERROR;
+        retval = CefV8Value::CreateBool((dwAttr & FILE_ATTRIBUTE_DIRECTORY) != 0);
+        return NO_ERROR;
     }
     
     int ExecuteReadFile(const CefV8ValueList& arguments,
@@ -349,46 +363,46 @@ public:
         std::string pathStr = arguments[0]->GetStringValue();
         std::string encodingStr = arguments[1]->GetStringValue();
 
-		if (encodingStr != "utf8")
-			return ERR_UNSUPPORTED_ENCODING;
+        if (encodingStr != "utf8")
+            return ERR_UNSUPPORTED_ENCODING;
 
-		FixFilename(pathStr);
-		
-		std::wstring wPathStr = StringToWString(pathStr);
+        FixFilename(pathStr);
+        
+        std::wstring wPathStr = StringToWString(pathStr);
 
-		DWORD dwAttr;
-		dwAttr = GetFileAttributes(wPathStr.c_str());
-		if (INVALID_FILE_ATTRIBUTES == dwAttr)
-			return ConvertErrorCode(GetLastError());
+        DWORD dwAttr;
+        dwAttr = GetFileAttributes(wPathStr.c_str());
+        if (INVALID_FILE_ATTRIBUTES == dwAttr)
+            return ConvertWinErrorCode(GetLastError());
 
-		if (dwAttr & FILE_ATTRIBUTE_DIRECTORY)
-			return ERR_CANT_READ;
+        if (dwAttr & FILE_ATTRIBUTE_DIRECTORY)
+            return ERR_CANT_READ;
 
-		HANDLE hFile = CreateFile(wPathStr.c_str(), GENERIC_READ,
-			0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
-		int error = NO_ERROR;
+        HANDLE hFile = CreateFile(wPathStr.c_str(), GENERIC_READ,
+            0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
+        int error = NO_ERROR;
 
-		if (INVALID_HANDLE_VALUE == hFile)
-			return ConvertErrorCode(GetLastError()); 
+        if (INVALID_HANDLE_VALUE == hFile)
+            return ConvertWinErrorCode(GetLastError()); 
 
-		DWORD dwFileSize = GetFileSize(hFile, NULL);
-		DWORD dwBytesRead;
-		char* buffer = (char*)malloc(dwFileSize);
-		if (buffer && ReadFile(hFile, buffer, dwFileSize, &dwBytesRead, NULL)) {
-			std::string contents(buffer, dwFileSize);
-			retval = CefV8Value::CreateString(contents.c_str());
-		}
-		else {
-			if (!buffer)
-				error = ERR_UNKNOWN;
-			else
-				error = ConvertErrorCode(GetLastError());
-		}
-		CloseHandle(hFile);
-		if (buffer)
-			free(buffer);
+        DWORD dwFileSize = GetFileSize(hFile, NULL);
+        DWORD dwBytesRead;
+        char* buffer = (char*)malloc(dwFileSize);
+        if (buffer && ReadFile(hFile, buffer, dwFileSize, &dwBytesRead, NULL)) {
+            std::string contents(buffer, dwFileSize);
+            retval = CefV8Value::CreateString(contents.c_str());
+        }
+        else {
+            if (!buffer)
+                error = ERR_UNKNOWN;
+            else
+                error = ConvertWinErrorCode(GetLastError());
+        }
+        CloseHandle(hFile);
+        if (buffer)
+            free(buffer);
 
-		return error; 
+        return error; 
     }
     
     int ExecuteWriteFile(const CefV8ValueList& arguments,
@@ -403,43 +417,52 @@ public:
         std::string encodingStr = arguments[2]->GetStringValue();
         FixFilename(pathStr);
 
-		if (encodingStr != "utf8")
-			return ERR_UNSUPPORTED_ENCODING;
+        if (encodingStr != "utf8")
+            return ERR_UNSUPPORTED_ENCODING;
 
-		HANDLE hFile = CreateFile(StringToWString(pathStr).c_str(), GENERIC_WRITE,
-			0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
-		DWORD dwBytesWritten;
-		int error = NO_ERROR;
+        HANDLE hFile = CreateFile(StringToWString(pathStr).c_str(), GENERIC_WRITE,
+            0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
+        DWORD dwBytesWritten;
+        int error = NO_ERROR;
 
-		if (INVALID_HANDLE_VALUE == hFile)
-			return ConvertErrorCode(GetLastError(), false); 
+        if (INVALID_HANDLE_VALUE == hFile)
+            return ConvertWinErrorCode(GetLastError(), false); 
 
-		// TODO: Should write to temp file
-		// TODO: Encoding
-		if (!WriteFile(hFile, contentsStr.c_str(), contentsStr.length(), &dwBytesWritten, NULL)) {
-			error = ConvertErrorCode(GetLastError(), false);
-		}
+        // TODO: Should write to temp file
+        // TODO: Encoding
+        if (!WriteFile(hFile, contentsStr.c_str(), contentsStr.length(), &dwBytesWritten, NULL)) {
+            error = ConvertWinErrorCode(GetLastError(), false);
+        }
 
-		CloseHandle(hFile);
-		return error;
+        CloseHandle(hFile);
+        return error;
     }
 
-	/* In progress:
-	ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
+    int ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
                        CefRefPtr<CefV8Value>& retval,
                        CefString& exception)
-	{
-		if (arguments.size() != 1 || !arguments[0]->IsString())
+    {
+        if (arguments.size() != 1 || !arguments[0]->IsString())
             return ERR_INVALID_PARAMS;
 
-		std::string pathStr = arguments[0]->GetStringValue();
-		FixFilename(pathStr);
+        std::string pathStr = arguments[0]->GetStringValue();
+        FixFilename(pathStr);
 
-		struct _stat buffer;
-		int result = _stat(StringToWString(pathStr).c_str(), &buffer);
+        /* Alternative implementation
+        WIN32_FILE_ATTRIBUTE_DATA attribData;
+        GET_FILEEX_INFO_LEVELS FileInfosLevel;
+        GetFileAttributesEx( StringToWString(pathStr).c_str(), GetFileExInfoStandard, &attribData);*/
 
-			 
-	}*/
+
+        struct _stat buffer;
+        if(_wstat(StringToWString(pathStr).c_str(), &buffer) == -1) {
+            return ConvertErrnoCode(errno); 
+        }
+
+        retval = CefV8Value::CreateDate(buffer.st_mtime);
+
+        return NO_ERROR;
+    }
     
     int ExecuteSetPosixPermissions(const CefV8ValueList& arguments,
                        CefRefPtr<CefV8Value>& retval,
@@ -450,16 +473,13 @@ public:
         
         std::string pathStr = arguments[0]->GetStringValue();
         int mode = arguments[1]->GetIntValue();
-		FixFilename(pathStr);
+        FixFilename(pathStr);
 
-		if (_wchmod(StringToWString(pathStr).c_str(), mode) == -1) {
-			if (errno == ENOENT)
-				return ERR_NOT_FOUND;
-			else
-				return ERR_UNKNOWN;
-		}
+        if (_wchmod(StringToWString(pathStr).c_str(), mode) == -1) {
+            return ConvertErrnoCode(errno); 
+        }
 
-		return NO_ERROR;
+        return NO_ERROR;
     }
     
     int ExecuteDeleteFileOrDirectory(const CefV8ValueList& arguments,
@@ -470,36 +490,36 @@ public:
             return ERR_INVALID_PARAMS;
         
         std::string pathStr = arguments[0]->GetStringValue();
-		FixFilename(pathStr);
+        FixFilename(pathStr);
 
-		if (!DeleteFile(StringToWString(pathStr).c_str()))
-			return ConvertErrorCode(GetLastError());
+        if (!DeleteFile(StringToWString(pathStr).c_str()))
+            return ConvertWinErrorCode(GetLastError());
 
-		return NO_ERROR;
+        return NO_ERROR;
     }
 
-	void FixFilename(std::string& filename)
-	{
-		// Convert '/' to '\'
-		for (unsigned int i = 0; i < filename.length(); i++) {
-			if (filename[i] == '/')
-				filename[i] = '\\';
-		}
-	}
+    void FixFilename(std::string& filename)
+    {
+        // Convert '/' to '\'
+        for (unsigned int i = 0; i < filename.length(); i++) {
+            if (filename[i] == '/')
+                filename[i] = '\\';
+        }
+    }
 
-	std::wstring StringToWString(const std::string& s)
-	{
-		std::wstring temp(s.length(),L' ');
-		std::copy(s.begin(), s.end(), temp.begin());
-		return temp;
-	}
+    std::wstring StringToWString(const std::string& s)
+    {
+        std::wstring temp(s.length(),L' ');
+        std::copy(s.begin(), s.end(), temp.begin());
+        return temp;
+    }
 
-	std::string WStringToString(const std::wstring& s)
-	{
-		std::string temp(s.length(), ' ');
-		std::copy(s.begin(), s.end(), temp.begin());
-		return temp;
-	}
+    std::string WStringToString(const std::wstring& s)
+    {
+        std::string temp(s.length(), ' ');
+        std::copy(s.begin(), s.end(), temp.begin());
+        return temp;
+    }
 
     // Escapes characters that have special meaning in JSON
     void EscapeJSONString(const std::string& str, std::string& result) {
@@ -524,24 +544,42 @@ public:
         }
     }
 
-	int ConvertErrorCode(int errorCode, bool isReading = true)
-	{
-		switch (errorCode) {
-		case NO_ERROR:
-			return NO_ERROR;
-		case ERROR_PATH_NOT_FOUND:
-		case ERROR_FILE_NOT_FOUND:
-			return ERR_NOT_FOUND;
-		case ERROR_ACCESS_DENIED:
-			return isReading ? ERR_CANT_READ : ERR_CANT_WRITE;
-		case ERROR_WRITE_PROTECT:
-			return ERR_CANT_WRITE;
-		case ERROR_HANDLE_DISK_FULL:
-			return ERR_OUT_OF_SPACE;
-		default:
-			return ERR_UNKNOWN;
-		}
-	}
+    // Maps errors from errno.h to the brackets error codes
+    // found in brackets_extensions.js
+    int ConvertErrnoCode(int errorCode, bool isReading = true)
+    {
+        switch (errorCode) {
+        case NO_ERROR:
+            return NO_ERROR;
+        case EINVAL:
+            return ERR_INVALID_PARAMS;
+        case ENOENT:
+            return ERR_NOT_FOUND;
+        default:
+            return ERR_UNKNOWN;
+        }
+    }
+
+    // Maps errors from  WinError.h to the brackets error codes
+    // found in brackets_extensions.js
+    int ConvertWinErrorCode(int errorCode, bool isReading = true)
+    {
+        switch (errorCode) {
+        case NO_ERROR:
+            return NO_ERROR;
+        case ERROR_PATH_NOT_FOUND:
+        case ERROR_FILE_NOT_FOUND:
+            return ERR_NOT_FOUND;
+        case ERROR_ACCESS_DENIED:
+            return isReading ? ERR_CANT_READ : ERR_CANT_WRITE;
+        case ERROR_WRITE_PROTECT:
+            return ERR_CANT_WRITE;
+        case ERROR_HANDLE_DISK_FULL:
+            return ERR_OUT_OF_SPACE;
+        default:
+            return ERR_UNKNOWN;
+        }
+    }
 
 private:
     int lastError;
@@ -559,24 +597,24 @@ void InitBracketsExtensions()
     //NSString* sourcePath = [[NSBundle mainBundle] pathForResource:@"brackets_extensions" ofType:@"js"];
     //NSString* jsSource = [[NSString alloc] initWithContentsOfFile:sourcePath encoding:NSUTF8StringEncoding error:nil];
 
-	extern HINSTANCE hInst;
+    extern HINSTANCE hInst;
 
-	HRSRC hRes = FindResource(hInst, MAKEINTRESOURCE(IDS_BRACKETS_EXTENSIONS), MAKEINTRESOURCE(256));
-	DWORD dwSize;
-	LPBYTE pBytes = NULL;
+    HRSRC hRes = FindResource(hInst, MAKEINTRESOURCE(IDS_BRACKETS_EXTENSIONS), MAKEINTRESOURCE(256));
+    DWORD dwSize;
+    LPBYTE pBytes = NULL;
 
-	if(hRes)
-	{
-		HGLOBAL hGlob = LoadResource(hInst, hRes);
-		if(hGlob)
-		{
-			dwSize = SizeofResource(hInst, hRes);
-			pBytes = (LPBYTE)LockResource(hGlob);
-		}
-	}
+    if(hRes)
+    {
+        HGLOBAL hGlob = LoadResource(hInst, hRes);
+        if(hGlob)
+        {
+            dwSize = SizeofResource(hInst, hRes);
+            pBytes = (LPBYTE)LockResource(hGlob);
+        }
+    }
 
-	if (pBytes) {
-		std::string jsSource((const char *)pBytes, dwSize);
-		CefRegisterExtension("brackets", jsSource.c_str(), new BracketsExtensionHandler());
-	}
+    if (pBytes) {
+        std::string jsSource((const char *)pBytes, dwSize);
+        CefRegisterExtension("brackets", jsSource.c_str(), new BracketsExtensionHandler());
+    }
 }
