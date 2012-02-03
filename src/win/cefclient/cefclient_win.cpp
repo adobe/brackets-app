@@ -175,12 +175,12 @@ ATOM MyRegisterClass(HINSTANCE hInstance)
 	wcex.cbClsExtra		= 0;
 	wcex.cbWndExtra		= 0;
 	wcex.hInstance		= hInstance;
-	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_CEFCLIENT));
+	wcex.hIcon			= LoadIcon(hInstance, MAKEINTRESOURCE(IDI_BRACKETS));
 	wcex.hCursor		= LoadCursor(NULL, IDC_ARROW);
 	wcex.hbrBackground	= (HBRUSH)(COLOR_WINDOW+1);
 	wcex.lpszMenuName	= MAKEINTRESOURCE(IDC_CEFCLIENT);
 	wcex.lpszClassName	= szWindowClass;
-	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_SMALL));
+	wcex.hIconSm		= LoadIcon(wcex.hInstance, MAKEINTRESOURCE(IDI_BRACKETS_SMALL));
 
 	return RegisterClassEx(&wcex);
 }
@@ -384,7 +384,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         info.SetAsChild(hWnd, rect);
 
 		wchar_t initialUrl[MAX_PATH];
-		const wchar_t* appFolder = L"brackets-app";
+		const wchar_t* appFolder = L"Brackets.exe";
 
 		// TODO: Parse command line arguments for initial URL
 
@@ -393,7 +393,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		wchar_t *pStr = wcsstr(initialUrl, appFolder);
 		*pStr = NULL;
-		wcscat(pStr, L"brackets-app\\brackets\\src\\index.html");
+		wcscat(pStr, L"..\\..\\brackets\\src\\index.html");
 
 		pStr = initialUrl;
 		while (*pStr) {
