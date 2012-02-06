@@ -322,11 +322,12 @@ CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBro
     // app bundle and provide a mechanism for specifying a specific index.html
     // to load.
 
-    appPath = appPath.substr(0, appPath.rfind("/"));
-    if (appPath.find("xcodebuild") != std::string::npos)
+    if (appPath.find("xcodebuild") != std::string::npos) {
+        appPath = appPath.substr(0, appPath.rfind("/"));
         filePath = appPath + "/../../../../brackets/src/index.html";
-    else
-        filePath = appPath + "/../../brackets/src/index.html";
+    } else {
+        filePath = appPath + "/Contents/brackets/src/index.html";
+    }
         
     initialUrl = "file://" + filePath;
   }
