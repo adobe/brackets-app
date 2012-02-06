@@ -636,29 +636,95 @@ void InitBracketsExtensions()
 	}
 }
 
+//Simple stack class to ensure calls to Enter and Exit are balanced
+class StContextScope {
+public:
+	StContextScope( const CefRefPtr<CefV8Context>& ctx )
+		: m_ctx(NULL) {
+			if( ctx && ctx->Enter() ) {
+				m_ctx = ctx;
+			}
+	}
+
+	~StContextScope() {
+		if(m_ctx) {
+			m_ctx->Exit();
+		}
+	}
+
+	const CefRefPtr<CefV8Context>& GetContext() const { 
+		return m_ctx;
+	}
+
+private:
+	CefRefPtr<CefV8Context> m_ctx;
+
+};
 
 /**
  * Class for implementing native calls from native windows functionality to Brackets JavaScript code
  */
-void BracketsShellAPI::DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser)
+bool BracketsShellAPI::DelegateQuitToBracketsJS(const CefRefPtr<CefBrowser>& browser)
 {
-	ExecuteJavaScript(browser, "handleRequestQuit();");
+	return CallShellAPI(browser, "handleRequestQuit");
 }
 
-void BracketsShellAPI::DelegateCloseToBracketsJS(CefRefPtr<CefBrowser> browser)
+bool BracketsShellAPI::DelegateCloseToBracketsJS(const CefRefPtr<CefBrowser>& browser)
 {
-	ExecuteJavaScript(browser, "handleRequestClose();");
+	return CallShellAPI(browser, "handleRequestCloseWindow");
 }
 
 /**
- * Calls the provided function call on window.brackets.shellAPI. The function should include trailing parens and
- * parameters. For examples: "doSomething()", "doSomethingElse(paramA, paramB)"
+ * Calls the provided function call on window.brackets.shellAPI. The functionName should just be the name on the 
+ * shellAPI object. The return value is whether the function was called or not.
+ * For examples: "doSomething" calls "window.brackets.shellAPI.doSomething()" in the client side.
  * The JavaScript side of this API is defined
  * in shellAPI.h
  */
-void BracketsShellAPI::ExecuteJavaScript(CefRefPtr<CefBrowser> browser, const CefString& shellAPIFunction){
-	std::string jsCode = "window.brackets.shellAPI." + std::string(shellAPIFunction);
-	CefRefPtr<CefFrame> frame = browser->GetMainFrame();
-	CefString url = frame->GetURL();
-	browser->GetMainFrame()->ExecuteJavaScript(jsCode, url, 0);
+bool BracketsShellAPI::CallShellAPI(const CefRefPtr<CefBrowser>& browser, const CefString& functionName )
+{
+	CefRefPtr<CefFrame> frame = browser->GetMainFrame();  
+	StContextScope ctx( frame->GetV8Context() );
+	if( !ctx.GetContext() ) {
+		return false;
+	}
+
+	CefRefPtr<CefV8Value> win = ctx.GetContext()->GetGlobal();
+
+	if( !win->HasValue("brackets") ) {
+		return false;
+	}
+
+	CefRefPtr<CefV8Value> brackets = win->GetValue("brackets");
+	if( !brackets ) {
+		return false;
+	}
+
+	if( !brackets->HasValue("shellAPI") ) {
+		return false;
+	}
+
+	CefRefPtr<CefV8Value> shellAPI = brackets->GetValue("shellAPI");
+	if( !shellAPI ) {
+		return false;
+	}
+
+	if( !shellAPI->HasValue("handleRequestCloseWindow") ) {
+		return false;
+	}
+
+	CefRefPtr<CefV8Value> handleRequestCloseWindow = shellAPI->GetValue(functionName);
+	if( !handleRequestCloseWindow ) {
+		return false;
+	}
+
+	if( !handleRequestCloseWindow->IsFunction() ) {
+		return false;
+	}
+
+	CefV8ValueList args;
+	CefRefPtr<CefV8Value> retval;
+	CefRefPtr<CefV8Exception> e;
+	bool called = handleRequestCloseWindow->ExecuteFunction(brackets, args, retval, e, false);
+	return called;
 }

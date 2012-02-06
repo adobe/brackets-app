@@ -9,9 +9,9 @@ void InitBracketsExtensions();
 class BracketsShellAPI {
 
 public:
-	static void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser);
-	static void DelegateCloseToBracketsJS(CefRefPtr<CefBrowser> browser);
-	static void ExecuteJavaScript(CefRefPtr<CefBrowser> browser, const CefString& jsCode);
+	static bool DelegateQuitToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+	static bool DelegateCloseToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+	static bool CallShellAPI(const CefRefPtr<CefBrowser>& browser, const CefString& functionName );
 };
 
 

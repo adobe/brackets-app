@@ -426,12 +426,11 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case IDM_EXIT:
           // Brackets: Delegate to JavaScript code to handle quit
           // so that JavaScript can handle things like saving files
-          BracketsShellAPI::DelegateQuitToBracketsJS(browser);
+          if( BracketsShellAPI::DelegateQuitToBracketsJS(browser) ) {
+            return 0;
+          }
           
-          /* Brackets: commented out default handling for IDM_EXIT below since the JavaScript
-           *  side will confirm quiting and then call QuitApplication (handled in brackets_extensions.cpp)
-           *  to actually quit */
-          //DestroyWindow(hWnd);
+          DestroyWindow(hWnd);
           return 0;
         case ID_WARN_CONSOLEMESSAGE:
 		/*
@@ -672,27 +671,18 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
       break;
 
     case WM_CLOSE:
-      // Brackets: commented out default handling of quit via close since JavaScript will handle this
-      /*if (g_handler.get()) {
+      if (g_handler.get()) {
         CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
         if (browser.get()) {
+          // Brackets:  Delegate to JavaScript code to handle quit via close
+          // so that JavaScript can handle things like saving files
+          if(BracketsShellAPI::DelegateCloseToBracketsJS(browser)) {
+            return 0;
+          }
           // Let the browser window know we are about to destroy it.	
           browser->ParentWindowWillClose();
         }
-      }*/
-
-      // Brackets:  Delegate to JavaScript code to handle quit via close
-      // so that JavaScript can handle things like saving files
-     {
-		  CefRefPtr<CefBrowser> browser;
-		  if(g_handler.get()){
-			  browser = g_handler->GetBrowser();
-			  BracketsShellAPI::DelegateQuitToBracketsJS(browser);   
-		  }
       }
-      // Brackets: 
-      return 0;
-
       break;
 
     case WM_DESTROY:

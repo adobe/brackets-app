@@ -47,6 +47,7 @@ void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 bool ClientHandler::DoClose(CefRefPtr<CefBrowser> browser)
 {
   REQUIRE_UI_THREAD();
+  m_OpenBrowserWindowMap.erase( browser->GetWindowHandle() );
 
   if (m_BrowserHwnd == browser->GetWindowHandle()) {
     // Since the main window contains the browser window, we need to close
@@ -58,8 +59,6 @@ bool ClientHandler::DoClose(CefRefPtr<CefBrowser> browser)
     // the parent above.)
     return true;
   }
-
-  m_OpenBrowserWindowMap.erase( browser->GetWindowHandle() );
 
   // A popup browser window is not contained in another window, so we can let
   // these windows close by themselves.

@@ -8,6 +8,7 @@
 #include "resource.h"
 #include "resource_util.h"
 #include "string_util.h"
+#include "brackets_extensions.h"
 
 #ifdef TEST_REDIRECT_POPUP_URLS
 #include "client_popup_handler.h"
@@ -64,11 +65,12 @@ static WNDPROC g_popupWndOldProc = NULL;
 LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 {
   //For now, we are only interest in WM_COMMAND's that we know are in our menus
+  //and WM_CLOSE so we can delegate that back to the browser
+  CefRefPtr<CefBrowser> browser = GetBrowserForWindow(hWnd);
   switch (message)
   {
     case WM_COMMAND:
       {
-        CefRefPtr<CefBrowser> browser = GetBrowserForWindow(hWnd);
         int wmId    = LOWORD(wParam);
         int wmEvent = HIWORD(wParam);
         // Parse the menu selections:
@@ -93,6 +95,16 @@ LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         }
       }
       break;
+
+        case WM_CLOSE:
+          if (browser.get()) {
+            // Brackets:  Delegate to JavaScript code to handle quit via close
+            // so that JavaScript can handle things like saving files
+            if(BracketsShellAPI::DelegateCloseToBracketsJS(browser)) {
+              return 0;
+            }
+        }
+        break;
   }
 
   if (g_popupWndOldProc) 
