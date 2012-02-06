@@ -22,6 +22,8 @@ static const int ERR_OUT_OF_SPACE           = 7;
 static const int ERR_NOT_FILE               = 8;
 static const int ERR_NOT_DIRECTORY          = 9;
 
+
+
 /**
  * Class for implementing native calls from Brackets JavaScript code to native windows functionality
  */
@@ -452,10 +454,12 @@ public:
 	{
 		PostQuitMessage(0);
 
-		// TODO: Any errors to handle?
+		return NO_ERROR;
 	}
-                       CefRefPtr<CefV8Value>& retval,
-                       CefString& exception)
+
+    int ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
+        CefRefPtr<CefV8Value>& retval,
+        CefString& exception)
     {
         if (arguments.size() != 1 || !arguments[0]->IsString())
             return ERR_INVALID_PARAMS;
@@ -640,23 +644,30 @@ void InitBracketsExtensions()
  */
 void BracketsShellAPI::DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser)
 {
-	ExecuteJavaScript(browser, "handleRequestQuit();");
+	DispatchBracketsJSCommand(browser, FILE_QUIT);
 }
 
 void BracketsShellAPI::DelegateCloseToBracketsJS(CefRefPtr<CefBrowser> browser)
 {
-	ExecuteJavaScript(browser, "handleRequestClose();");
+	DispatchBracketsJSCommand(browser, FILE_CLOSE_WINDOW);
 }
 
 /**
- * Calls the provided function call on window.brackets.shellAPI. The function should include trailing parens and
- * parameters. For examples: "doSomething()", "doSomethingElse(paramA, paramB)"
- * The JavaScript side of this API is defined
- * in shellAPI.h
+ * Event constants for TriggerBracketsJSEvent
+ * These constants should be kept in sunc wiuth Commands.js
  */
-void BracketsShellAPI::ExecuteJavaScript(CefRefPtr<CefBrowser> browser, const CefString& shellAPIFunction){
-	std::string jsCode = "window.brackets.shellAPI." + std::string(shellAPIFunction);
-	CefRefPtr<CefFrame> frame = browser->GetMainFrame();
-	CefString url = frame->GetURL();
-	browser->GetMainFrame()->ExecuteJavaScript(jsCode, url, 0);
+const std::string BracketsShellAPI::FILE_QUIT = "file.quit";
+const std::string BracketsShellAPI::FILE_CLOSE_WINDOW = "file.close_window";
+
+
+
+/**
+ * Provides a mechanism to execute Brackets JavaScript commands from native code. This function will
+ * call CommandManager.execute(commandName) in JavaScript. 
+ */
+void BracketsShellAPI::DispatchBracketsJSCommand( CefRefPtr<CefBrowser> browser, BracketsCommandName &commandName) {
+    std::string jsCode = "window.brackets.shellAPI.executeCommand('" + std::string(commandName) + "');";
+    CefRefPtr<CefFrame> frame = browser->GetMainFrame();
+    CefString url = frame->GetURL();
+    browser->GetMainFrame()->ExecuteJavaScript(jsCode, url, 0);
 }
