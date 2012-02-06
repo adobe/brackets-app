@@ -35,7 +35,26 @@ public:
     {        
         int errorCode = -1;
         
-        if (name == "ShowOpenDialog") 
+        if (name == "RunApplication")
+        {
+            // runApplication(pathToExecutable, parameters)
+            //
+            // Inputs:
+            //  pathToExecutable - path to the executable of the application to be run
+            //  parameters - string of parameters that should be passed to the application
+            //
+            // Output:
+            //  whatever the application returns
+            //
+            // Error:
+            //  NO_ERROR
+            //  ERR_INVALID_PARAMS - invalid parameters
+            //  ERR_NOT_FOUND - application not found
+            //  ERR_UNKNOWN - unable to launch applications
+            
+            errorCode = ExecuteRunApplication(arguments, retval, exception);
+        }
+        else if (name == "ShowOpenDialog") 
         {
             // showOpenDialog(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes)
             //
@@ -209,6 +228,41 @@ public:
         }
         
         return false;
+    }
+    
+    int ExecuteRunApplication(const CefV8ValueList& arguments,
+                              CefRefPtr<CefV8Value>& retval,
+                              CefString& exception)
+    {
+        if (arguments.size() != 2 || !arguments[0]->IsString() || !arguments[1]->IsArray())
+            return ERR_INVALID_PARAMS;
+        
+        // Get the application URL from the bundle identifier
+        std::string applicationBundleIdentifier = arguments[0]->GetStringValue();
+        NSWorkspace * ws = [NSWorkspace sharedWorkspace];
+        NSURL * appURL = [ws URLForApplicationWithBundleIdentifier:[NSString stringWithUTF8String:applicationBundleIdentifier.c_str()]];
+        if( !appURL ) {
+            return ERR_NOT_FOUND;
+        }
+        
+        // extract the parameters array and create the configuration dictionary
+        int parametersCount = arguments[1]->GetArrayLength();
+        NSMutableArray *parameters = [NSMutableArray arrayWithCapacity:parametersCount];
+        std::string parameterString;
+        for( int i=0; i < parametersCount; i++ ) {
+            parameterString = arguments[1]->GetValue(i)->GetStringValue();
+            [parameters addObject:[NSString stringWithUTF8String:parameterString.c_str()]];
+        }
+        NSMutableDictionary* appConfig = [NSDictionary dictionaryWithObject:parameters forKey:NSWorkspaceLaunchConfigurationArguments];
+
+        // run the application
+        NSError *error = nil;
+        if( ![ws launchApplicationAtURL:appURL options:NSWorkspaceLaunchDefault configuration:appConfig error:&error] ) {
+            // todo: interpret the error object and return a useful error code
+            return ERR_UNKNOWN;
+        }
+        
+        return NO_ERROR;
     }
     
     int ExecuteShowOpenDialog(const CefV8ValueList& arguments,
