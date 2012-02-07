@@ -753,7 +753,11 @@ bool BracketsShellAPI::DispatchBracketsJSCommand(const CefRefPtr<CefBrowser>& br
 	bool called = executeCommand->ExecuteFunction(brackets, args, retval, e, false);
 
 	if( !called ) {
-		return true; //if we didn't 
+		return true; //if we didn't call correctly, do the default action
+	}
+
+	if( e ) {
+		return true; //if there was an exception, do the default action
 	}
 
 	bool preventDefault = false;
