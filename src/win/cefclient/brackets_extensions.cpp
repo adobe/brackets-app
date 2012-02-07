@@ -42,7 +42,7 @@ public:
                          const CefV8ValueList& arguments,
                          CefRefPtr<CefV8Value>& retval,
                          CefString& exception)
-    {  
+    {
         int errorCode = -1;
         
         if (name == "ShowOpenDialog") 
@@ -203,11 +203,11 @@ public:
             
             errorCode = ExecuteDeleteFileOrDirectory(arguments, retval, exception);
         }
-		else if (name == "QuitApplication")
-		{
-			// TODO comments
-			errorCode = ExecuteQuitApplication(arguments, retval, exception);
-		}
+        else if (name == "QuitApplication")
+        {
+            // TODO comments
+            errorCode = ExecuteQuitApplication(arguments, retval, exception);
+        }
         else if (name == "GetLastError")
         {
             // Special case private native function to return the last error code.
@@ -647,26 +647,26 @@ void InitBracketsExtensions()
 //Simple stack class to ensure calls to Enter and Exit are balanced
 class StContextScope {
 public:
-	StContextScope( const CefRefPtr<CefV8Context>& ctx )
-		: m_ctx(NULL) {
-			if( ctx && ctx->Enter() ) {
-				m_ctx = ctx;
-			}
-	}
-
-	~StContextScope() {
-		if(m_ctx) {
-			m_ctx->Exit();
-		}
-	}
-
-	const CefRefPtr<CefV8Context>& GetContext() const { 
-		return m_ctx;
-	}
-
+  StContextScope( const CefRefPtr<CefV8Context>& ctx )
+  : m_ctx(NULL) {
+    if( ctx && ctx->Enter() ) {
+      m_ctx = ctx;
+    }
+  }
+  
+  ~StContextScope() {
+    if(m_ctx) {
+      m_ctx->Exit();
+    }
+  }
+  
+  const CefRefPtr<CefV8Context>& GetContext() const { 
+    return m_ctx;
+  }
+  
 private:
-	CefRefPtr<CefV8Context> m_ctx;
-
+  CefRefPtr<CefV8Context> m_ctx;
+  
 };
 
 /**

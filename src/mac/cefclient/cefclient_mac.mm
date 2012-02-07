@@ -84,7 +84,10 @@ static NSAutoreleasePool* g_autopool = nil;
 
 - (IBAction)reload:(id)sender {
   if (g_handler.get() && g_handler->GetBrowserHwnd())
-    g_handler->GetBrowser()->Reload();
+    if( !BracketsShellAPI::DispatchReloadToBracketsJS(g_handler->GetBrowser()) ) {
+      return;
+    }
+    g_handler->GetBrowser()->ReloadIgnoreCache();
 }
 
 - (IBAction)stopLoading:(id)sender {
@@ -163,7 +166,7 @@ static NSAutoreleasePool* g_autopool = nil;
   CefRefPtr<CefBrowser> browser = GetBrowserForWindow(window);
   if(browser && !IsDevToolsBrowser(browser)) {
     //If we have a browser, we'll let it handle the window closing
-    if( DelegateWindowCloseToBracketsJS(browser) ) {
+    if( !BracketsShellAPI::DispatchCloseToBracketsJS(browser) ) {
       return NO;
     }
   }
@@ -312,7 +315,10 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 - (IBAction)reload:(id)sender {
   CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
   if(browser) {
-    browser->Reload();
+    if( !BracketsShellAPI::DispatchReloadToBracketsJS(browser) ) {
+      return;
+    }
+    browser->ReloadIgnoreCache();
   }
 }
 
@@ -344,8 +350,9 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
   CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
   if(browser) {
     //If we have a browser, we'll let it handle the termination
-    DelegateQuitToBracketsJS(browser);
-    return NSTerminateCancel;
+    if( !BracketsShellAPI::DispatchQuitToBracketsJS(browser) ) {
+      return NSTerminateCancel;
+    }
   }
   return NSTerminateNow;
 }

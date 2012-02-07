@@ -23,7 +23,7 @@ public:
     // Command constants (should match Commands.js)
     static BracketsCommandName FILE_QUIT;
     static BracketsCommandName FILE_CLOSE_WINDOW;
-	static BracketsCommandName FILE_RELOAD;
+    static BracketsCommandName FILE_RELOAD;
 };
 
 
