@@ -145,6 +145,14 @@ static NSAutoreleasePool* g_autopool = nil;
   if(g_handler.get() && g_handler->GetBrowserHwnd()) {
     // Give focus to the browser window.
     g_handler->GetBrowser()->SetFocus(true);
+    
+    // CEF doesn't handle focus/blur correctly. See CEF bug #501 for details:
+    // http://code.google.com/p/chromiumembedded/issues/detail?id=501
+    //
+    // To work around this, send a fake focus event when the window is activated
+    // TODO: Remove once the CEF bug is fixed.
+    CefString jsCode = "brackets.sendFakeFocusEvent()";
+    g_handler->GetBrowser()->GetMainFrame()->ExecuteJavaScript(jsCode, "about:blank", 0);
   }
 }
 
