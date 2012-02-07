@@ -3,15 +3,21 @@
 
 #include "include/cef.h"
 
+
 // Register the Brackets extension handler.
 void InitBracketsExtensions();
 
+typedef const std::string BracketsCommandName;
+
+/**
+ * BracketsShellAPI contains functionality for making calls from native code to JavaScript
+ */
 class BracketsShellAPI {
 
 public:
-	static bool DelegateQuitToBracketsJS(const CefRefPtr<CefBrowser>& browser);
-	static bool DelegateCloseToBracketsJS(const CefRefPtr<CefBrowser>& browser);
-	static bool CallShellAPI(const CefRefPtr<CefBrowser>& browser, const CefString& functionName );
+	static void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser);
+	static void DelegateCloseToBracketsJS(CefRefPtr<CefBrowser> browser);
+	static void ExecuteJavaScript(CefRefPtr<CefBrowser> browser, const CefString& jsCode);
 };
 
 

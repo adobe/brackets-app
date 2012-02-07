@@ -141,15 +141,18 @@ if (!brackets.app)
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
     native function IsDirectory();
+    native function GetFileModificationTime();
     brackets.fs.stat = function(path, callback) {
         var isDir = IsDirectory(path);
+        var modtime = GetFileModificationTime(path);
         callback(getLastError(), {
             isFile: function() {
                 return !isDir;
             },
             isDirectory: function() {
                 return isDir;
-            }
+            },
+            mtime: modtime
         });
     };
  

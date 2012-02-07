@@ -384,7 +384,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         info.SetAsChild(hWnd, rect);
 
 		wchar_t initialUrl[MAX_PATH];
-		const wchar_t* appFolder = L"brackets-app";
+		const wchar_t* appFolder = L"Brackets.exe";
 
 		// TODO: Parse command line arguments for initial URL
 
@@ -393,7 +393,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 
 		wchar_t *pStr = wcsstr(initialUrl, appFolder);
 		*pStr = NULL;
-		wcscat(pStr, L"brackets-app\\brackets\\src\\index.html");
+		wcscat(pStr, L"..\\..\\brackets\\src\\index.html");
 
 		pStr = initialUrl;
 		while (*pStr) {
