@@ -239,6 +239,7 @@ public:
 
         if (canChooseDirectories) {
             BROWSEINFO bi = {0};
+            bi.hwndOwner = GetActiveWindow();
             bi.lpszTitle = wtitle.c_str();
             bi.ulFlags = BIF_NEWDIALOGSTYLE;
             LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
@@ -258,6 +259,7 @@ public:
             OPENFILENAME ofn;
 
             ZeroMemory(&ofn, sizeof(ofn));
+            ofn.hwndOwner = GetActiveWindow();
             ofn.lStructSize = sizeof(ofn);
             ofn.lpstrFile = szFile;
             ofn.nMaxFile = MAX_PATH;
