@@ -1,25 +1,30 @@
-#ifndef _BRACKETS_EXTENSION_TEST_H
-#define _BRACKETS_EXTENSION_TEST_H
+#ifndef _BRACKETS_EXTENSIONS_H
+#define _BRACKETS_EXTENSIONS_H
 
 #include "include/cef.h"
+
 
 // Register the Brackets extension handler.
 void InitBracketsExtensions();
 
-// Run the test.
-void RunBracketsExtensionTest(CefRefPtr<CefBrowser> browser);
+typedef const std::string BracketsCommandName;
 
-// Tell Brackets to open the specified file
-void OpenFile(const char *filename, CefRefPtr<CefBrowser> browser);
+/**
+ * BracketsShellAPI contains functionality for making calls from native code to JavaScript
+ */
+class BracketsShellAPI {
 
-//Callback to Brackets to let it know a native quit has been fired
-void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser);
+public:
+    static bool DispatchQuitToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+    static bool DispatchCloseToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+	static bool DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+    static bool DispatchBracketsJSCommand(const CefRefPtr<CefBrowser>& browser, BracketsCommandName &command);
 
-//Callback to Brackets to let it know a native window close has been fired
-bool DelegateWindowCloseToBracketsJS(CefRefPtr<CefBrowser> browser);
-
-//Utility function to identify dev tool browsers
-bool IsDevToolsBrowser( CefRefPtr<CefBrowser> browser );
+    // Command constants (should match Commands.js)
+    static BracketsCommandName FILE_QUIT;
+    static BracketsCommandName FILE_CLOSE_WINDOW;
+    static BracketsCommandName FILE_RELOAD;
+};
 
 #ifdef __cplusplus
 #ifdef __OBJC__
@@ -36,6 +41,9 @@ class NSWindow;
 //Utility function that maps NSWindows to the browser that they belong to
 CefRefPtr<CefBrowser> GetBrowserForWindow(const BracketsMainWindowHandle wnd);
 
+//Utility function to identify dev tool browsers
+bool IsDevToolsBrowser( CefRefPtr<CefBrowser> browser );
+
 //Get the devtoools browser for the window (or null if it is not the dev tools)
 CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBrowser);
-#endif // _BRACKETS_EXTENSION_TEST_H
+#endif // _BRACKETS_EXTENSIONS_H

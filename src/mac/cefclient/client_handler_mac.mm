@@ -254,7 +254,7 @@ CefRefPtr<CefBrowser> GetBrowserForWindow(const NSWindow* wnd);
   CefRefPtr<CefBrowser> browser = GetBrowserForWindow(window);
   if(browser && !IsDevToolsBrowser(browser)) {
     //If we have a browser, we'll let it handle the window closing (for now same a quit)
-    if( DelegateWindowCloseToBracketsJS(browser) ) {
+    if( !BracketsShellAPI::DispatchCloseToBracketsJS(browser) ) {
       return NO;
     }
   }
