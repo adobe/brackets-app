@@ -44,6 +44,17 @@ void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 }
 */
 
+void ClientHandler::CloseAllBrowsers()
+{
+	while( !m_OpenBrowserWindowMap.empty() )
+	{
+		BrowserWindowMap::iterator i = m_OpenBrowserWindowMap.begin();
+		CefRefPtr<CefBrowser> browser = i->second;
+		m_OpenBrowserWindowMap.erase(i);
+		browser->CloseBrowser();
+	}
+}
+
 bool ClientHandler::DoClose(CefRefPtr<CefBrowser> browser)
 {
   REQUIRE_UI_THREAD();

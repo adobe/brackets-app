@@ -1,5 +1,6 @@
 #include "brackets_extensions.h"
 #include "Resource.h"
+#include "client_handler.h"
 
 #include <stdio.h>
 #include <sys/types.h>
@@ -7,6 +8,7 @@
 #include <ShlObj.h>
 #include <wchar.h>
 
+extern CefRefPtr<ClientHandler> g_handler;
 
 
 // Error values. These MUST be in sync with the error values
@@ -452,6 +454,10 @@ public:
                        CefRefPtr<CefV8Value>& retval,
                        CefString& exception)
 	{
+		if (g_handler.get()) {
+			g_handler->CloseAllBrowsers();
+			return NO_ERROR;
+		}
 		PostQuitMessage(0);
 
 		return NO_ERROR;
