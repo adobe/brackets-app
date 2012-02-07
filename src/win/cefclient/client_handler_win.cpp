@@ -77,12 +77,22 @@ LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
         switch (wmId)
         {
         case IDM_CLOSE:
-			if(browser.get())
+			if (browser.get()) {
+				// Brackets:  Delegate to JavaScript code to handle quit via close
+				// so that JavaScript can handle things like saving files
+				if( !BracketsShellAPI::DispatchCloseToBracketsJS(browser) ) {
+					return 0;
+				}
 				browser->CloseBrowser();
+			}
 			return 0;
         case IDC_NAV_RELOAD:  // Reload button
-          if(browser.get())
-            browser->ReloadIgnoreCache();
+          if(browser.get()) {
+			  if( !BracketsShellAPI::DispatchReloadToBracketsJS(browser) ) {
+                return 0;
+			  }
+			  browser->ReloadIgnoreCache();
+		  }
           return 0;
         case ID_TESTS_DEVTOOLS_SHOW:
           if (browser.get())
@@ -100,7 +110,7 @@ LRESULT CALLBACK PopupWndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lPa
           if (browser.get()) {
             // Brackets:  Delegate to JavaScript code to handle quit via close
             // so that JavaScript can handle things like saving files
-            if(BracketsShellAPI::DelegateCloseToBracketsJS(browser)) {
+            if(!BracketsShellAPI::DispatchCloseToBracketsJS(browser)) {
               return 0;
             }
         }

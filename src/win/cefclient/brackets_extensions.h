@@ -15,9 +15,15 @@ typedef const std::string BracketsCommandName;
 class BracketsShellAPI {
 
 public:
-	static void DelegateQuitToBracketsJS(CefRefPtr<CefBrowser> browser);
-	static void DelegateCloseToBracketsJS(CefRefPtr<CefBrowser> browser);
-	static void ExecuteJavaScript(CefRefPtr<CefBrowser> browser, const CefString& jsCode);
+    static bool DispatchQuitToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+    static bool DispatchCloseToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+	static bool DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+    static bool DispatchBracketsJSCommand(const CefRefPtr<CefBrowser>& browser, BracketsCommandName &command);
+
+    // Command constants (should match Commands.js)
+    static BracketsCommandName FILE_QUIT;
+    static BracketsCommandName FILE_CLOSE_WINDOW;
+	static BracketsCommandName FILE_RELOAD;
 };
 
 

@@ -426,7 +426,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case IDM_EXIT:
           // Brackets: Delegate to JavaScript code to handle quit
           // so that JavaScript can handle things like saving files
-          if( BracketsShellAPI::DelegateQuitToBracketsJS(browser) ) {
+          if( !BracketsShellAPI::DispatchQuitToBracketsJS(browser) ) {
             return 0;
           }
           
@@ -492,8 +492,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             browser->GoForward();
           return 0;
         case IDC_NAV_RELOAD:  // Reload button
-          if(browser.get())
-            browser->Reload();
+          if(browser.get()) {
+			if( !BracketsShellAPI::DispatchReloadToBracketsJS(browser) ) {
+              return 0;
+			}
+			browser->ReloadIgnoreCache();
+		  }
           return 0;
         case IDC_NAV_STOP:  // Stop button
           if(browser.get())
@@ -676,7 +680,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         if (browser.get()) {
           // Brackets:  Delegate to JavaScript code to handle quit via close
           // so that JavaScript can handle things like saving files
-          if(BracketsShellAPI::DelegateCloseToBracketsJS(browser)) {
+          if(!BracketsShellAPI::DispatchCloseToBracketsJS(browser)) {
             return 0;
           }
           // Let the browser window know we are about to destroy it.	
