@@ -163,7 +163,7 @@ if (!brackets.app)
      * TODO comments
      */
      native function QuitApplication();
-     brackets.app.Quit = function() {
+     brackets.app.quit = function() {
         QuitApplication();
      };
     
