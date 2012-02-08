@@ -426,8 +426,10 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         case IDM_EXIT:
           // Brackets: Delegate to JavaScript code to handle quit
           // so that JavaScript can handle things like saving files
-          if( !BracketsShellAPI::DispatchQuitToBracketsJS(browser) ) {
-            return 0;
+          if (g_handler.get()) {
+            if (!g_handler->DispatchQuitToAllBrowsers()) {
+              return NO_ERROR;
+            }
           }
           
           DestroyWindow(hWnd);
@@ -677,13 +679,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
       if (g_handler.get()) {
         CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
-        if (browser.get()) {
-          // Brackets:  Delegate to JavaScript code to handle quit via close
-          // so that JavaScript can handle things like saving files
-          if(!BracketsShellAPI::DispatchCloseToBracketsJS(browser)) {
-            return 0;
-          }
-          // Let the browser window know we are about to destroy it.	
+        //currently brackets doesn't handle multiple browser windows that well. 
+		//Most of this code assume a single "main" browser window. If this one
+		//goes away, so goes the others, so lets give them all a change to close first
+		if (!g_handler->DispatchQuitToAllBrowsers()) {
+		  return 0;
+		}
+        
+		// Let the browser window know we are about to destroy it.
+		if (browser) {
           browser->ParentWindowWillClose();
         }
       }

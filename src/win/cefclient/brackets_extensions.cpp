@@ -457,8 +457,9 @@ public:
                        CefString& exception)
 	{
 		if (g_handler.get()) {
-			g_handler->CloseAllBrowsers();
-			return NO_ERROR;
+			if (!g_handler->DispatchQuitToAllBrowsers()) {
+				return NO_ERROR;
+			}
 		}
 		PostQuitMessage(0);
 
