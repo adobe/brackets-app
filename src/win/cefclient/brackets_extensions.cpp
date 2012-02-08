@@ -452,23 +452,23 @@ public:
         return error;
     }
 
-	int ExecuteQuitApplication(const CefV8ValueList& arguments,
-                       CefRefPtr<CefV8Value>& retval,
-                       CefString& exception)
-	{
-		if (g_handler.get()) {
-			if (!g_handler->DispatchQuitToAllBrowsers()) {
-				return NO_ERROR;
-			}
-		}
-		PostQuitMessage(0);
+  int ExecuteQuitApplication(const CefV8ValueList& arguments,
+                             CefRefPtr<CefV8Value>& retval,
+                             CefString& exception)
+  {
+    if (g_handler.get()) {
+      if (!g_handler->DispatchQuitToAllBrowsers()) {
+        return NO_ERROR;
+      }
+    }
+    PostQuitMessage(0);
 
-		return NO_ERROR;
-	}
+    return NO_ERROR;
+  }
 
     int ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
-        CefRefPtr<CefV8Value>& retval,
-        CefString& exception)
+                                       CefRefPtr<CefV8Value>& retval,
+                                       CefString& exception)
     {
         if (arguments.size() != 1 || !arguments[0]->IsString())
             return ERR_INVALID_PARAMS;
@@ -476,10 +476,10 @@ public:
         std::string pathStr = arguments[0]->GetStringValue();
         FixFilename(pathStr);
 
-		// Remove trailing "\", if present. _wstat will fail with a "file not found"
-		// error if a directory has a trailing '\' in the name.
-		if (pathStr[pathStr.length() - 1] == '\\')
-			pathStr[pathStr.length() - 1] = 0;
+    // Remove trailing "\", if present. _wstat will fail with a "file not found"
+    // error if a directory has a trailing '\' in the name.
+    if (pathStr[pathStr.length() - 1] == '\\')
+      pathStr[pathStr.length() - 1] = 0;
 
         /* Alternative implementation
         WIN32_FILE_ATTRIBUTE_DATA attribData;
@@ -508,14 +508,14 @@ public:
         int mode = arguments[1]->GetIntValue();
         FixFilename(pathStr);
 
-		/* TODO: Implement me! _wchmod() uses different parameters than chmod(), and
-		/  will _not_ always work on directories. For now, do nothing and return NO_ERROR
-		/  so most unit test can at least be run. 
+    /* TODO: Implement me! _wchmod() uses different parameters than chmod(), and
+    /  will _not_ always work on directories. For now, do nothing and return NO_ERROR
+    /  so most unit test can at least be run. 
 
         if (_wchmod(StringToWString(pathStr).c_str(), mode) == -1) {
             return ConvertErrnoCode(errno); 
         }
-		*/
+    */
 
         return NO_ERROR;
     }
@@ -687,17 +687,17 @@ private:
  */
 bool BracketsShellAPI::DispatchQuitToBracketsJS(const CefRefPtr<CefBrowser>& browser)
 {
-	return DispatchBracketsJSCommand(browser, FILE_QUIT);
+  return DispatchBracketsJSCommand(browser, FILE_QUIT);
 }
 
 bool BracketsShellAPI::DispatchCloseToBracketsJS(const CefRefPtr<CefBrowser>& browser)
 {
-	return DispatchBracketsJSCommand(browser, FILE_CLOSE_WINDOW);
+  return DispatchBracketsJSCommand(browser, FILE_CLOSE_WINDOW);
 }
 
 bool BracketsShellAPI::DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& browser)
 {
-	return DispatchBracketsJSCommand(browser, FILE_RELOAD);
+  return DispatchBracketsJSCommand(browser, FILE_RELOAD);
 }
 
 /**
@@ -720,64 +720,64 @@ const std::string BracketsShellAPI::FILE_RELOAD = "file.reload";
  * the value is false, else the value is true.
  */
 bool BracketsShellAPI::DispatchBracketsJSCommand(const CefRefPtr<CefBrowser>& browser, BracketsCommandName &command){
-	CefRefPtr<CefFrame> frame = browser->GetMainFrame();  
-	StContextScope ctx( frame->GetV8Context() );
-	if( !ctx.GetContext() ) {
-		return true;
-	}
+  CefRefPtr<CefFrame> frame = browser->GetMainFrame();  
+  StContextScope ctx( frame->GetV8Context() );
+  if( !ctx.GetContext() ) {
+    return true;
+  }
 
-	CefRefPtr<CefV8Value> win = ctx.GetContext()->GetGlobal();
+  CefRefPtr<CefV8Value> win = ctx.GetContext()->GetGlobal();
 
-	if( !win->HasValue("brackets") ) {
-		return true;
-	}
+  if( !win->HasValue("brackets") ) {
+    return true;
+  }
 
-	CefRefPtr<CefV8Value> brackets = win->GetValue("brackets");
-	if( !brackets ) {
-		return true;
-	}
+  CefRefPtr<CefV8Value> brackets = win->GetValue("brackets");
+  if( !brackets ) {
+    return true;
+  }
 
-	if( !brackets->HasValue("shellAPI") ) {
-		return true;
-	}
+  if( !brackets->HasValue("shellAPI") ) {
+    return true;
+  }
 
-	CefRefPtr<CefV8Value> shellAPI = brackets->GetValue("shellAPI");
-	if( !shellAPI ) {
-		return true;
-	}
+  CefRefPtr<CefV8Value> shellAPI = brackets->GetValue("shellAPI");
+  if( !shellAPI ) {
+    return true;
+  }
 
-	if( !shellAPI->HasValue("executeCommand") ) {
-		return true;
-	}
+  if( !shellAPI->HasValue("executeCommand") ) {
+    return true;
+  }
 
-	CefRefPtr<CefV8Value> executeCommand = shellAPI->GetValue("executeCommand");
-	if( !executeCommand ) {
-		return true;
-	}
+  CefRefPtr<CefV8Value> executeCommand = shellAPI->GetValue("executeCommand");
+  if( !executeCommand ) {
+    return true;
+  }
 
-	if( !executeCommand->IsFunction() ) {
-		return true;
-	}
+  if( !executeCommand->IsFunction() ) {
+    return true;
+  }
 
-	CefV8ValueList args;
-	args.push_back( CefV8Value::CreateString(command) );
-	CefRefPtr<CefV8Value> retval;
-	CefRefPtr<CefV8Exception> e;
-	bool called = executeCommand->ExecuteFunction(brackets, args, retval, e, false);
+  CefV8ValueList args;
+  args.push_back( CefV8Value::CreateString(command) );
+  CefRefPtr<CefV8Value> retval;
+  CefRefPtr<CefV8Exception> e;
+  bool called = executeCommand->ExecuteFunction(brackets, args, retval, e, false);
 
-	if( !called ) {
-		return true; //if we didn't call correctly, do the default action
-	}
+  if( !called ) {
+    return true; //if we didn't call correctly, do the default action
+  }
 
-	if( e ) {
-		return true; //if there was an exception, do the default action
-	}
+  if( e ) {
+    return true; //if there was an exception, do the default action
+  }
 
-	bool preventDefault = false;
-	if(called && retval && retval->IsBool() ) {
-		preventDefault = retval->GetBoolValue();
-	}
+  bool preventDefault = false;
+  if(called && retval && retval->IsBool() ) {
+    preventDefault = retval->GetBoolValue();
+  }
 
-	//Return whether we should do the default action or not (this function defaults to the caller should do the default)
-	return (!preventDefault);
+  //Return whether we should do the default action or not (this function defaults to the caller should do the default)
+  return (!preventDefault);
 }
