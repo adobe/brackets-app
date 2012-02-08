@@ -256,4 +256,17 @@ if (!brackets.app)
         DeleteFileOrDirectory(path);
         callback(getLastError());
     };
+    
+    /**
+     * Workaround for CEF bug #501. On Mac, focus (and blur) events are not sent to the
+     * window object. In order for our "sync files on app activate" feature to work, fake
+     * a focus event here. 
+     * TODO: Remove this function once CEF bug #501 is fixed.
+     * http://code.google.com/p/chromiumembedded/issues/detail?id=501
+     */
+    brackets.sendFakeFocusEvent = function() {
+        var evt = document.createEvent("HTMLEvents");
+        evt.initEvent("focus", false);
+        window.dispatchEvent(evt);
+    }
 })();;
