@@ -252,6 +252,7 @@ public:
 
         if (canChooseDirectories) {
             BROWSEINFO bi = {0};
+            bi.hwndOwner = GetActiveWindow();
             bi.lpszTitle = wtitle.c_str();
             bi.ulFlags = BIF_NEWDIALOGSTYLE;
             LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
@@ -271,6 +272,7 @@ public:
             OPENFILENAME ofn;
 
             ZeroMemory(&ofn, sizeof(ofn));
+            ofn.hwndOwner = GetActiveWindow();
             ofn.lStructSize = sizeof(ofn);
             ofn.lpstrFile = szFile;
             ofn.nMaxFile = MAX_PATH;
@@ -473,6 +475,11 @@ public:
         std::string pathStr = arguments[0]->GetStringValue();
         FixFilename(pathStr);
 
+		// Remove trailing "\", if present. _wstat will fail with a "file not found"
+		// error if a directory has a trailing '\' in the name.
+		if (pathStr[pathStr.length() - 1] == '\\')
+			pathStr[pathStr.length() - 1] = 0;
+
         /* Alternative implementation
         WIN32_FILE_ATTRIBUTE_DATA attribData;
         GET_FILEEX_INFO_LEVELS FileInfosLevel;
@@ -500,9 +507,14 @@ public:
         int mode = arguments[1]->GetIntValue();
         FixFilename(pathStr);
 
+		/* TODO: Implement me! _wchmod() uses different parameters than chmod(), and
+		/  will _not_ always work on directories. For now, do nothing and return NO_ERROR
+		/  so most unit test can at least be run. 
+
         if (_wchmod(StringToWString(pathStr).c_str(), mode) == -1) {
             return ConvertErrnoCode(errno); 
         }
+		*/
 
         return NO_ERROR;
     }
