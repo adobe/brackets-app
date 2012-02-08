@@ -7,6 +7,9 @@
 #include <sys/types.h>
 #include <dirent.h>
 
+extern CefRefPtr<ClientHandler> g_handler;
+
+
 // Error values. These MUST be in sync with the error values
 // in brackets_extensions.js
 static const int NO_ERROR                   = 0;
@@ -442,6 +445,12 @@ public:
                                CefRefPtr<CefV8Value>& retval,
                                CefString& exception)
     {
+      if (g_handler.get()) {
+        if( !g_handler->DispatchQuitToAllBrowsers() ) {
+          return NO_ERROR;
+        }
+      }
+      
       CefQuitMessageLoop();
       [NSApp stop:nil];
       return NO_ERROR;

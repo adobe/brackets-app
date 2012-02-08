@@ -347,10 +347,9 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
   if( g_isTerminating ) {
     return NSTerminateNow;
   }
-  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
-  if(browser) {
-    //If we have a browser, we'll let it handle the termination
-    if( !BracketsShellAPI::DispatchQuitToBracketsJS(browser) ) {
+  //Give all the browsers a chance to quit
+  if (g_handler.get()) {
+    if (!g_handler->DispatchQuitToAllBrowsers()) {
       return NSTerminateCancel;
     }
   }
