@@ -199,7 +199,10 @@
     <None Include="cefclient\res\extensionperf.html">
       <Filter>cefclient\res</Filter>
     </None>
-    <None Include="cefclient\res\cefclient.ico">
+    <None Include="cefclient\res\brackets.ico">
+      <Filter>cefclient\res</Filter>
+    </None>
+    <None Include="cefclient\res\brackets_small.ico">
       <Filter>cefclient\res</Filter>
     </None>
     <None Include="cefclient\res\osrplugin.html">
@@ -221,9 +224,6 @@
       <Filter>cefclient\res</Filter>
     </None>
     <None Include="cefclient\res\xmlhttprequest.html">
-      <Filter>cefclient\res</Filter>
-    </None>
-    <None Include="cefclient\res\small.ico">
       <Filter>cefclient\res</Filter>
     </None>
     <None Include="cefclient\res\logo.png">

@@ -262,7 +262,8 @@
     <None Include="cefclient.gyp" />
     <None Include="cefclient\res\brackets_extensions.js" />
     <None Include="cefclient\res\extensionperf.html" />
-    <None Include="cefclient\res\cefclient.ico" />
+    <None Include="cefclient\res\brackets.ico" />
+    <None Include="cefclient\res\brackets_small.ico" />
     <None Include="cefclient\res\osrplugin.html" />
     <None Include="cefclient\res\domaccess.html" />
     <None Include="cefclient\res\transparency.html" />
@@ -270,7 +271,6 @@
     <None Include="cefclient\res\modaldialog.html" />
     <None Include="cefclient\res\localstorage.html" />
     <None Include="cefclient\res\xmlhttprequest.html" />
-    <None Include="cefclient\res\small.ico" />
     <None Include="cefclient\res\logo.png" />
     <None Include="cefclient\res\logoball.png" />
     <None Include="cefclient\res\uiplugin.html" />
