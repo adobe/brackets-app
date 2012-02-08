@@ -7,6 +7,7 @@
 #import "include/cef_application_mac.h"
 #include "cefclient.h"
 #include "brackets_extensions.h"
+#include "brackets_utils_mac.h"
 #include "client_handler.h"
 #include "resource_util.h"
 #include "string_util.h"
@@ -16,6 +17,7 @@
 
 // The global ClientHandler reference.
 extern CefRefPtr<ClientHandler> g_handler;
+static bool g_isTerminating = false;
 
 char szWorkingDir[512];   // The current working directory
 
@@ -83,7 +85,10 @@ static NSAutoreleasePool* g_autopool = nil;
 
 - (IBAction)reload:(id)sender {
   if (g_handler.get() && g_handler->GetBrowserHwnd())
-    g_handler->GetBrowser()->Reload();
+    if( !BracketsShellAPI::DispatchReloadToBracketsJS(g_handler->GetBrowser()) ) {
+      return;
+    }
+    g_handler->GetBrowser()->ReloadIgnoreCache();
 }
 
 - (IBAction)stopLoading:(id)sender {
@@ -167,6 +172,13 @@ static NSAutoreleasePool* g_autopool = nil;
 // sequence by getting rid of the window. By returning YES, we allow the window
 // to be removed from the screen.
 - (BOOL)windowShouldClose:(id)window {  
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow(window);
+  if(browser && !Brackets::Utils::IsDevToolsBrowser(browser)) {
+    //If we have a browser, we'll let it handle the window closing
+    if( !BracketsShellAPI::DispatchCloseToBracketsJS(browser) ) {
+      return NO;
+    }
+  }
   // Try to make the window go away.
   [window autorelease];
   
@@ -195,50 +207,6 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
   [parent addSubview:button];
   rect->origin.x += BUTTON_WIDTH;
   return button;
-}
-
-CefRefPtr<CefBrowser> GetBrowserForWindow(const NSWindow* wnd) {
-  CefRefPtr<CefBrowser> browser = NULL;
-  if(g_handler.get() && wnd) {
-    //go through all the browsers looking for a browser within this window
-    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
-    for( ClientHandler::BrowserWindowMap::const_iterator i = browsers.begin() ; i != browsers.end() && browser == NULL ; i++ ) {
-      NSView* browserView = i->first;
-      if( browserView && [browserView window] == wnd ) {
-        browser = i->second;
-      }
-    }
-  }
-  return browser;
-}
-
-bool IsDevToolsBrowser( CefRefPtr<CefBrowser> browser ) {
-  if( !browser ) { 
-    return false;
-  }
-  
-  CefRefPtr<CefFrame> frame = browser->GetMainFrame();
-  if( !frame ) {
-    return false;
-  }
-  
-  std::string url = frame->GetURL();
-  const char * chromeProtocol = "chrome-devtools";
-  return ( 0 == strncmp(url.c_str(), chromeProtocol, strlen(chromeProtocol)) );
-}
-
-CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBrowser) {
-  CefRefPtr<CefBrowser> browser = NULL;
-  if(g_handler.get() && parentBrowser) {
-    //go through all the browsers looking for the one that was opened by the parentBrowser
-    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
-    for( ClientHandler::BrowserWindowMap::const_iterator i = browsers.begin() ; i != browsers.end() && browser == NULL ; i++ ) {
-      if( IsDevToolsBrowser(i->second) && parentBrowser->GetWindowHandle() == i->second->GetOpenerWindowHandle() ) {
-        browser = i->second;
-      }
-    }
-  }
-  return browser;
 }
 
 // Receives notifications from the application. Will delete itself when done.
@@ -354,35 +322,55 @@ CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBro
 
 
 - (IBAction)reload:(id)sender {
-  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow([NSApp mainWindow]);
   if(browser) {
-    browser->Reload();
+    if( !BracketsShellAPI::DispatchReloadToBracketsJS(browser) ) {
+      return;
+    }
+    browser->ReloadIgnoreCache();
   }
 }
 
 - (IBAction)showDevTools:(id)sender {
-  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
-  CefRefPtr<CefBrowser> popup = GetDevToolsPopupForBrowser(browser);
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow([NSApp mainWindow]);
+  CefRefPtr<CefBrowser> popup = Brackets::Utils::GetDevToolsPopupForBrowser(browser);
   if( popup ) {
     NSView* view = popup->GetWindowHandle();
     NSWindow* wnd = [view window];
     [wnd makeKeyAndOrderFront:self];
   }
-  else if(browser && !IsDevToolsBrowser(browser)) {
+  else if(browser && !Brackets::Utils::IsDevToolsBrowser(browser)) {
     browser->ShowDevTools();
   }
 }
 
 - (IBAction)hideDevTools:(id)sender {
-  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow([NSApp mainWindow]);
   if(browser) {
     browser->CloseDevTools();
   }
 }
 
+- (NSApplicationTerminateReply)applicationShouldTerminate:(NSApplication *)sender {
+  //if we're terimating, don't try to cancel it
+  if( g_isTerminating ) {
+    return NSTerminateNow;
+  }
+  //Give all the browsers a chance to quit
+  if (g_handler.get()) {
+    if (!g_handler->DispatchQuitToAllBrowsers()) {
+      return NSTerminateCancel;
+    }
+  }
+  return NSTerminateNow;
+}
+
+
 // Sent by the default notification center immediately before the application
 // terminates.
 - (void)applicationWillTerminate:(NSNotification *)aNotification {
+  g_isTerminating = true;
+  
   // Shut down CEF.
   g_handler = NULL;
   CefShutdown();
@@ -391,6 +379,10 @@ CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBro
 
   // Release the AutoRelease pool.
   [g_autopool release];
+}
+
+-(BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication *)theApplication {
+  return YES;
 }
 
 @end
@@ -433,6 +425,13 @@ int main(int argc, char* argv[])
 
   // Run the application message loop.
   CefRunMessageLoop();
+  
+  //if we quit the message loop programatically we need to call
+  //terminate now to properly cleanup everything
+  if( !g_isTerminating ) {
+    g_isTerminating = true;
+    [NSApp terminate:NULL];
+  }
 
   // Don't put anything below this line because it won't be executed.
   return 0;

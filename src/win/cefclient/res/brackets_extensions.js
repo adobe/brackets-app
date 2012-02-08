@@ -9,6 +9,9 @@ if (!brackets)
    brackets = {};
 if (!brackets.fs)
     brackets.fs = {};
+if (!brackets.app)
+    brackets.app = {};
+
 (function() {
     // Internal function to get the last error code.
     native function GetLastError();
@@ -154,6 +157,15 @@ if (!brackets.fs)
             mtime: modtime
         });
     };
+
+
+    /**
+     * TODO comments
+     */
+     native function QuitApplication();
+     brackets.app.quit = function() {
+        QuitApplication();
+     };
     
     /**
      * Reads the entire contents of a file. 
@@ -247,4 +259,8 @@ if (!brackets.fs)
         DeleteFileOrDirectory(path);
         callback(getLastError());
     };
+
+
+
+
 })();;
