@@ -273,6 +273,30 @@ bool ClientHandler::OnJSPrompt(CefRefPtr<CefBrowser> browser,
   [self release];
 }
 
+- (void)windowDidBecomeKey:(NSNotification*)notification {
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow([notification object]);
+  if(browser) {
+    // Give focus to the browser window.
+    browser->SetFocus(true);
+    
+    // CEF doesn't handle focus/blur correctly. See CEF bug #501 for details:
+    // http://code.google.com/p/chromiumembedded/issues/detail?id=501
+    //
+    // To work around this, send a fake focus event when the window is activated
+    // TODO: Remove once the CEF bug is fixed.
+    CefString jsCode = "brackets.sendFakeFocusEvent()";
+    browser->GetMainFrame()->ExecuteJavaScript(jsCode, "about:blank", 0);
+  }
+}
+
+- (void)windowDidResignKey:(NSNotification *)notification {
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow([notification object]);
+  if(browser) {
+    // Remove focus from the browser window.
+    browser->SetFocus(false);
+  }
+}
+
 @end
 
 void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
