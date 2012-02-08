@@ -22,6 +22,8 @@
 /* End PBXAggregateTarget section */
 
 /* Begin PBXBuildFile section */
+		0402CFB114E2109C003C9903 /* brackets_utils_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0402CF6F14E20886003C9903 /* brackets_utils_mac.mm */; };
+		0402CFB214E2109C003C9903 /* brackets_utils_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 0402CF6F14E20886003C9903 /* brackets_utils_mac.mm */; };
 		04FD9135645A80EE5B2DDFEE /* cefclient_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 9E0B6B0F071E0CF61DD3F0CF /* cefclient_mac.mm */; };
 		05D08528E099C178B00B1260 /* browser_ctocpp.cc in Sources */ = {isa = PBXBuildFile; fileRef = 659F873974A982D7F1F3A259 /* browser_ctocpp.cc */; };
 		065343256D3AD56B20BA59F7 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7C436EE49324AFE846F24254 /* MainMenu.xib */; };
@@ -216,6 +218,8 @@
 		0092CB55903D016B3004BB67 /* response_ctocpp.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = response_ctocpp.h; sourceTree = "<group>"; };
 		02D02DBAFD451063CD5301BE /* cef_string_list.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cef_string_list.h; sourceTree = "<group>"; };
 		02EC892952094A790B013E64 /* cef_types_mac.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = cef_types_mac.h; sourceTree = "<group>"; };
+		0402CF6E14E20840003C9903 /* brackets_utils_mac.h */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.h; path = brackets_utils_mac.h; sourceTree = "<group>"; };
+		0402CF6F14E20886003C9903 /* brackets_utils_mac.mm */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.cpp.objcpp; path = brackets_utils_mac.mm; sourceTree = "<group>"; };
 		04D99B5772F3FB9CDB60BD4F /* download_handler_cpptoc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = download_handler_cpptoc.h; sourceTree = "<group>"; };
 		05262FC2D4068D3E2A58A718 /* content_filter_cpptoc.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; path = content_filter_cpptoc.h; sourceTree = "<group>"; };
 		072F52B20F0B05446344281D /* client_handler.cpp */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.cpp.cpp; path = client_handler.cpp; sourceTree = "<group>"; };
@@ -592,6 +596,8 @@
 			children = (
 				216AF0FD148EB75F00C276A2 /* brackets_extensions.h */,
 				216AF0FE148EB75F00C276A2 /* brackets_extensions.mm */,
+				0402CF6E14E20840003C9903 /* brackets_utils_mac.h */,
+				0402CF6F14E20886003C9903 /* brackets_utils_mac.mm */,
 				57338A9AD1F426E475F2A4CA /* mac */,
 				BDFDD7C41EA28111EEFAD317 /* cefclient.cpp */,
 				37735D046E73608141E1F0D6 /* cefclient.h */,
@@ -908,6 +914,7 @@
 				214293CC149002FF006DE3C0 /* resource_util_mac.mm in Sources */,
 				214293CD149002FF006DE3C0 /* brackets_extensions.mm in Sources */,
 				214293CE149002FF006DE3C0 /* NSAlert+SynchronousSheet.m in Sources */,
+				0402CFB214E2109C003C9903 /* brackets_utils_mac.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -925,6 +932,7 @@
 				B603CBCC8D36CE20C9E62E67 /* resource_util_mac.mm in Sources */,
 				216AF0FF148EB75F00C276A2 /* brackets_extensions.mm in Sources */,
 				216AF102148ED3CB00C276A2 /* NSAlert+SynchronousSheet.m in Sources */,
+				0402CFB114E2109C003C9903 /* brackets_utils_mac.mm in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

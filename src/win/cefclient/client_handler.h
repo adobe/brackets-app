@@ -161,6 +161,7 @@ public:
 
   typedef std::map< CefWindowHandle, CefRefPtr<CefBrowser> > BrowserWindowMap;
   const BrowserWindowMap& GetOpenBrowserWindowMap() const { return m_OpenBrowserWindowMap; }
+  bool DispatchQuitToAllBrowsers();
 
   std::string GetLogFile();
 

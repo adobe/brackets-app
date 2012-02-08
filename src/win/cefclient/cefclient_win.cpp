@@ -424,6 +424,14 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
           DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
           return 0;
         case IDM_EXIT:
+          // Brackets: Delegate to JavaScript code to handle quit
+          // so that JavaScript can handle things like saving files
+          if (g_handler.get()) {
+            if (!g_handler->DispatchQuitToAllBrowsers()) {
+              return NO_ERROR;
+            }
+          }
+          
           DestroyWindow(hWnd);
           return 0;
         case ID_WARN_CONSOLEMESSAGE:
@@ -486,8 +494,12 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
             browser->GoForward();
           return 0;
         case IDC_NAV_RELOAD:  // Reload button
-          if(browser.get())
-            browser->Reload();
+          if(browser.get()) {
+			if( !BracketsShellAPI::DispatchReloadToBracketsJS(browser) ) {
+              return 0;
+			}
+			browser->ReloadIgnoreCache();
+		  }
           return 0;
         case IDC_NAV_STOP:  // Stop button
           if(browser.get())
@@ -667,8 +679,15 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
     case WM_CLOSE:
       if (g_handler.get()) {
         CefRefPtr<CefBrowser> browser = g_handler->GetBrowser();
-        if (browser.get()) {
-          // Let the browser window know we are about to destroy it.
+        //currently brackets doesn't handle multiple browser windows that well. 
+		//Most of this code assume a single "main" browser window. If this one
+		//goes away, so goes the others, so lets give them all a change to close first
+		if (!g_handler->DispatchQuitToAllBrowsers()) {
+		  return 0;
+		}
+        
+		// Let the browser window know we are about to destroy it.
+		if (browser) {
           browser->ParentWindowWillClose();
         }
       }

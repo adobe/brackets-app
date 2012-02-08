@@ -1,15 +1,29 @@
-#ifndef _BRACKETS_EXTENSION_TEST_H
-#define _BRACKETS_EXTENSION_TEST_H
+#ifndef _BRACKETS_EXTENSIONS_H
+#define _BRACKETS_EXTENSIONS_H
 
 #include "include/cef.h"
+
 
 // Register the Brackets extension handler.
 void InitBracketsExtensions();
 
-// Run the test.
-void RunBracketsExtensionTest(CefRefPtr<CefBrowser> browser);
+typedef const std::string BracketsCommandName;
 
-// Tell Brackets to open the specified file
-void OpenFile(const char *filename, CefRefPtr<CefBrowser> browser);
+/**
+ * BracketsShellAPI contains functionality for making calls from native code to JavaScript
+ */
+class BracketsShellAPI {
 
-#endif // _BRACKETS_EXTENSION_TEST_H
+public:
+    static bool DispatchQuitToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+    static bool DispatchCloseToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+    static bool DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+    static bool DispatchBracketsJSCommand(const CefRefPtr<CefBrowser>& browser, BracketsCommandName &command);
+
+    // Command constants (should match Commands.js)
+    static BracketsCommandName FILE_QUIT;
+    static BracketsCommandName FILE_CLOSE_WINDOW;
+    static BracketsCommandName FILE_RELOAD;
+};
+
+#endif // _BRACKETS_EXTENSIONS_H

@@ -3,6 +3,7 @@
 // can be found in the LICENSE file.
 
 #include "include/cef.h"
+#include "brackets_extensions.h"
 #include "client_handler.h"
 #include "cefclient.h"
 #include "download_handler.h"
@@ -28,7 +29,7 @@ ClientHandler::~ClientHandler()
 {
 }
 
-
+/* Brackets: Moved this to client_handler_mac.mm
 void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
 {
   REQUIRE_UI_THREAD();
@@ -42,6 +43,37 @@ void ClientHandler::OnAfterCreated(CefRefPtr<CefBrowser> browser)
   }
 
   m_OpenBrowserWindowMap[browser->GetWindowHandle()] = browser;
+}
+ */
+
+bool ClientHandler::DispatchQuitToAllBrowsers()
+{
+  while( !m_OpenBrowserWindowMap.empty() )
+  {
+    BrowserWindowMap::iterator i = m_OpenBrowserWindowMap.begin();
+    //close the "main" window last as that will shut everything else down
+    if( m_BrowserHwnd == i->first && m_OpenBrowserWindowMap.size() > 1 ) {
+      i++;
+    }
+    CefWindowHandle nativeWindow = i->first;
+    CefRefPtr<CefBrowser> browser = i->second;
+    
+    //Give each window a chance to quit
+    if( !BracketsShellAPI::DispatchQuitToBracketsJS(browser) ) {
+      return false;
+    }
+    
+    //get the iterator again incase the disptach invalidated it
+    i = m_OpenBrowserWindowMap.find(nativeWindow);
+    if( i != m_OpenBrowserWindowMap.end() )
+    {
+      browser = i->second;
+      m_OpenBrowserWindowMap.erase(i);
+      browser->CloseBrowser();
+	}
+  }
+       
+  return true;
 }
 
 bool ClientHandler::DoClose(CefRefPtr<CefBrowser> browser)
