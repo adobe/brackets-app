@@ -7,6 +7,7 @@
 #import "include/cef_application_mac.h"
 #include "cefclient.h"
 #include "brackets_extensions.h"
+#include "brackets_utils_mac.h"
 #include "client_handler.h"
 #include "resource_util.h"
 #include "string_util.h"
@@ -163,8 +164,8 @@ static NSAutoreleasePool* g_autopool = nil;
 // sequence by getting rid of the window. By returning YES, we allow the window
 // to be removed from the screen.
 - (BOOL)windowShouldClose:(id)window {  
-  CefRefPtr<CefBrowser> browser = GetBrowserForWindow(window);
-  if(browser && !IsDevToolsBrowser(browser)) {
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow(window);
+  if(browser && !Brackets::Utils::IsDevToolsBrowser(browser)) {
     //If we have a browser, we'll let it handle the window closing
     if( !BracketsShellAPI::DispatchCloseToBracketsJS(browser) ) {
       return NO;
@@ -313,7 +314,7 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 
 
 - (IBAction)reload:(id)sender {
-  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow([NSApp mainWindow]);
   if(browser) {
     if( !BracketsShellAPI::DispatchReloadToBracketsJS(browser) ) {
       return;
@@ -323,20 +324,20 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 }
 
 - (IBAction)showDevTools:(id)sender {
-  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
-  CefRefPtr<CefBrowser> popup = GetDevToolsPopupForBrowser(browser);
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow([NSApp mainWindow]);
+  CefRefPtr<CefBrowser> popup = Brackets::Utils::GetDevToolsPopupForBrowser(browser);
   if( popup ) {
     NSView* view = popup->GetWindowHandle();
     NSWindow* wnd = [view window];
     [wnd makeKeyAndOrderFront:self];
   }
-  else if(browser && !IsDevToolsBrowser(browser)) {
+  else if(browser && !Brackets::Utils::IsDevToolsBrowser(browser)) {
     browser->ShowDevTools();
   }
 }
 
 - (IBAction)hideDevTools:(id)sender {
-  CefRefPtr<CefBrowser> browser = GetBrowserForWindow([NSApp mainWindow]);
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow([NSApp mainWindow]);
   if(browser) {
     browser->CloseDevTools();
   }

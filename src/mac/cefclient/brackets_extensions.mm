@@ -578,25 +578,25 @@ void InitBracketsExtensions()
 //Simple stack class to ensure calls to Enter and Exit are balanced
 class StContextScope {
 public:
-  StContextScope( const CefRefPtr<CefV8Context>& ctx )
-  : m_ctx(NULL) {
-    if( ctx && ctx->Enter() ) {
-      m_ctx = ctx;
+    StContextScope( const CefRefPtr<CefV8Context>& ctx )
+    : m_ctx(NULL) {
+        if( ctx && ctx->Enter() ) {
+            m_ctx = ctx;
+        }
     }
-  }
   
-  ~StContextScope() {
-    if(m_ctx) {
-      m_ctx->Exit();
+    ~StContextScope() {
+        if(m_ctx) {
+            m_ctx->Exit();
+        }
     }
-  }
   
-  const CefRefPtr<CefV8Context>& GetContext() const { 
-    return m_ctx;
-  }
+    const CefRefPtr<CefV8Context>& GetContext() const { 
+        return m_ctx;
+    }
   
 private:
-  CefRefPtr<CefV8Context> m_ctx;
+    CefRefPtr<CefV8Context> m_ctx;
   
 };
 
@@ -694,50 +694,4 @@ bool BracketsShellAPI::DispatchBracketsJSCommand(const CefRefPtr<CefBrowser>& br
 
 	//Return whether we should do the default action or not (this function defaults to the caller should do the default)
 	return (!preventDefault);
-}
-
-bool IsDevToolsBrowser( CefRefPtr<CefBrowser> browser ) {
-  if( !browser ) { 
-    return false;
-  }
-  
-  CefRefPtr<CefFrame> frame = browser->GetMainFrame();
-  if( !frame ) {
-    return false;
-  }
-  
-  std::string url = frame->GetURL();
-  const char * chromeProtocol = "chrome-devtools";
-  return ( 0 == strncmp(url.c_str(), chromeProtocol, strlen(chromeProtocol)) );
-}
-
-extern CefRefPtr<ClientHandler> g_handler;
-
-CefRefPtr<CefBrowser> GetBrowserForWindow(const BracketsMainWindowHandle wnd) {
-  CefRefPtr<CefBrowser> browser = NULL;
-  if(g_handler.get() && wnd) {
-    //go through all the browsers looking for a browser within this window
-    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
-    for( ClientHandler::BrowserWindowMap::const_iterator i = browsers.begin() ; i != browsers.end() && browser == NULL ; i++ ) {
-      NSView* browserView = i->first;
-      if( browserView && [browserView window] == wnd ) {
-        browser = i->second;
-      }
-    }
-  }
-  return browser;
-}
-
-CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBrowser) {
-  CefRefPtr<CefBrowser> browser = NULL;
-  if(g_handler.get() && parentBrowser) {
-    //go through all the browsers looking for the one that was opened by the parentBrowser
-    ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
-    for( ClientHandler::BrowserWindowMap::const_iterator i = browsers.begin() ; i != browsers.end() && browser == NULL ; i++ ) {
-      if( IsDevToolsBrowser(i->second) && parentBrowser->GetWindowHandle() == i->second->GetOpenerWindowHandle() ) {
-        browser = i->second;
-      }
-    }
-  }
-  return browser;
 }

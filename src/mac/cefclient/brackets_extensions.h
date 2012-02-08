@@ -17,7 +17,7 @@ class BracketsShellAPI {
 public:
     static bool DispatchQuitToBracketsJS(const CefRefPtr<CefBrowser>& browser);
     static bool DispatchCloseToBracketsJS(const CefRefPtr<CefBrowser>& browser);
-	static bool DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& browser);
+    static bool DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& browser);
     static bool DispatchBracketsJSCommand(const CefRefPtr<CefBrowser>& browser, BracketsCommandName &command);
 
     // Command constants (should match Commands.js)
@@ -26,24 +26,4 @@ public:
     static BracketsCommandName FILE_RELOAD;
 };
 
-#ifdef __cplusplus
-#ifdef __OBJC__
-@class NSWindow;
-#else
-class NSWindow;
-#endif
-#define brackets_main_window_handle_t NSWindow*
-#else
-#define brackets_main_window_handle_t void*
-#endif
-#define BracketsMainWindowHandle brackets_main_window_handle_t
-
-//Utility function that maps NSWindows to the browser that they belong to
-CefRefPtr<CefBrowser> GetBrowserForWindow(const BracketsMainWindowHandle wnd);
-
-//Utility function to identify dev tool browsers
-bool IsDevToolsBrowser( CefRefPtr<CefBrowser> browser );
-
-//Get the devtoools browser for the window (or null if it is not the dev tools)
-CefRefPtr<CefBrowser> GetDevToolsPopupForBrowser(CefRefPtr<CefBrowser> parentBrowser);
 #endif // _BRACKETS_EXTENSIONS_H

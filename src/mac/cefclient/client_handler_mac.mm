@@ -8,6 +8,7 @@
 #include "client_handler.h"
 #include "resource_util.h"
 #include "string_util.h"
+#include "brackets_utils_mac.h"
 #include "brackets_extensions.h"
 #include "NSAlert+SynchronousSheet.h"
 #import <Cocoa/Cocoa.h>
@@ -247,12 +248,11 @@ bool ClientHandler::OnJSPrompt(CefRefPtr<CefBrowser> browser,
 // Called when the window is about to close. Perform the self-destruction
 // sequence by getting rid of the window. By returning YES, we allow the window
 // to be removed from the screen.
-CefRefPtr<CefBrowser> GetBrowserForWindow(const NSWindow* wnd);
 
 - (BOOL)windowShouldClose:(id)window {  
   //if we're terimating, don't try to cancel it
-  CefRefPtr<CefBrowser> browser = GetBrowserForWindow(window);
-  if(browser && !IsDevToolsBrowser(browser)) {
+  CefRefPtr<CefBrowser> browser = Brackets::Utils::GetBrowserForWindow(window);
+  if(browser && !Brackets::Utils::IsDevToolsBrowser(browser)) {
     //If we have a browser, we'll let it handle the window closing (for now same a quit)
     if( !BracketsShellAPI::DispatchCloseToBracketsJS(browser) ) {
       return NO;
