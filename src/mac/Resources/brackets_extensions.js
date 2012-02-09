@@ -70,23 +70,21 @@ if (!brackets.fs)
     brackets.fs.ERR_NOT_DIRECTORY           = 9;
     
     /**
-    * Run an application
+    * Open the live browser
     *
-    * @param {string} pathToExecutable
-    * @param {string} parameters
-    * @param {function(err, selection)} callback Asynchronous callback function. The callback gets two arguments 
-    *        (err, selection) where selection is an array of the names of the selected files.
+    * @param {string} url
+    * @param {function(err)} callback Asynchronous callback function with one argument (the error)
     *        Possible error values:
     *          NO_ERROR
     *          ERR_INVALID_PARAMS
     *
     * @return None. This is an asynchronous call that sends all return information to the callback.
     */
-    native function RunApplication();
-    brackets.fs.runApplication = function(pathToExecutable, parameters, callback) {
+    native function OpenLiveBrowser();
+    brackets.fs.openLiveBrowser = function(url, callback) {
         setTimeout(function() {
-            var resultString = RunApplication(pathToExecutable, parameters);
-            callback(getLastError(), resultString);
+            OpenLiveBrowser(url);
+            callback(getLastError());
         }, 0);
     };
  

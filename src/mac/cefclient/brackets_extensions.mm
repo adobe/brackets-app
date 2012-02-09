@@ -35,24 +35,19 @@ public:
     {        
         int errorCode = -1;
         
-        if (name == "RunApplication")
+        if (name == "OpenLiveBrowser")
         {
-            // runApplication(pathToExecutable, parameters)
+            // OpenLiveBrowser(url)
             //
             // Inputs:
-            //  pathToExecutable - path to the executable of the application to be run
-            //  parameters - string of parameters that should be passed to the application
-            //
-            // Output:
-            //  whatever the application returns
+            //  url - url of the document or website to open
             //
             // Error:
             //  NO_ERROR
             //  ERR_INVALID_PARAMS - invalid parameters
-            //  ERR_NOT_FOUND - application not found
-            //  ERR_UNKNOWN - unable to launch applications
+            //  ERR_UNKNOWN - unable to launch the browser
             
-            errorCode = ExecuteRunApplication(arguments, retval, exception);
+            errorCode = OpenLiveBrowser(arguments, retval, exception);
         }
         else if (name == "ShowOpenDialog") 
         {
@@ -230,37 +225,42 @@ public:
         return false;
     }
     
-    int ExecuteRunApplication(const CefV8ValueList& arguments,
+    int OpenLiveBrowser(const CefV8ValueList& args,
                               CefRefPtr<CefV8Value>& retval,
                               CefString& exception)
     {
-        if (arguments.size() != 2 || !arguments[0]->IsString() || !arguments[1]->IsArray())
+        // Parse the arguments
+        if (args.size() != 1 || !args[0]->IsString())
             return ERR_INVALID_PARAMS;
+        std::string argURL = args[0]->GetStringValue();
+        NSURL *url = [NSURL URLWithString:[NSString stringWithUTF8String:argURL.c_str()]];
         
-        // Get the application URL from the bundle identifier
-        std::string applicationBundleIdentifier = arguments[0]->GetStringValue();
+        // Find instances of the Browser
+        NSString *appId = @"org.chromium.Chromium";
+        NSArray *apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:appId];
         NSWorkspace * ws = [NSWorkspace sharedWorkspace];
-        NSURL * appURL = [ws URLForApplicationWithBundleIdentifier:[NSString stringWithUTF8String:applicationBundleIdentifier.c_str()]];
-        if( !appURL ) {
-            return ERR_NOT_FOUND;
+        NSUInteger launchOptions = NSWorkspaceLaunchDefault | NSWorkspaceLaunchWithoutActivation;
+
+        // Launch Browser
+        if(apps.count == 0) {
+            
+            // create the configuration dictionary for launching with custom parameters
+            NSArray *parameters = [NSArray arrayWithObjects:
+                                   @"--remote-debugging-port=9222", 
+                                   @"--allow-file-access-from-files", 
+                                   url, 
+                                   nil];
+            NSMutableDictionary* appConfig = [NSDictionary dictionaryWithObject:parameters forKey:NSWorkspaceLaunchConfigurationArguments];
+
+            NSURL *appURL = [ws URLForApplicationWithBundleIdentifier:appId];
+            NSError *error = nil;
+            if( ![ws launchApplicationAtURL:appURL options:launchOptions configuration:appConfig error:&error] ) {
+                return ERR_UNKNOWN;
+            }
         }
         
-        // extract the parameters array and create the configuration dictionary
-        int parametersCount = arguments[1]->GetArrayLength();
-        NSMutableArray *parameters = [NSMutableArray arrayWithCapacity:parametersCount];
-        std::string parameterString;
-        for( int i=0; i < parametersCount; i++ ) {
-            parameterString = arguments[1]->GetValue(i)->GetStringValue();
-            [parameters addObject:[NSString stringWithUTF8String:parameterString.c_str()]];
-        }
-        NSMutableDictionary* appConfig = [NSDictionary dictionaryWithObject:parameters forKey:NSWorkspaceLaunchConfigurationArguments];
-
-        // run the application
-        NSError *error = nil;
-        if( ![ws launchApplicationAtURL:appURL options:NSWorkspaceLaunchDefault configuration:appConfig error:&error] ) {
-            // todo: interpret the error object and return a useful error code
-            return ERR_UNKNOWN;
-        }
+        // Tell the Browser to load the url
+        [ws openURLs:[NSArray arrayWithObject:url] withAppBundleIdentifier:appId options:launchOptions additionalEventParamDescriptor:nil launchIdentifiers:nil];
         
         return NO_ERROR;
     }
