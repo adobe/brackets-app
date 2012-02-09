@@ -9,6 +9,8 @@ if (!brackets)
    brackets = {};
 if (!brackets.fs)
     brackets.fs = {};
+if (!brackets.app)
+    brackets.app = {};
 (function() {
     // Internal function to get the last error code.
     native function GetLastError();
@@ -111,13 +113,13 @@ if (!brackets.fs)
      */
     native function ShowOpenDialog();
     brackets.fs.showOpenDialog = function(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback) {
-       setTimeout(function() {
+        setTimeout(function() {
            var resultString = ShowOpenDialog(allowMultipleSelection, chooseDirectory, 
                                              title || 'Open', initialPath || '', 
                                              fileTypes ? fileTypes.join(' ') : '');
            var result = JSON.parse(resultString || '[]');
            callback(getLastError(), result);
-       }, 0);
+        }, 0);
     };
     
     /**
@@ -172,6 +174,14 @@ if (!brackets.fs)
             mtime: modtime
         });
     };
+ 
+    /**
+     * TODO comments
+     */
+     native function QuitApplication();
+     brackets.app.quit = function() {
+        QuitApplication();
+     };
     
     /**
      * Reads the entire contents of a file. 
@@ -265,4 +275,17 @@ if (!brackets.fs)
         DeleteFileOrDirectory(path);
         callback(getLastError());
     };
+    
+    /**
+     * Workaround for CEF bug #501. On Mac, focus (and blur) events are not sent to the
+     * window object. In order for our "sync files on app activate" feature to work, fake
+     * a focus event here. 
+     * TODO: Remove this function once CEF bug #501 is fixed.
+     * http://code.google.com/p/chromiumembedded/issues/detail?id=501
+     */
+    brackets.sendFakeFocusEvent = function() {
+        var evt = document.createEvent("HTMLEvents");
+        evt.initEvent("focus", false);
+        window.dispatchEvent(evt);
+    }
 })();;

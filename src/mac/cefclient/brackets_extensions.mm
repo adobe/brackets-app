@@ -1,10 +1,14 @@
 #include "brackets_extensions.h"
+#include "client_handler.h"
 
 #import <Cocoa/Cocoa.h>
 
 #include <stdio.h>
 #include <sys/types.h>
 #include <dirent.h>
+
+extern CefRefPtr<ClientHandler> g_handler;
+
 
 // Error values. These MUST be in sync with the error values
 // in brackets_extensions.js
@@ -19,6 +23,11 @@ static const int ERR_OUT_OF_SPACE           = 7;
 static const int ERR_NOT_FILE               = 8;
 static const int ERR_NOT_DIRECTORY          = 9;
 
+
+
+/**
+ * Class for implementing native calls from Brackets JavaScript code to native windows functionality
+ */
 class BracketsExtensionHandler : public CefV8Handler
 {
 public:
@@ -32,7 +41,7 @@ public:
                          const CefV8ValueList& arguments,
                          CefRefPtr<CefV8Value>& retval,
                          CefString& exception)
-    {        
+    {
         int errorCode = -1;
         
         if (name == "OpenLiveBrowser")
@@ -206,6 +215,11 @@ public:
             //  ERR_NOT_FOUND - can't file file/directory
             
             errorCode = ExecuteDeleteFileOrDirectory(arguments, retval, exception);
+        }
+        else if (name == "QuitApplication")
+        {
+            // TODO comments
+            errorCode = ExecuteQuitApplication(arguments, retval, exception);
         }
         else if (name == "GetLastError")
         {
@@ -480,6 +494,21 @@ public:
         
         return ConvertNSErrorCode(error, false);
     }
+  
+    int ExecuteQuitApplication(const CefV8ValueList& arguments,
+                               CefRefPtr<CefV8Value>& retval,
+                               CefString& exception)
+    {
+      if (g_handler.get()) {
+        if( !g_handler->DispatchQuitToAllBrowsers() ) {
+          return NO_ERROR;
+        }
+      }
+      
+      CefQuitMessageLoop();
+      [NSApp stop:nil];
+      return NO_ERROR;
+    }
 
     // Escapes characters that have special meaning in JSON
     void EscapeJSONString(const std::string& str, std::string& result) {
@@ -598,4 +627,125 @@ void InitBracketsExtensions()
     CefRegisterExtension("brackets", [jsSource UTF8String], new BracketsExtensionHandler());
     
     [jsSource release];
+}
+
+//Simple stack class to ensure calls to Enter and Exit are balanced
+class StContextScope {
+public:
+    StContextScope( const CefRefPtr<CefV8Context>& ctx )
+    : m_ctx(NULL) {
+        if( ctx && ctx->Enter() ) {
+            m_ctx = ctx;
+        }
+    }
+  
+    ~StContextScope() {
+        if(m_ctx) {
+            m_ctx->Exit();
+        }
+    }
+  
+    const CefRefPtr<CefV8Context>& GetContext() const { 
+        return m_ctx;
+    }
+  
+private:
+    CefRefPtr<CefV8Context> m_ctx;
+  
+};
+
+/**
+ * Class for implementing native calls from native windows functionality to Brackets JavaScript code
+ */
+bool BracketsShellAPI::DispatchQuitToBracketsJS(const CefRefPtr<CefBrowser>& browser)
+{
+	return DispatchBracketsJSCommand(browser, FILE_QUIT);
+}
+
+bool BracketsShellAPI::DispatchCloseToBracketsJS(const CefRefPtr<CefBrowser>& browser)
+{
+	return DispatchBracketsJSCommand(browser, FILE_CLOSE_WINDOW);
+}
+
+bool BracketsShellAPI::DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& browser)
+{
+	return DispatchBracketsJSCommand(browser, FILE_RELOAD);
+}
+
+/**
+ * Event constants for TriggerBracketsJSEvent
+ * These constants should be kept in sync with Commands.js
+ */
+const std::string BracketsShellAPI::FILE_QUIT = "file.quit";
+const std::string BracketsShellAPI::FILE_CLOSE_WINDOW = "file.close_window";
+const std::string BracketsShellAPI::FILE_RELOAD = "file.reload";
+
+
+
+
+/**
+ * Provides a mechanism to execute Brackets JavaScript commands from native code. This function will
+ * call CommandManager.execute(commandName) in JavaScript. 
+ * The bool return is the same as the W3 dispatchEvent:
+ * The return value of dispatchEvent indicates whether any of the listeners 
+ * which handled the event called preventDefault. If preventDefault was called 
+ * the value is false, else the value is true.
+ */
+bool BracketsShellAPI::DispatchBracketsJSCommand(const CefRefPtr<CefBrowser>& browser, BracketsCommandName &command){
+	CefRefPtr<CefFrame> frame = browser->GetMainFrame();  
+	StContextScope ctx( frame->GetV8Context() );
+	if( !ctx.GetContext() ) {
+		return true;
+	}
+
+	CefRefPtr<CefV8Value> win = ctx.GetContext()->GetGlobal();
+
+	if( !win->HasValue("brackets") ) {
+		return true;
+	}
+
+	CefRefPtr<CefV8Value> brackets = win->GetValue("brackets");
+	if( !brackets ) {
+		return true;
+	}
+
+	if( !brackets->HasValue("shellAPI") ) {
+		return true;
+	}
+
+	CefRefPtr<CefV8Value> shellAPI = brackets->GetValue("shellAPI");
+	if( !shellAPI ) {
+		return true;
+	}
+
+	if( !shellAPI->HasValue("executeCommand") ) {
+		return true;
+	}
+
+	CefRefPtr<CefV8Value> executeCommand = shellAPI->GetValue("executeCommand");
+	if( !executeCommand ) {
+		return true;
+	}
+
+	if( !executeCommand->IsFunction() ) {
+		return true;
+	}
+
+	CefV8ValueList args;
+	args.push_back( CefV8Value::CreateString(command) );
+	CefRefPtr<CefV8Value> retval;
+	CefRefPtr<CefV8Exception> e;
+	bool called = executeCommand->ExecuteFunction(brackets, args, retval, e, false);
+
+	if( !called ) {
+		return true; //if we didn't 
+	}
+
+	bool preventDefault = false;
+	if(called && retval && retval->IsBool() ) {
+		preventDefault = retval->GetBoolValue();
+	}
+
+	//Return whether we should do the default action or not (this function defaults to the caller should do the default)
+	return (!preventDefault);
 }
