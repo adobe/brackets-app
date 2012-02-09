@@ -19,6 +19,11 @@ if (!brackets.app)
         return GetLastError();
     }
     
+    // For debug purposes. When true, a 10 millisecond timeout is
+    // run before the callback is called. See invokeCallback() below
+    // for details.
+    brackets.forceAsyncCallbacks = false;
+        
     // Error values. These MUST be in sync with the error values
     // at the top of brackets_extensions.mm.
     
@@ -100,7 +105,7 @@ if (!brackets.app)
                                              title || 'Open', initialPath || '', 
                                              fileTypes ? fileTypes.join(' ') : '');
            var result = JSON.parse(resultString || '[]');
-           callback(getLastError(), result);
+           invokeCallback(callback, getLastError(), result);
         }, 0);
     };
     
@@ -124,7 +129,7 @@ if (!brackets.app)
     brackets.fs.readdir = function(path, callback) {
         var resultString = ReadDir(path);
         var result = JSON.parse(resultString || '[]');
-        callback(getLastError(), result);
+        invokeCallback(callback, getLastError(), result);
     };
     
     /**
@@ -147,7 +152,7 @@ if (!brackets.app)
         var isDir = IsDirectory(path);
         var modtime = GetFileModificationTime(path);
 
-        callback(getLastError(), {
+        invokeCallback(callback, getLastError(), {
             isFile: function() {
                 return !isDir;
             },
@@ -187,7 +192,7 @@ if (!brackets.app)
     native function ReadFile();
     brackets.fs.readFile = function(path, encoding, callback) {
         var contents = ReadFile(path, encoding);
-        callback(getLastError(), contents);
+        invokeCallback(callback, getLastError(), contents);
     };
     
     /**
@@ -211,7 +216,7 @@ if (!brackets.app)
     brackets.fs.writeFile = function(path, data, encoding, callback) {
         WriteFile(path, data, encoding);
         if (callback)
-            callback(getLastError());
+            invokeCallback(callback, getLastError());
     };
     
     /**
@@ -231,7 +236,7 @@ if (!brackets.app)
     native function SetPosixPermissions();
     brackets.fs.chmod = function(path, mode, callback) {
         SetPosixPermissions(path, mode);
-        callback(getLastError());
+        invokeCallback(callback, getLastError());
     };
     
     /**
@@ -257,10 +262,27 @@ if (!brackets.app)
             return;
         }
         DeleteFileOrDirectory(path);
-        callback(getLastError());
+        invokeCallback(callback, getLastError());
     };
 
-
-
-
+    /**
+     * Invoke a callback function.
+     *
+     * If the variable "brackets.forceAsyncCallbacks" is true, the callback is called after a 10
+     * ms timer is run. If brackets.forceAsyncCallbacks is false, the callback is called
+     * immediately.
+     */
+    function invokeCallback(callback /* callback args */) {
+        var args = [].splice.call(arguments, 1);
+    
+        function doCallback() {
+            callback.apply(this, args);
+        }
+        
+        if (brackets.forceAsyncCallbacks) {
+            setTimeout(doCallback, 10);
+        } else {
+            doCallback();
+        }        
+    }
 })();;
