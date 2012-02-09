@@ -7,6 +7,7 @@
 #include <CommDlg.h>
 #include <ShlObj.h>
 #include <wchar.h>
+#include <algorithm>
 
 extern CefRefPtr<ClientHandler> g_handler;
 
@@ -243,6 +244,8 @@ public:
         std::string fileTypesStr = arguments[4]->GetStringValue();
         std::string selectedFilenames = "";
         std::string result = "";
+
+        FixFilename(initialPath);
 
         wchar_t szFile[MAX_PATH];
         szFile[0] = 0;
@@ -536,13 +539,13 @@ public:
         return NO_ERROR;
     }
 
-    void FixFilename(std::string& filename)
+    template<class _Elem,
+    class _Traits,
+    class _Ax>
+    void FixFilename(std::basic_string<_Elem, _Traits, _Ax>& filename)
     {
         // Convert '/' to '\'
-        for (unsigned int i = 0; i < filename.length(); i++) {
-            if (filename[i] == '/')
-                filename[i] = '\\';
-        }
+        std::replace_if(filename.begin(), filename.end(), std::bind2nd(std::equal_to<_Elem>(), '/'), '\\');
     }
 
     std::wstring StringToWString(const std::string& s)
