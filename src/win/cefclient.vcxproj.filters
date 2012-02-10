@@ -202,9 +202,6 @@
     <None Include="cefclient\res\brackets.ico">
       <Filter>cefclient\res</Filter>
     </None>
-    <None Include="cefclient\res\brackets_small.ico">
-      <Filter>cefclient\res</Filter>
-    </None>
     <None Include="cefclient\res\osrplugin.html">
       <Filter>cefclient\res</Filter>
     </None>
