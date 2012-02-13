@@ -263,7 +263,6 @@
     <None Include="cefclient\res\brackets_extensions.js" />
     <None Include="cefclient\res\extensionperf.html" />
     <None Include="cefclient\res\brackets.ico" />
-    <None Include="cefclient\res\brackets_small.ico" />
     <None Include="cefclient\res\osrplugin.html" />
     <None Include="cefclient\res\domaccess.html" />
     <None Include="cefclient\res\transparency.html" />
