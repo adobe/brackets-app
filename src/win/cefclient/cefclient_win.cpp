@@ -386,9 +386,7 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 		wchar_t initialUrl[MAX_PATH];
 		const wchar_t* appFolder = L"Brackets.exe";
 
-		// TODO: Parse command line arguments for initial URL
-
-		// TODO: Proper finding of Brackets index.html file
+		// TODO (issue 68) - Proper finding of Brackets index.html file
 		GetModuleFileName(NULL, initialUrl, MAX_PATH);
 
 		wchar_t *pStr = wcsstr(initialUrl, appFolder);
