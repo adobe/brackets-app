@@ -8,6 +8,7 @@
 #include <ShlObj.h>
 #include <wchar.h>
 #include <algorithm>
+#include <list>
 
 extern CefRefPtr<ClientHandler> g_handler;
 
@@ -206,7 +207,10 @@ public:
         }
         else if (name == "QuitApplication")
         {
-            // TODO comments
+            // QuitApplication
+            //
+            // Inputs: none
+            // Output: none
             errorCode = ExecuteQuitApplication(arguments, retval, exception);
         }
         else if (name == "GetLastError")
@@ -226,6 +230,9 @@ public:
         
         return false;
     }
+
+
+
 
 
     int ExecuteShowOpenDialog(const CefV8ValueList& arguments,
@@ -250,8 +257,24 @@ public:
         wchar_t szFile[MAX_PATH];
         szFile[0] = 0;
 
-        // TODO: This method should be using IFileDialog instead of the
-        // outdated SHGetPathFromIDList and GetOpenFileName.
+        // TODO (issue #64) - This method should be using IFileDialog instead of the
+        /* outdated SHGetPathFromIDList and GetOpenFileName.
+       
+        Useful function to parse fileTypesStr:
+        template<class T>
+        int inline findAndReplaceString(T& source, const T& find, const T& replace)
+        {
+        int num=0;
+        int fLen = find.size();
+        int rLen = replace.size();
+        for (int pos=0; (pos=source.find(find, pos))!=T::npos; pos+=rLen)
+        {
+        num++;
+        source.replace(pos, fLen, replace);
+        }
+        return num;
+        }
+        */
 
         if (canChooseDirectories) {
             BROWSEINFO bi = {0};
@@ -279,7 +302,13 @@ public:
             ofn.lStructSize = sizeof(ofn);
             ofn.lpstrFile = szFile;
             ofn.nMaxFile = MAX_PATH;
-            ofn.lpstrFilter = L"Web Files\0*.js;*.css;*.htm;*.html\0\0"; // TODO: Use passed in file types
+
+           // TODO (issue #65) - Use passed in file types
+           /* findAndReplaceString( fileTypesStr, std::string(" "), std::string(";*."));
+            LPCWSTR allFilesFilter = L"All Files\0*.*\0\0";*/
+
+             ofn.lpstrFilter = L"Web Files\0*.js;*.css;*.htm;*.html\0\0"; 
+           
             ofn.lpstrInitialDir = initialPath.c_str();
             ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
             if (allowsMultipleSelection)
@@ -291,7 +320,7 @@ public:
             }
         }
 
-        // TODO: Handle multiple select
+        // TODO (issue #65) Handle multiple select
         if (selectedFilenames.length() > 0) {
             std::string escapedFilenames;
             EscapeJSONString(selectedFilenames, escapedFilenames);
@@ -335,7 +364,7 @@ public:
                     bAddedOne = TRUE;
                 std::wstring wfilename = ffd.cFileName;
                 std::string filename = WStringToString(wfilename);
-// TODO?:                EscapeJSONString(filename, filename);
+                EscapeJSONString(filename, filename);
                 result += "\"" + filename + "\"";
             } while (FindNextFile(hFind, &ffd) != 0);
 
@@ -445,8 +474,7 @@ public:
         if (INVALID_HANDLE_VALUE == hFile)
             return ConvertWinErrorCode(GetLastError(), false); 
 
-        // TODO: Should write to temp file
-        // TODO: Encoding
+        // TODO (issue 67) -  Should write to temp file and handle encoding
         if (!WriteFile(hFile, contentsStr.c_str(), contentsStr.length(), &dwBytesWritten, NULL)) {
             error = ConvertWinErrorCode(GetLastError(), false);
         }
@@ -511,7 +539,7 @@ public:
         int mode = arguments[1]->GetIntValue();
         FixFilename(pathStr);
 
-    /* TODO: Implement me! _wchmod() uses different parameters than chmod(), and
+    /* TODO (issue #66) -  Implement me! _wchmod() uses different parameters than chmod(), and
     /  will _not_ always work on directories. For now, do nothing and return NO_ERROR
     /  so most unit test can at least be run. 
 
