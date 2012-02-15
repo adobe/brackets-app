@@ -261,6 +261,15 @@ if (!brackets.app)
         DeleteFileOrDirectory(path);
         invokeCallback(callback, getLastError());
     };
+
+    /**
+     * Return the number of milliseconds that have ellapsed since the application
+     * was launched. 
+     */
+    native function GetEllapsedMilliseconds();
+    brackets.app.getEllapsedMilliseconds = function() {
+        return GetEllapsedMilliseconds();
+    }
     
     /**
      * Invoke a callback function.
