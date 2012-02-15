@@ -343,7 +343,10 @@ public:
             return ERR_INVALID_PARAMS;
         
         std::string pathStr = arguments[0]->GetStringValue();
-        std::string result = "[";
+        std::string resultDirs;
+        std::string resultFiles;
+        bool addedOneDir = false;
+        bool addedOneFile = false;
 
         FixFilename(pathStr);
         pathStr += "\\*";
@@ -351,22 +354,36 @@ public:
         WIN32_FIND_DATA ffd;
         HANDLE hFind = FindFirstFile(StringToWString(pathStr).c_str(), &ffd);
 
-        if (hFind != INVALID_HANDLE_VALUE) {
-            BOOL bAddedOne = false;
-            do {
+        if (hFind != INVALID_HANDLE_VALUE) 
+        {
+            do
+            {
                 // Ignore '.' and '..'
                 if (!wcscmp(ffd.cFileName, L".") || !wcscmp(ffd.cFileName, L".."))
                     continue;
 
-                if (bAddedOne)
-                    result += ",";
+                std::string filename;
+                EscapeJSONString(WStringToString(ffd.cFileName), filename);
+
+                // Collect file and directory names separately
+                if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
+                {
+                    if (addedOneDir)
+                        resultDirs += ",";
+                    else
+                        addedOneDir = true;
+                    resultDirs += "\"" + filename + "\"";
+                }
                 else
-                    bAddedOne = TRUE;
-                std::wstring wfilename = ffd.cFileName;
-                std::string filename = WStringToString(wfilename);
-                EscapeJSONString(filename, filename);
-                result += "\"" + filename + "\"";
-            } while (FindNextFile(hFind, &ffd) != 0);
+                {
+                    if (addedOneFile)
+                        resultFiles += ",";
+                    else
+                        addedOneFile = true;
+                    resultFiles += "\"" + filename + "\"";
+                }
+            }
+            while (FindNextFile(hFind, &ffd) != 0);
 
             FindClose(hFind);
         } 
@@ -374,6 +391,16 @@ public:
             return ConvertWinErrorCode(GetLastError());
         }
 
+        // On Windows, list directories first, then files
+        std::string result = "[";
+        if (addedOneDir)
+        {
+            result += resultDirs;
+            if (addedOneFile)
+                result += ",";
+        }
+        if (addedOneFile)
+            result += resultFiles;
         result += "]";
         retval = CefV8Value::CreateString(result);
         return NO_ERROR;
@@ -591,26 +618,27 @@ public:
     }
 
     // Escapes characters that have special meaning in JSON
-    void EscapeJSONString(const std::string& str, std::string& result) {
-        result = "";
+    void EscapeJSONString(const std::string& str, std::string& finalResult) {
+        std::string result;
         
         for(size_t pos = 0; pos != str.size(); ++pos) {
-                switch(str[pos]) {
-                    case '\a':  result.append("\\a");   break;
-                    case '\b':  result.append("\\b");   break;
-                    case '\f':  result.append("\\f");   break;
-                    case '\n':  result.append("\\n");   break;
-                    case '\r':  result.append("\\r");   break;
-                    case '\t':  result.append("\\t");   break;
-                    case '\v':  result.append("\\v");   break;
-                    // Note: single quotes are OK for JSON
-                    case '\"':  result.append("\\\"");  break; // double quote
-                    case '\\':  result.append("/");  break; // backslash                        
+            switch(str[pos]) {
+                case '\a':  result.append("\\a");   break;
+                case '\b':  result.append("\\b");   break;
+                case '\f':  result.append("\\f");   break;
+                case '\n':  result.append("\\n");   break;
+                case '\r':  result.append("\\r");   break;
+                case '\t':  result.append("\\t");   break;
+                case '\v':  result.append("\\v");   break;
+                // Note: single quotes are OK for JSON
+                case '\"':  result.append("\\\"");  break; // double quote
+                case '\\':  result.append("/");     break; // backslash                        
                         
-                default:   result.append( 1, str[pos]); break;
-                        
+                default:   result.append(1, str[pos]); break;
             }
         }
+
+        finalResult = result;
     }
 
     // Maps errors from errno.h to the brackets error codes
