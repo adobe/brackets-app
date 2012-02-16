@@ -9,9 +9,10 @@
 #include <wchar.h>
 #include <algorithm>
 #include <list>
+#include <MMSystem.h>
 
 extern CefRefPtr<ClientHandler> g_handler;
-
+extern DWORD g_appStartupTime;
 
 // Error values. These MUST be in sync with the error values
 // in brackets_extensions.js
@@ -212,6 +213,17 @@ public:
             // Inputs: none
             // Output: none
             errorCode = ExecuteQuitApplication(arguments, retval, exception);
+        }
+        else if (name == "GetEllapsedMilliseconds")
+        {
+            // Get
+            //
+            // Inputs: 
+            //  none
+            // Output: 
+            //  Number of milliseconds that have ellapsed since the application
+            //  was launched.
+            errorCode = ExecuteGetEllapsedMilliseconds(arguments, retval, exception); 
         }
         else if (name == "GetLastError")
         {
@@ -591,6 +603,16 @@ public:
         if (!DeleteFile(StringToWString(pathStr).c_str()))
             return ConvertWinErrorCode(GetLastError());
 
+        return NO_ERROR;
+    }
+    
+    int ExecuteGetEllapsedMilliseconds(const CefV8ValueList& arguments,
+                               CefRefPtr<CefV8Value>& retval,
+                               CefString& exception)
+    {
+        DWORD ellapsed = timeGetTime() - g_appStartupTime;
+        
+        retval = CefV8Value::CreateDouble(ellapsed);
         return NO_ERROR;
     }
 

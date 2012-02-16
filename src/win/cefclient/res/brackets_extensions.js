@@ -266,6 +266,15 @@ if (!brackets.app)
     };
 
     /**
+     * Return the number of milliseconds that have ellapsed since the application
+     * was launched. 
+     */
+    native function GetEllapsedMilliseconds();
+    brackets.app.getEllapsedMilliseconds = function() {
+        return GetEllapsedMilliseconds();
+    }
+
+    /**
      * Invoke a callback function.
      *
      * If the variable "brackets.forceAsyncCallbacks" is true, the callback is called after a 10
