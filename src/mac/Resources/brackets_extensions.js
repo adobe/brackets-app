@@ -263,12 +263,12 @@ if (!brackets.app)
     };
 
     /**
-     * Return the number of milliseconds that have ellapsed since the application
+     * Return the number of milliseconds that have elapsed since the application
      * was launched. 
      */
-    native function GetEllapsedMilliseconds();
-    brackets.app.getEllapsedMilliseconds = function() {
-        return GetEllapsedMilliseconds();
+    native function GetElapsedMilliseconds();
+    brackets.app.getElapsedMilliseconds = function() {
+        return GetElapsedMilliseconds();
     }
     
     /**

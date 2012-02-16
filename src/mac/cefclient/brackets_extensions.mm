@@ -210,16 +210,16 @@ public:
             // Output: none
             errorCode = ExecuteQuitApplication(arguments, retval, exception);
         }
-        else if (name == "GetEllapsedMilliseconds")
+        else if (name == "GetElapsedMilliseconds")
         {
             // Get
             //
             // Inputs: 
             //  none
             // Output: 
-            //  Number of milliseconds that have ellapsed since the application
+            //  Number of milliseconds that have elapsed since the application
             //  was launched.
-            errorCode = ExecuteGetEllapsedMilliseconds(arguments, retval, exception); 
+            errorCode = ExecuteGetElapsedMilliseconds(arguments, retval, exception); 
         }
         else if (name == "GetLastError")
         {
@@ -470,13 +470,13 @@ public:
       return NO_ERROR;
     }
     
-    int ExecuteGetEllapsedMilliseconds(const CefV8ValueList& arguments,
+    int ExecuteGetElapsedMilliseconds(const CefV8ValueList& arguments,
                                CefRefPtr<CefV8Value>& retval,
                                CefString& exception)
     {
-        CFAbsoluteTime ellapsed = CFAbsoluteTimeGetCurrent() - g_appStartupTime;
+        CFAbsoluteTime elapsed = CFAbsoluteTimeGetCurrent() - g_appStartupTime;
         
-        retval = CefV8Value::CreateDouble(round(ellapsed * 1000));
+        retval = CefV8Value::CreateDouble(round(elapsed * 1000));
         return NO_ERROR;
     }
 
