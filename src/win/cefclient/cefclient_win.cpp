@@ -19,6 +19,7 @@
 #include <direct.h>
 #include <sstream>
 #include <string.h>
+#include <MMSystem.h>
 
 #include <shellapi.h>
 #include <ShlObj.h>
@@ -29,6 +30,7 @@
 #define URLBAR_HEIGHT  24
 
 // Global Variables:
+DWORD g_appStartupTime;
 HINSTANCE hInst;								// current instance
 TCHAR szTitle[MAX_LOADSTRING];					// The title bar text
 TCHAR szWindowClass[MAX_LOADSTRING];			// the main window class name
@@ -59,6 +61,8 @@ int APIENTRY wWinMain(HINSTANCE hInstance,
 {
   UNREFERENCED_PARAMETER(hPrevInstance);
   UNREFERENCED_PARAMETER(lpCmdLine);
+
+  g_appStartupTime = timeGetTime();
 
   // Retrieve the current working directory.
   if(_getcwd(szWorkingDir, MAX_PATH) == NULL)
