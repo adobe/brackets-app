@@ -218,7 +218,10 @@ public:
         }
         else if (name == "QuitApplication")
         {
-            // TODO comments
+            // QuitApplication
+            //
+            // Inputs: none
+            // Output: none
             errorCode = ExecuteQuitApplication(arguments, retval, exception);
         }
         else if (name == "GetLastError")
