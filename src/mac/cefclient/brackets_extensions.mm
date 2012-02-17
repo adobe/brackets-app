@@ -8,7 +8,7 @@
 #include <dirent.h>
 
 extern CefRefPtr<ClientHandler> g_handler;
-
+extern CFAbsoluteTime g_appStartupTime;
 
 // Error values. These MUST be in sync with the error values
 // in brackets_extensions.js
@@ -209,6 +209,17 @@ public:
             // Inputs: none
             // Output: none
             errorCode = ExecuteQuitApplication(arguments, retval, exception);
+        }
+        else if (name == "GetElapsedMilliseconds")
+        {
+            // Get
+            //
+            // Inputs: 
+            //  none
+            // Output: 
+            //  Number of milliseconds that have elapsed since the application
+            //  was launched.
+            errorCode = ExecuteGetElapsedMilliseconds(arguments, retval, exception); 
         }
         else if (name == "GetLastError")
         {
@@ -457,6 +468,16 @@ public:
       CefQuitMessageLoop();
       [NSApp stop:nil];
       return NO_ERROR;
+    }
+    
+    int ExecuteGetElapsedMilliseconds(const CefV8ValueList& arguments,
+                               CefRefPtr<CefV8Value>& retval,
+                               CefString& exception)
+    {
+        CFAbsoluteTime elapsed = CFAbsoluteTimeGetCurrent() - g_appStartupTime;
+        
+        retval = CefV8Value::CreateDouble(round(elapsed * 1000));
+        return NO_ERROR;
     }
 
     // Escapes characters that have special meaning in JSON
