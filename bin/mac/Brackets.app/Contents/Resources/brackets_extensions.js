@@ -162,7 +162,7 @@ if (!brackets.app)
     };
  
     /**
-     * TODO comments
+     * Quits native shell application
      */
      native function QuitApplication();
      brackets.app.quit = function() {
@@ -261,6 +261,15 @@ if (!brackets.app)
         DeleteFileOrDirectory(path);
         invokeCallback(callback, getLastError());
     };
+
+    /**
+     * Return the number of milliseconds that have elapsed since the application
+     * was launched. 
+     */
+    native function GetElapsedMilliseconds();
+    brackets.app.getElapsedMilliseconds = function() {
+        return GetElapsedMilliseconds();
+    }
     
     /**
      * Invoke a callback function.
@@ -287,7 +296,7 @@ if (!brackets.app)
      * Workaround for CEF bug #501. On Mac, focus (and blur) events are not sent to the
      * window object. In order for our "sync files on app activate" feature to work, fake
      * a focus event here. 
-     * TODO: Remove this function once CEF bug #501 is fixed.
+     * TODO (issue 69) - Remove this function once CEF bug #501 is fixed.
      * http://code.google.com/p/chromiumembedded/issues/detail?id=501
      */
     brackets.sendFakeFocusEvent = function() {

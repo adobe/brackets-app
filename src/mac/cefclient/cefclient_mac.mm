@@ -34,6 +34,9 @@ const int kWindowHeight = 700;
 // Memory AutoRelease pool.
 static NSAutoreleasePool* g_autopool = nil;
 
+// Application startup time
+CFTimeInterval g_appStartupTime;
+
 // Provide the CefAppProtocol implementation required by CEF.
 @interface ClientApplication : NSApplication<CefAppProtocol> {
 @private
@@ -390,6 +393,8 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 
 int main(int argc, char* argv[])
 {
+  g_appStartupTime = CFAbsoluteTimeGetCurrent();
+  
   // Retrieve the current working directory.
   getcwd(szWorkingDir, sizeof(szWorkingDir));
 
