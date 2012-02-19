@@ -9,7 +9,7 @@
 
 
 // Private methods -- use prefixes to avoid collisions with Apple's methods
-@interface NSAlert ()
+@interface NSAlert (SynchronousSheetPrivate)
 -(IBAction) BE_stopSynchronousSheet:(id)sender;   // hide sheet & stop modal
 -(void) BE_beginSheetModalForWindow:(NSWindow *)aWindow;
 @end
