@@ -56,7 +56,7 @@ public:
             //  allowMultipleSelection - Boolean
             //  chooseDirectory - Boolean. Choose directory if true, choose file if false
             //  title - title of the dialog
-            //  initialPath - initial path to display. Pass "" to show default.
+            //  initialPath - initial path to display. Pass null to show all file types
             //  fileTypes - space-delimited string of file extensions, without '.'
             //
             // Output:
@@ -315,7 +315,7 @@ public:
             ofn.lpstrFile = szFile;
             ofn.nMaxFile = MAX_PATH;
 
-           // TODO (issue #65) - Use passed in file types
+           // TODO (issue #65) - Use passed in file types. Note, when fileTypesStr is null, all files should be shown
            /* findAndReplaceString( fileTypesStr, std::string(" "), std::string(";*."));
             LPCWSTR allFilesFilter = L"All Files\0*.*\0\0";*/
 
