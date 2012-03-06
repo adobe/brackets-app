@@ -319,7 +319,7 @@ public:
            /* findAndReplaceString( fileTypesStr, std::string(" "), std::string(";*."));
             LPCWSTR allFilesFilter = L"All Files\0*.*\0\0";*/
 
-             ofn.lpstrFilter = L"Web Files\0*.js;*.css;*.htm;*.html\0\0"; 
+             ofn.lpstrFilter = L"All Files\0*.*\0Web Files\0*.js;*.css;*.htm;*.html\0\0";
            
             ofn.lpstrInitialDir = initialPath.c_str();
             ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
