@@ -245,7 +245,15 @@ public:
 
 
 
+    static int CALLBACK SetInitialPathCallback(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
+    {
+        if (BFFM_INITIALIZED == uMsg && NULL != lpData)
+        {
+            SendMessage(hWnd, BFFM_SETSELECTION, TRUE, lpData);
+        }
 
+        return 0;
+    }
 
     int ExecuteShowOpenDialog(const CefV8ValueList& arguments,
                                CefRefPtr<CefV8Value>& retval,
@@ -293,6 +301,9 @@ public:
             bi.hwndOwner = GetActiveWindow();
             bi.lpszTitle = wtitle.c_str();
             bi.ulFlags = BIF_NEWDIALOGSTYLE;
+            bi.lpfn = SetInitialPathCallback;
+            bi.lParam = (LPARAM)initialPath.c_str();
+
             LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
             if (pidl != 0) {
                 if (SHGetPathFromIDList(pidl, szFile)) {
