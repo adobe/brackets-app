@@ -581,15 +581,14 @@ public:
 
         // Note, Windows cannot set read-only on directories.
         // See http://support.microsoft.com/kb/326549
-        //DWORD dwAttr = GetFileAttributes(StringToWString(pathStr).c_str());
-        //if (dwAttr == INVALID_FILE_ATTRIBUTES) {
-        //    return ConvertWinErrorCode(GetLastError()); 
-        //}
-
-        //bool isDir = (dwAttr & FILE_ATTRIBUTE_DIRECTORY) != 0;
-        //if(isDir) {
-        //    return NO_ERROR;
-        //}
+        DWORD dwAttr = GetFileAttributes(StringToWString(pathStr).c_str());
+        if (dwAttr == INVALID_FILE_ATTRIBUTES) {
+            return ConvertWinErrorCode(GetLastError()); 
+        }
+        bool isDir = (dwAttr & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        if(isDir) {
+            return NO_ERROR;
+        }
 
         //// For now only extract permissions for "owner"
         //bool write = (mode & 0200) != 0; 
