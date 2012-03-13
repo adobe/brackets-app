@@ -4,13 +4,13 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <CommDlg.h>
 #include <ShlObj.h>
 #include <wchar.h>
 #include <algorithm>
 #include <list>
 #include <MMSystem.h>
-#include <AclAPI.h>
 
 extern CefRefPtr<ClientHandler> g_handler;
 extern DWORD g_appStartupTime;
@@ -579,55 +579,27 @@ public:
         int mode = arguments[1]->GetIntValue();
         FixFilename(pathStr);
 
-    /* TODO (issue #66) -  Implement me! _wchmod() uses different parameters than chmod(), and
-    /  will _not_ always work on directories. For now, do nothing and return NO_ERROR
-    /  so most unit test can at least be run. 
+        // Note, Windows cannot set read-only on directories.
+        // See http://support.microsoft.com/kb/326549
 
-        if (_wchmod(StringToWString(pathStr).c_str(), mode) == -1) {
+        DWORD dwAttr = GetFileAttributes(StringToWString(pathStr).c_str());
+        if (dwAttr == INVALID_FILE_ATTRIBUTES) {
+            return ConvertWinErrorCode(GetLastError()); 
+        }
+
+        bool isDir = (dwAttr & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        if(isDir) {
+            return NO_ERROR;
+        }
+
+        bool write = (mode & 0200) != 0; 
+        bool read = (mode & 0400) != 0;
+
+        int mask = (write ? _S_IWRITE : 0) | (read ? _S_IREAD : 0);
+
+        if (_wchmod(StringToWString(pathStr).c_str(), mask) == -1) {
             return ConvertErrnoCode(errno); 
         }
-    */
-
-    HANDLE hDir = CreateFile(StringToWString(pathStr).c_str(),
-            READ_CONTROL | WRITE_DAC,
-            0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL); 
-
-    // http://stackoverflow.com/questions/690780/how-to-create-directory-with-all-rights-granted-to-everyone
-    ACL* pOldDACL;
-    SECURITY_DESCRIPTOR* pSD = NULL;
-    PSID *ppsidOwner = NULL;
-    PSID *ppsidGroup = NULL;
-    DWORD result = GetSecurityInfo(hDir, SE_FILE_OBJECT , 
-        OWNER_SECURITY_INFORMATION | GROUP_SECURITY_INFORMATION | DACL_SECURITY_INFORMATION, ppsidOwner, ppsidGroup, &pOldDACL, NULL, (void**)&pSD);
-
-    bool test = result == ERROR_INVALID_HANDLE;
-
-
-    PSID pSid = NULL;
-    SID_IDENTIFIER_AUTHORITY authNt = SECURITY_NT_AUTHORITY;
-    AllocateAndInitializeSid(&authNt,2,SECURITY_BUILTIN_DOMAIN_RID,DOMAIN_ALIAS_RID_USERS,0,0,0,0,0,0,&pSid);
-
-      EXPLICIT_ACCESS ea={0};
-      ea.grfAccessMode = DENY_ACCESS;
-      ea.grfAccessPermissions = STANDARD_RIGHTS_ALL;
-      ea.grfInheritance = CONTAINER_INHERIT_ACE|OBJECT_INHERIT_ACE;
-      ea.Trustee.TrusteeType = TRUSTEE_IS_GROUP;
-      ea.Trustee.TrusteeForm = TRUSTEE_IS_SID;
-      ea.Trustee.ptstrName = (LPTSTR)pSid;
-
-      ACL* pNewDACL = 0;
-      DWORD err = SetEntriesInAcl(1,&ea,pOldDACL,&pNewDACL);
-
-      if(pNewDACL)
-          result = SetSecurityInfo(hDir,SE_FILE_OBJECT,DACL_SECURITY_INFORMATION,NULL, NULL, pNewDACL, NULL);
-
-      FreeSid(pSid);
-      LocalFree(pNewDACL);
-      LocalFree(pSD);
-      LocalFree(pOldDACL);
-      CloseHandle(hDir);
-
-
 
         return NO_ERROR;
     }
