@@ -590,14 +590,16 @@ public:
             return NO_ERROR;
         }
 
-        //// For now only extract permissions for "owner"
-        //bool write = (mode & 0200) != 0; 
-        //bool read = (mode & 0400) != 0;
-        //int mask = (write ? _S_IWRITE : 0) | (read ? _S_IREAD : 0);
+        // For now only extract permissions for "owner"
+        bool write = (mode & 0200) != 0; 
+        bool read = (mode & 0400) != 0;
+        int mask = (write ? _S_IWRITE : 0) | (read ? _S_IREAD : 0);
 
-        //if (_wchmod(StringToWString(pathStr).c_str(), mask) == -1) {
-        //    return ConvertErrnoCode(errno); 
-        //}
+        // Note _wchmod only supports setting FILE_ATTRIBUTE_READONLY so 
+        // _S_IREAD is ignored.
+        if (_wchmod(StringToWString(pathStr).c_str(), mask) == -1) {
+            return ConvertErrnoCode(errno); 
+        }
 
         return NO_ERROR;
     }
