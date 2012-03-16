@@ -4,6 +4,7 @@
 
 #include <stdio.h>
 #include <sys/types.h>
+#include <sys/stat.h>
 #include <CommDlg.h>
 #include <ShlObj.h>
 #include <wchar.h>
@@ -56,7 +57,7 @@ public:
             //  allowMultipleSelection - Boolean
             //  chooseDirectory - Boolean. Choose directory if true, choose file if false
             //  title - title of the dialog
-            //  initialPath - initial path to display. Pass "" to show default.
+            //  initialPath - initial path to display. Pass null to show all file types
             //  fileTypes - space-delimited string of file extensions, without '.'
             //
             // Output:
@@ -245,7 +246,15 @@ public:
 
 
 
+    static int CALLBACK SetInitialPathCallback(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
+    {
+        if (BFFM_INITIALIZED == uMsg && NULL != lpData)
+        {
+            SendMessage(hWnd, BFFM_SETSELECTION, TRUE, lpData);
+        }
 
+        return 0;
+    }
 
     int ExecuteShowOpenDialog(const CefV8ValueList& arguments,
                                CefRefPtr<CefV8Value>& retval,
@@ -293,6 +302,9 @@ public:
             bi.hwndOwner = GetActiveWindow();
             bi.lpszTitle = wtitle.c_str();
             bi.ulFlags = BIF_NEWDIALOGSTYLE;
+            bi.lpfn = SetInitialPathCallback;
+            bi.lParam = (LPARAM)initialPath.c_str();
+
             LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
             if (pidl != 0) {
                 if (SHGetPathFromIDList(pidl, szFile)) {
@@ -315,11 +327,11 @@ public:
             ofn.lpstrFile = szFile;
             ofn.nMaxFile = MAX_PATH;
 
-           // TODO (issue #65) - Use passed in file types
+           // TODO (issue #65) - Use passed in file types. Note, when fileTypesStr is null, all files should be shown
            /* findAndReplaceString( fileTypesStr, std::string(" "), std::string(";*."));
             LPCWSTR allFilesFilter = L"All Files\0*.*\0\0";*/
 
-             ofn.lpstrFilter = L"Web Files\0*.js;*.css;*.htm;*.html\0\0"; 
+             ofn.lpstrFilter = L"All Files\0*.*\0Web Files\0*.js;*.css;*.htm;*.html\0\0";
            
             ofn.lpstrInitialDir = initialPath.c_str();
             ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
@@ -578,14 +590,27 @@ public:
         int mode = arguments[1]->GetIntValue();
         FixFilename(pathStr);
 
-    /* TODO (issue #66) -  Implement me! _wchmod() uses different parameters than chmod(), and
-    /  will _not_ always work on directories. For now, do nothing and return NO_ERROR
-    /  so most unit test can at least be run. 
+        // Note, Windows cannot set read-only on directories.
+        // See http://support.microsoft.com/kb/326549
+        DWORD dwAttr = GetFileAttributes(StringToWString(pathStr).c_str());
+        if (dwAttr == INVALID_FILE_ATTRIBUTES) {
+            return ConvertWinErrorCode(GetLastError()); 
+        }
+        bool isDir = (dwAttr & FILE_ATTRIBUTE_DIRECTORY) != 0;
+        if(isDir) {
+            return NO_ERROR;
+        }
 
-        if (_wchmod(StringToWString(pathStr).c_str(), mode) == -1) {
+        // For now only extract permissions for "owner"
+        bool write = (mode & 0200) != 0; 
+        bool read = (mode & 0400) != 0;
+        int mask = (write ? _S_IWRITE : 0) | (read ? _S_IREAD : 0);
+
+        // Note _wchmod only supports setting FILE_ATTRIBUTE_READONLY so 
+        // _S_IREAD is ignored.
+        if (_wchmod(StringToWString(pathStr).c_str(), mask) == -1) {
             return ConvertErrnoCode(errno); 
         }
-    */
 
         return NO_ERROR;
     }

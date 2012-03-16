@@ -67,7 +67,7 @@ public:
             //  chooseDirectory - Boolean. Choose directory if true, choose file if false
             //  title - title of the dialog
             //  initialPath - initial path to display. Pass "" to show default.
-            //  fileTypes - space-delimited string of file extensions, without '.'
+            //  fileTypes - space-delimited string of file extensions, without '.' Pass null to show all file types
             //
             // Output:
             //  "" if no file/directory was selected
