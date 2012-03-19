@@ -293,6 +293,26 @@ if (!brackets.app)
     }
     
     /**
+     * Open the live browser
+     *
+     * @param {string} url
+     * @param {function(err)} callback Asynchronous callback function with one argument (the error)
+     *        Possible error values:
+     *          NO_ERROR
+     *          ERR_INVALID_PARAMS - invalid parameters
+	 *          ERR_UNKNOWN - unable to launch the browser
+     *
+     * @return None. This is an asynchronous call that sends all return information to the callback.
+     */
+    native function OpenLiveBrowser();
+    brackets.app.openLiveBrowser = function(url, callback) {
+        setTimeout(function() {
+            OpenLiveBrowser(url);
+            callback(getLastError());
+        }, 0);
+    };
+
+    /**
      * Workaround for CEF bug #501. On Mac, focus (and blur) events are not sent to the
      * window object. In order for our "sync files on app activate" feature to work, fake
      * a focus event here. 
