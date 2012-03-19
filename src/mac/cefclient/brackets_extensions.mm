@@ -44,7 +44,21 @@ public:
     {
         int errorCode = -1;
         
-        if (name == "ShowOpenDialog") 
+        if (name == "OpenLiveBrowser")
+        {
+            // OpenLiveBrowser(url)
+            //
+            // Inputs:
+            //  url - url of the document or website to open
+            //
+            // Error:
+            //  NO_ERROR
+            //  ERR_INVALID_PARAMS - invalid parameters
+            //  ERR_UNKNOWN - unable to launch the browser
+            
+            errorCode = OpenLiveBrowser(arguments, retval, exception);
+        }
+        else if (name == "ShowOpenDialog") 
         {
             // showOpenDialog(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes)
             //
@@ -237,6 +251,48 @@ public:
         }
         
         return false;
+    }
+    
+    int OpenLiveBrowser(const CefV8ValueList& args,
+                              CefRefPtr<CefV8Value>& retval,
+                              CefString& exception)
+    {
+        // Parse the arguments
+        if (args.size() != 1 || !args[0]->IsString())
+            return ERR_INVALID_PARAMS;
+        std::string argURL = args[0]->GetStringValue();
+		NSString *urlString = [NSString stringWithUTF8String:argURL.c_str()];
+		urlString = [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        NSURL *url = [NSURL URLWithString:urlString];
+        
+        // Find instances of the Browser
+        NSString *appId = @"org.chromium.Chromium";
+        NSArray *apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:appId];
+        NSWorkspace * ws = [NSWorkspace sharedWorkspace];
+        NSUInteger launchOptions = NSWorkspaceLaunchDefault | NSWorkspaceLaunchWithoutActivation;
+
+        // Launch Browser
+        if(apps.count == 0) {
+            
+            // create the configuration dictionary for launching with custom parameters
+            NSArray *parameters = [NSArray arrayWithObjects:
+                                   @"--remote-debugging-port=9222", 
+                                   @"--allow-file-access-from-files", 
+                                   url, 
+                                   nil];
+            NSMutableDictionary* appConfig = [NSDictionary dictionaryWithObject:parameters forKey:NSWorkspaceLaunchConfigurationArguments];
+
+            NSURL *appURL = [ws URLForApplicationWithBundleIdentifier:appId];
+            NSError *error = nil;
+            if( ![ws launchApplicationAtURL:appURL options:launchOptions configuration:appConfig error:&error] ) {
+                return ERR_UNKNOWN;
+            }
+        }
+        
+        // Tell the Browser to load the url
+        [ws openURLs:[NSArray arrayWithObject:url] withAppBundleIdentifier:appId options:launchOptions additionalEventParamDescriptor:nil launchIdentifiers:nil];
+        
+        return NO_ERROR;
     }
     
     int ExecuteShowOpenDialog(const CefV8ValueList& arguments,

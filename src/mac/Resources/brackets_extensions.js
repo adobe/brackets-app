@@ -77,6 +77,25 @@ if (!brackets.app)
     brackets.fs.ERR_NOT_DIRECTORY           = 9;
     
     /**
+    * Open the live browser
+    *
+    * @param {string} url
+    * @param {function(err)} callback Asynchronous callback function with one argument (the error)
+    *        Possible error values:
+    *          NO_ERROR
+    *          ERR_INVALID_PARAMS
+    *
+    * @return None. This is an asynchronous call that sends all return information to the callback.
+    */
+    native function OpenLiveBrowser();
+    brackets.fs.openLiveBrowser = function(url, callback) {
+        setTimeout(function() {
+            OpenLiveBrowser(url);
+            callback(getLastError());
+        }, 0);
+    };
+ 
+    /**
      * Display the OS File Open dialog, allowing the user to select
      * files or directories.
      *

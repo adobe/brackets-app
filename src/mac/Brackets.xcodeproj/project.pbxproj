@@ -746,6 +746,7 @@
 				214293D3149002FF006DE3C0 /* Postbuild "Change Mach-O Flags" */,
 				214293D4149002FF006DE3C0 /* Postbuild "Strip If Needed" */,
 				214293D5149002FF006DE3C0 /* Copy Files */,
+				2D3A461014E08F1B000E410A /* Create link to brackets */,
 			);
 			buildRules = (
 			);
@@ -768,6 +769,7 @@
 				8CCB3A77807C286D2BA60AEA /* Frameworks */,
 				C7D8B76891B2EB408E226FA2 /* Postbuild "Change Mach-O Flags" */,
 				A019BF58402B64855147A97A /* Postbuild "Strip If Needed" */,
+				2D3A460E14E08B92000E410A /* Create Link to Brackets */,
 			);
 			buildRules = (
 			);
@@ -864,6 +866,34 @@
 			shellPath = /bin/sh;
 			shellScript = "exec tools/strip_from_xcode\nexit 1\n";
 			showEnvVarsInLog = 0;
+		};
+		2D3A460E14E08B92000E410A /* Create Link to Brackets */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Create Link to Brackets";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "ln -sf $SRCROOT/../../brackets $BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/";
+		};
+		2D3A461014E08F1B000E410A /* Create link to brackets */ = {
+			isa = PBXShellScriptBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputPaths = (
+			);
+			name = "Create link to brackets";
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "ln -sf $SRCROOT/../../brackets $BUILT_PRODUCTS_DIR/$CONTENTS_FOLDER_PATH/";
 		};
 		A019BF58402B64855147A97A /* Postbuild "Strip If Needed" */ = {
 			isa = PBXShellScriptBuildPhase;
