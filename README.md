@@ -147,7 +147,7 @@ Getting the source
 
 Brackets is currently hosted in two github repos: the 
 [brackets-app repo](http://github.com/adobe/brackets-app), which contains
-the native app shell, and [brackets repo](http://github.com/adobe/brackets), 
+the native app shell, and the [brackets repo](http://github.com/adobe/brackets), 
 which contains the HTML/JS/CSS code. The brackets-app repo contains the brackets
 repo as a submodule. (These repos are currently private, so you'll need to
 contact us for access.)
