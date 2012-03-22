@@ -301,12 +301,11 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
     // app bundle and provide a mechanism for specifying a specific index.html
     // to load.
 
-    if (appPath.find("xcodebuild") != std::string::npos) {
-        appPath = appPath.substr(0, appPath.rfind("/"));
+    appPath = appPath.substr(0, appPath.rfind("/"));
+    if (appPath.find("xcodebuild") != std::string::npos)
         filePath = appPath + "/../../../../brackets/src/index.html";
-    } else {
-        filePath = appPath + "/Contents/brackets/src/index.html";
-    }
+    else
+        filePath = appPath + "/../../brackets/src/index.html";
         
     initialUrl = "file://" + filePath;
   }
