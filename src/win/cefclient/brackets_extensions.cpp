@@ -49,7 +49,21 @@ public:
     {
         int errorCode = -1;
         
-        if (name == "ShowOpenDialog") 
+        if (name == "OpenLiveBrowser")
+        {
+            // OpenLiveBrowser(url)
+            //
+            // Inputs:
+            //  url - url of the document or website to open
+            //
+            // Error:
+            //  NO_ERROR
+            //  ERR_INVALID_PARAMS - invalid parameters
+            //  ERR_UNKNOWN - unable to launch the browser
+            
+            errorCode = OpenLiveBrowser(arguments, retval, exception);
+        }
+        else if (name == "ShowOpenDialog") 
         {
             // showOpenDialog(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes)
             //
@@ -244,7 +258,40 @@ public:
         return false;
     }
 
+    int OpenLiveBrowser(const CefV8ValueList& arguments,
+                               CefRefPtr<CefV8Value>& retval,
+                               CefString& exception)
+    {
+        // Parse the arguments
+        if (arguments.size() != 1 || !arguments[0]->IsString())
+            return ERR_INVALID_PARAMS;
+        std::wstring argURL = StringToWString(arguments[0]->GetStringValue());
+// TODO?:        urlString = [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
 
+        // Chrome.exe is at C:\Users\{USERNAME}\AppData\Local\Google\Chrome\Application\chrome.exe
+        PWSTR localAppPath;
+        SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &localAppPath);
+        std::wstring appPath(localAppPath);
+        appPath += L"\\Google\\Chrome\\Application\\chrome.exe";
+
+        // Args must be mutable
+        TCHAR args[MAX_PATH];
+        wcscpy(args, L"--remote-debugging-port=9222 --allow-file-access-from-files ");
+        wcscat(args, argURL.c_str());
+
+        STARTUPINFO si = {0};
+        si.cb = sizeof(si);
+        PROCESS_INFORMATION pi = {0};
+
+        if (!CreateProcess(appPath.c_str(), args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+            return ConvertWinErrorCode(GetLastError());
+        }
+        
+        CloseHandle(pi.hProcess);
+        CloseHandle(pi.hThread);
+
+        return NO_ERROR;
+    }
 
     static int CALLBACK SetInitialPathCallback(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
     {
