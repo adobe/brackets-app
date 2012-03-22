@@ -199,6 +199,9 @@ in to /bin/mac.
 Useful tools
 ------------
 
+Because Brackets is built in HTML/JS/CSS, we've actually started using Brackets
+itself to edit its own source code. It's pretty fun!
+
 If you use Brackets to edit Brackets, you can quickly reload the app itself by 
 choosing *View > Refresh* from the native menu (not the in-Brackets menu).
 You can also bring up the Chrome developer tools on the Brackets window using
