@@ -266,24 +266,47 @@ public:
         if (arguments.size() != 1 || !arguments[0]->IsString())
             return ERR_INVALID_PARAMS;
         std::wstring argURL = StringToWString(arguments[0]->GetStringValue());
-// TODO?:        urlString = [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
 
         // Chrome.exe is at C:\Users\{USERNAME}\AppData\Local\Google\Chrome\Application\chrome.exe
-        PWSTR localAppPath;
+        PWSTR localAppPath = NULL;
         SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &localAppPath);
         std::wstring appPath(localAppPath);
         appPath += L"\\Google\\Chrome\\Application\\chrome.exe";
 
+        if( localAppPath ) {
+            CoTaskMemFree(localAppPath);
+            localAppPath = NULL;
+        }
+
+        //When launching the app, we need to be careful about spaces in the path. A safe way to do this
+        //is to use the shortpath. It doesn't look as nice, but it always works and never has a space
+        DWORD shortPathBufSize = _MAX_PATH+1;
+        WCHAR shortPathBuf[_MAX_PATH+1];
+        DWORD finalShortPathSize = ::GetShortPathName(appPath.c_str(), shortPathBuf, shortPathBufSize);
+        //If the shortpath failed, we need to bail since we don't know what to call now
+        if( finalShortPathSize == 0 ){
+            return ConvertWinErrorCode(GetLastError());
+        }
+
+        appPath.assign(shortPathBuf, finalShortPathSize);
+
+
+        std::wstring args = appPath;
+        args += L" --remote-debugging-port=9222 --allow-file-access-from-files ";
+        args += argURL;
+
         // Args must be mutable
-        TCHAR args[MAX_PATH];
-        wcscpy(args, L"--remote-debugging-port=9222 --allow-file-access-from-files ");
-        wcscat(args, argURL.c_str());
+        int argsBufSize = args.length() +1;
+        std::auto_ptr<WCHAR> argsBuf( new WCHAR[argsBufSize]);
+        wcscpy(argsBuf.get(), args.c_str());
 
         STARTUPINFO si = {0};
         si.cb = sizeof(si);
         PROCESS_INFORMATION pi = {0};
 
-        if (!CreateProcess(appPath.c_str(), args, NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
+        //Send the whole command in through the args param. Windows will parse the first token up to a space
+        //as the processes and feed the rest in as the argument string. 
+        if (!CreateProcess(NULL, argsBuf.get(), NULL, NULL, FALSE, 0, NULL, NULL, &si, &pi)) {
             return ConvertWinErrorCode(GetLastError());
         }
         
