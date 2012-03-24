@@ -263,6 +263,14 @@ public:
         std::string argURL = args[0]->GetStringValue();
         NSString *urlString = [NSString stringWithUTF8String:argURL.c_str()];
         urlString = [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
+        /* TODO - respond to comment from Chris:
+          The url argument is already encoding so calling this will encoding it again and make the URL invalid. Most likely this 
+          isn't causing a problem because nothing needs to get encoded, but if you tried a file with a space in it would go from 
+          "file:///test%20file.htm" to "file:///test%2520file.html" as the percent would get encoding to "%25". If we want to be 
+          strict we can remove this line and put the responsibility on the caller to ensure the url is correct. If you want to be
+          forgiving, you can use CFURLCreateStringByReplacingPercentEscapes and pass in the reserved characters as one to not 
+          URL endcode, so if it's already URL encoded nothing should happen, but if it's not then the right thing will.
+        */
         NSURL *url = [NSURL URLWithString:urlString];
         
         // Find instances of the Browser
