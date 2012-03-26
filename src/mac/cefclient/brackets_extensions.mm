@@ -262,11 +262,10 @@ public:
             return ERR_INVALID_PARAMS;
         std::string argURL = args[0]->GetStringValue();
         NSString *urlString = [NSString stringWithUTF8String:argURL.c_str()];
-        urlString = [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
         NSURL *url = [NSURL URLWithString:urlString];
         
         // Find instances of the Browser
-        NSString *appId = @"org.chromium.Chromium";
+        NSString *appId = @"com.google.Chrome";
         NSArray *apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:appId];
         NSWorkspace * ws = [NSWorkspace sharedWorkspace];
         NSUInteger launchOptions = NSWorkspaceLaunchDefault | NSWorkspaceLaunchWithoutActivation;
@@ -274,11 +273,16 @@ public:
         // Launch Browser
         if(apps.count == 0) {
             
-            // create the configuration dictionary for launching with custom parameters
+            // Create the configuration dictionary for launching with custom parameters.
+            // The url parameter is commented out because it was ignored by chrome. The 
+            // result is chrome launchs with an extra blank tab. However this seems common
+            // for chrome as mac "Mail" does the same thing when opening a link from a message
+            // (We could also do system("open /Applications/Google\ Chrome.app --args --remote-debugging-port=9222 --allow-file-access-from-files url") but that
+            // seems not as robust.
             NSArray *parameters = [NSArray arrayWithObjects:
                                    @"--remote-debugging-port=9222", 
-                                   @"--allow-file-access-from-files", 
-                                   url, 
+                                   @"--allow-file-access-from-files",
+                                   /*url,*/ 
                                    nil];
             NSMutableDictionary* appConfig = [NSDictionary dictionaryWithObject:parameters forKey:NSWorkspaceLaunchConfigurationArguments];
 
