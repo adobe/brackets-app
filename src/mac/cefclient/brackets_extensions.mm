@@ -288,6 +288,9 @@ public:
             NSMutableDictionary* appConfig = [NSDictionary dictionaryWithObject:parameters forKey:NSWorkspaceLaunchConfigurationArguments];
 
             NSURL *appURL = [ws URLForApplicationWithBundleIdentifier:appId];
+            if( !appURL ) {
+                return ERR_NOT_FOUND; //Chrome not installed
+            }
             NSError *error = nil;
             if( ![ws launchApplicationAtURL:appURL options:launchOptions configuration:appConfig error:&error] ) {
                 return ERR_UNKNOWN;
