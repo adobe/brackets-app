@@ -262,6 +262,7 @@ public:
             return ERR_INVALID_PARAMS;
         std::string argURL = args[0]->GetStringValue();
         NSString *urlString = [NSString stringWithUTF8String:argURL.c_str()];
+        urlString = [urlString stringByAddingPercentEscapesUsingEncoding:NSUTF8StringEncoding];
         NSURL *url = [NSURL URLWithString:urlString];
         
         // Find instances of the Browser
