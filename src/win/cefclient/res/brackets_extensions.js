@@ -314,5 +314,25 @@ if (!brackets.app)
             callback(getLastError());
         }, 0);
     };
+    
+    /**
+     * Attempts to close the live browser. The user can still override this and the function 
+     * doesn't wait to see if the user actually closed it.
+     *
+     * @param {function(err)} callback Asynchronous callback function with one argument (the error)
+     *        Possible error values:
+     *          NO_ERROR
+     *
+     * @return None. This is an asynchronous call that sends all return information to the callback.
+     */
+    native function CloseLiveBrowser();
+    brackets.app.closeLiveBrowser = function(callback) {
+        setTimeout(function() {
+            CloseLiveBrowser();
+            if( callback ) {
+                callback(getLastError());
+            }
+        }, 0);
+    };
 
 })();;
