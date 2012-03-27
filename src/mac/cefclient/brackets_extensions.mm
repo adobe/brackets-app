@@ -58,6 +58,18 @@ public:
             
             errorCode = OpenLiveBrowser(arguments, retval, exception);
         }
+        else if (name == "CloseLiveBrowser")
+        {
+            // CloseLiveBrowser()
+            //
+            // Inputs:
+            //  none
+            //
+            // Error:
+            //  NO_ERROR
+            
+            errorCode = CloseLiveBrowser(arguments, retval, exception);
+        }
         else if (name == "ShowOpenDialog") 
         {
             // showOpenDialog(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes)
@@ -296,6 +308,23 @@ public:
         // Tell the Browser to load the url
         [ws openURLs:[NSArray arrayWithObject:url] withAppBundleIdentifier:appId options:launchOptions additionalEventParamDescriptor:nil launchIdentifiers:nil];
         
+        return NO_ERROR;
+    }
+  
+    int CloseLiveBrowser(const CefV8ValueList& args,
+                      CefRefPtr<CefV8Value>& retval,
+                      CefString& exception)
+    {  
+        // Find instances of the Browser
+        NSString *appId = @"com.google.Chrome";
+        NSArray *apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:appId];
+        for (NSUInteger i = 0; i < apps.count; i++) {
+            NSRunningApplication* curApp = [apps objectAtIndex:i];
+            if( curApp && !curApp.terminated ) {
+                [curApp terminate];
+            }
+        }
+    
         return NO_ERROR;
     }
     

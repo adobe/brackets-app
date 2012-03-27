@@ -316,8 +316,9 @@ if (!brackets.app)
     };
     
     /**
-     * Attempts to close the live browser. The user can still override this and the function 
-     * doesn't wait to see if the user actually closed it.
+     * Attempts to close the live browser. The browser can still give the user a chance to override
+     * the close attempt if there is a page with unsaved changes. This function does not wait to see
+     * if the browser actually closed or not.
      *
      * @param {function(err)} callback Asynchronous callback function with one argument (the error)
      *        Possible error values:

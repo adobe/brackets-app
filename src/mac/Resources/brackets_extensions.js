@@ -311,6 +311,27 @@ if (!brackets.app)
             callback(getLastError());
         }, 0);
     };
+    
+    /**
+     * Attempts to close the live browser. The browser can still give the user a chance to override
+     * the close attempt if there is a page with unsaved changes. This function does not wait to see
+     * if the browser actually closed or not.
+     *
+     * @param {function(err)} callback Asynchronous callback function with one argument (the error)
+     *        Possible error values:
+     *          NO_ERROR
+     *
+     * @return None. This is an asynchronous call that sends all return information to the callback.
+     */
+    native function CloseLiveBrowser();
+    brackets.app.closeLiveBrowser = function(callback) {
+        setTimeout(function() {
+            CloseLiveBrowser();
+            if( callback ) {
+                callback(getLastError());
+            }
+        }, 0);
+    };
 
     /**
      * Workaround for CEF bug #501. On Mac, focus (and blur) events are not sent to the
