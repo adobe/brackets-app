@@ -287,6 +287,19 @@ public:
         return appPath;
     }
     
+    static bool ConvertToShortPathName(std::wstring & path)
+    {
+        DWORD shortPathBufSize = _MAX_PATH+1;
+        WCHAR shortPathBuf[_MAX_PATH+1];
+        DWORD finalShortPathSize = ::GetShortPathName(path.c_str(), shortPathBuf, shortPathBufSize);
+        if( finalShortPathSize == 0 ) {
+            return false;
+        }
+        
+        path.assign(shortPathBuf, finalShortPathSize);
+        return true;
+    }
+    
     int OpenLiveBrowser(const CefV8ValueList& arguments,
                                CefRefPtr<CefV8Value>& retval,
                                CefString& exception)
@@ -300,15 +313,10 @@ public:
 
         //When launching the app, we need to be careful about spaces in the path. A safe way to do this
         //is to use the shortpath. It doesn't look as nice, but it always works and never has a space
-        DWORD shortPathBufSize = _MAX_PATH+1;
-        WCHAR shortPathBuf[_MAX_PATH+1];
-        DWORD finalShortPathSize = ::GetShortPathName(appPath.c_str(), shortPathBuf, shortPathBufSize);
-        //If the shortpath failed, we need to bail since we don't know what to call now
-        if( finalShortPathSize == 0 ){
+        if( !ConvertToShortPathName(appPath) ) {
+            //If the shortpath failed, we need to bail since we don't know what to call now
             return ConvertWinErrorCode(GetLastError());
         }
-
-        appPath.assign(shortPathBuf, finalShortPathSize);
 
 
         std::wstring args = appPath;
@@ -336,47 +344,84 @@ public:
         return NO_ERROR;
     }
 
-	static BOOL CALLBACK CloseChromeCallback(HWND hwnd, LPARAM userParam)
-	{
-		if( !hwnd ) {
+	struct EnumChromeWindowsCallbackData {
+		bool	postCloseMessage;
+		int		numberOfFoundWindows;
+	};
+
+    static BOOL CALLBACK EnumChromeWindowsCallback(HWND hwnd, LPARAM userParam)
+    {
+        if( !hwnd ) {
+            return FALSE;
+        }
+
+		EnumChromeWindowsCallbackData* cbData = reinterpret_cast<EnumChromeWindowsCallbackData*>(userParam);
+		if(!cbData) {
 			return FALSE;
 		}
+        
+        //Find the path that opened this window
+        DWORD processId = 0;
+        ::GetWindowThreadProcessId(hwnd, &processId);
+        
+        HANDLE	processHandle = ::OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+        if( !processHandle ) { 
+            return TRUE;
+        }
 
-		//Find the path that opened this window
-		DWORD processId = 0;
-		::GetWindowThreadProcessId(hwnd, &processId);
-
-		HANDLE	processHandle = ::OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
-		if( !processHandle ) { 
-			return TRUE;
-		}
-
-		DWORD modulePathBufSize = _MAX_PATH+1;
-		WCHAR modulePathBuf[_MAX_PATH+1];
-		DWORD modulePathSize = ::GetModuleFileNameEx(processHandle, NULL, modulePathBuf, modulePathBufSize );
-		::CloseHandle(processHandle);
-		processHandle = NULL;
-
-		//See if this path is the same as what we want to launch
-		std::wstring appPath = GetPathToLiveBrowser();
-		if(appPath.length() !=  modulePathSize ||
-			0 != _wcsnicmp(appPath.c_str(), modulePathBuf, modulePathSize) ){
-			return TRUE;
-		}
-
+        DWORD modulePathBufSize = _MAX_PATH+1;
+        WCHAR modulePathBuf[_MAX_PATH+1];
+        DWORD modulePathSize = ::GetModuleFileNameEx(processHandle, NULL, modulePathBuf, modulePathBufSize );
+        ::CloseHandle(processHandle);
+        processHandle = NULL;
+        
+        std::wstring modulePath(modulePathBuf, modulePathSize);
+        
+        //See if this path is the same as what we want to launch
+        std::wstring appPath = GetPathToLiveBrowser();
+        
+        if( !ConvertToShortPathName(modulePath) || !ConvertToShortPathName(appPath) ) {
+            return TRUE;
+        }
+        
+        if(0 != _wcsicmp(appPath.c_str(), modulePath.c_str()) ){
+            return TRUE;
+        }
+        
+		cbData->numberOfFoundWindows++;
 		//This window belongs to the instance of the browser we're interested in, tell it to close
-		::PostMessage(hwnd, WM_CLOSE, NULL, NULL);
 
-        return TRUE;
-	}
+		if( cbData->postCloseMessage ) {
+			//we'll wait 
+			UINT timeoutInMS = 500;
+			::SendMessageTimeout(hwnd, WM_CLOSE, NULL, NULL, SMTO_ABORTIFHUNG, timeoutInMS, NULL );
+		}
+        
+         return TRUE;
+    }
 
-	int CloseLiveBrowser(const CefV8ValueList& arguments,
-		CefRefPtr<CefV8Value>& retval,
-		CefString& exception)
-	{
-		::EnumWindows(CloseChromeCallback, NULL);
-		return NO_ERROR;
-	}
+    int CloseLiveBrowser(const CefV8ValueList& arguments,
+        CefRefPtr<CefV8Value>& retval,
+        CefString& exception)
+    {
+		EnumChromeWindowsCallbackData cbData = {0};
+
+		cbData.numberOfFoundWindows = 0;
+		cbData.postCloseMessage = true;
+        ::EnumWindows(EnumChromeWindowsCallback, (LPARAM)&cbData);
+		if( cbData.numberOfFoundWindows == 0 ) {
+			return NO_ERROR; //no windows found to close
+        }
+
+		cbData.numberOfFoundWindows = 0;
+		cbData.postCloseMessage = false;
+        ::EnumWindows(EnumChromeWindowsCallback, (LPARAM)&cbData);
+        if( cbData.numberOfFoundWindows == 0 ) {
+            return NO_ERROR; //windows are closed after we tried
+        }
+
+        return ERR_UNKNOWN; // we tried to close windows but they didn't close...
+    }
 
     static int CALLBACK SetInitialPathCallback(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
     {

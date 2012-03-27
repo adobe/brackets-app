@@ -304,6 +304,7 @@ if (!brackets.app)
      *          NO_ERROR
      *          ERR_INVALID_PARAMS - invalid parameters
      *          ERR_UNKNOWN - unable to launch the browser
+     *          ERR_NOT_FOUND - unable to find a browers to launch
      *
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
@@ -322,7 +323,9 @@ if (!brackets.app)
      *
      * @param {function(err)} callback Asynchronous callback function with one argument (the error)
      *        Possible error values:
-     *          NO_ERROR
+     *          NO_ERROR (all windows are closed when the callback is fired)
+     *          ERR_UNKNOWN - windows are currently open, though the user may be getting prompted by the 
+     *                      browser to close them
      *
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
