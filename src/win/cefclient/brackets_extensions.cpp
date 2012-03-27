@@ -11,6 +11,7 @@
 #include <algorithm>
 #include <list>
 #include <MMSystem.h>
+#include <Psapi.h>
 
 extern CefRefPtr<ClientHandler> g_handler;
 extern DWORD g_appStartupTime;
@@ -63,6 +64,18 @@ public:
             
             errorCode = OpenLiveBrowser(arguments, retval, exception);
         }
+		else if ( name == "CloseLiveBrowser" )
+		{
+			// CloseLiveBrowser()
+			//
+			// Inputs:
+			//  none
+			//
+			// Error:
+			//  NO_ERROR
+
+			errorCode = CloseLiveBrowser(arguments, retval, exception);
+		}
         else if (name == "ShowOpenDialog") 
         {
             // showOpenDialog(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes)
@@ -258,6 +271,22 @@ public:
         return false;
     }
 
+    static std::wstring GetPathToLiveBrowser() 
+    {
+        // Chrome.exe is at C:\Users\{USERNAME}\AppData\Local\Google\Chrome\Application\chrome.exe
+        PWSTR localAppPath = NULL;
+        SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &localAppPath);
+        std::wstring appPath(localAppPath);
+        appPath += L"\\Google\\Chrome\\Application\\chrome.exe";
+        
+        if( localAppPath ) {
+            CoTaskMemFree(localAppPath);
+            localAppPath = NULL;
+        }
+        
+        return appPath;
+    }
+    
     int OpenLiveBrowser(const CefV8ValueList& arguments,
                                CefRefPtr<CefV8Value>& retval,
                                CefString& exception)
@@ -267,16 +296,7 @@ public:
             return ERR_INVALID_PARAMS;
         std::wstring argURL = StringToWString(arguments[0]->GetStringValue());
 
-        // Chrome.exe is at C:\Users\{USERNAME}\AppData\Local\Google\Chrome\Application\chrome.exe
-        PWSTR localAppPath = NULL;
-        SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &localAppPath);
-        std::wstring appPath(localAppPath);
-        appPath += L"\\Google\\Chrome\\Application\\chrome.exe";
-
-        if( localAppPath ) {
-            CoTaskMemFree(localAppPath);
-            localAppPath = NULL;
-        }
+        std::wstring appPath = GetPathToLiveBrowser();
 
         //When launching the app, we need to be careful about spaces in the path. A safe way to do this
         //is to use the shortpath. It doesn't look as nice, but it always works and never has a space
@@ -315,6 +335,48 @@ public:
 
         return NO_ERROR;
     }
+
+	static BOOL CALLBACK CloseChromeCallback(HWND hwnd, LPARAM userParam)
+	{
+		if( !hwnd ) {
+			return FALSE;
+		}
+
+		//Find the path that opened this window
+		DWORD processId = 0;
+		::GetWindowThreadProcessId(hwnd, &processId);
+
+		HANDLE	processHandle = ::OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+		if( !processHandle ) { 
+			return TRUE;
+		}
+
+		DWORD modulePathBufSize = _MAX_PATH+1;
+		WCHAR modulePathBuf[_MAX_PATH+1];
+		DWORD modulePathSize = ::GetModuleFileNameEx(processHandle, NULL, modulePathBuf, modulePathBufSize );
+		::CloseHandle(processHandle);
+		processHandle = NULL;
+
+		//See if this path is the same as what we want to launch
+		std::wstring appPath = GetPathToLiveBrowser();
+		if(appPath.length() !=  modulePathSize ||
+			0 != _wcsnicmp(appPath.c_str(), modulePathBuf, modulePathSize) ){
+			return TRUE;
+		}
+
+		//This window belongs to the instance of the browser we're interested in, tell it to close
+		::PostMessage(hwnd, WM_CLOSE, NULL, NULL);
+
+        return TRUE;
+	}
+
+	int CloseLiveBrowser(const CefV8ValueList& arguments,
+		CefRefPtr<CefV8Value>& retval,
+		CefString& exception)
+	{
+		::EnumWindows(CloseChromeCallback, NULL);
+		return NO_ERROR;
+	}
 
     static int CALLBACK SetInitialPathCallback(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
     {
