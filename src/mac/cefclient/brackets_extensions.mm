@@ -275,15 +275,10 @@ public:
         if(apps.count == 0) {
             
             // Create the configuration dictionary for launching with custom parameters.
-            // The url parameter is commented out because it was ignored by chrome. The 
-            // result is chrome launchs with an extra blank tab. However this seems common
-            // for chrome as mac "Mail" does the same thing when opening a link from a message
-            // (We could also do system("open /Applications/Google\ Chrome.app --args --remote-debugging-port=9222 --allow-file-access-from-files url") but that
-            // seems not as robust.
             NSArray *parameters = [NSArray arrayWithObjects:
                                    @"--remote-debugging-port=9222", 
                                    @"--allow-file-access-from-files",
-                                   /*url,*/ 
+                                   urlString,
                                    nil];
             NSMutableDictionary* appConfig = [NSDictionary dictionaryWithObject:parameters forKey:NSWorkspaceLaunchConfigurationArguments];
 
@@ -295,6 +290,7 @@ public:
             if( ![ws launchApplicationAtURL:appURL options:launchOptions configuration:appConfig error:&error] ) {
                 return ERR_UNKNOWN;
             }
+            return NO_ERROR;
         }
         
         // Tell the Browser to load the url
