@@ -314,18 +314,43 @@ public:
     int CloseLiveBrowser(const CefV8ValueList& args,
                       CefRefPtr<CefV8Value>& retval,
                       CefString& exception)
-    {  
-        // Find instances of the Browser
+    { 
+        // Find instances of the Browser and terminate them
+        NSUInteger i = 0;
         NSString *appId = @"com.google.Chrome";
         NSArray *apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:appId];
         for (NSUInteger i = 0; i < apps.count; i++) {
             NSRunningApplication* curApp = [apps objectAtIndex:i];
             if( curApp && !curApp.terminated ) {
-                [curApp terminate];
+              [curApp terminate];
             }
         }
-    
-        return NO_ERROR;
+        
+        //wait up to 0.5 sec for the app to terminate (each loop is 0.01s x 50).
+        //If it hasn't done so after that then the caller can do their own polling
+        for(int j = 0 ; j < 50 ; j++ )
+        {
+            //go through again and see if there are any left running after we requested the quit
+            apps = [NSRunningApplication runningApplicationsWithBundleIdentifier:appId];
+          
+            bool foundRunning = false;
+            for (i = 0; i < apps.count && !foundRunning; i++) {
+                NSRunningApplication* curApp = [apps objectAtIndex:i];
+                if( curApp && !curApp.terminated ) {
+                  foundRunning = true;
+                }
+            }
+          
+            if( !foundRunning ) {
+                return NO_ERROR; //None left running
+            }
+          
+           struct timespec tm = {0};
+           tm.tv_nsec = 10000000; //10 milliseconds, .01 seconds
+           nanosleep(&tm, NULL);
+        }
+        
+        return ERR_UNKNOWN; //still some running
     }
     
     int ExecuteShowOpenDialog(const CefV8ValueList& arguments,
