@@ -323,7 +323,7 @@ if (!brackets.app)
      *
      * @param {function(err)} callback Asynchronous callback function with one argument (the error)
      *        Possible error values:
-     *          NO_ERROR (all windows are closed when the callback is fired)
+     *          NO_ERROR (all windows are closed by the time the callback is fired)
      *          ERR_UNKNOWN - windows are currently open, though the user may be getting prompted by the 
      *                      browser to close them
      *
