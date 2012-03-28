@@ -64,18 +64,18 @@ public:
             
             errorCode = OpenLiveBrowser(arguments, retval, exception);
         }
-		else if ( name == "CloseLiveBrowser" )
-		{
-			// CloseLiveBrowser()
-			//
-			// Inputs:
-			//  none
-			//
-			// Error:
-			//  NO_ERROR
+        else if ( name == "CloseLiveBrowser" )
+        {
+            // CloseLiveBrowser()
+            //
+            // Inputs:
+            //  none
+            //
+            // Error:
+            //  NO_ERROR
 
-			errorCode = CloseLiveBrowser(arguments, retval, exception);
-		}
+            errorCode = CloseLiveBrowser(arguments, retval, exception);
+        }
         else if (name == "ShowOpenDialog") 
         {
             // showOpenDialog(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes)
@@ -344,10 +344,10 @@ public:
         return NO_ERROR;
     }
 
-	struct EnumChromeWindowsCallbackData {
-		bool	postCloseMessage;
-		int		numberOfFoundWindows;
-	};
+    struct EnumChromeWindowsCallbackData {
+        bool    postCloseMessage;
+        int     numberOfFoundWindows;
+    };
 
     static BOOL CALLBACK EnumChromeWindowsCallback(HWND hwnd, LPARAM userParam)
     {
@@ -355,16 +355,16 @@ public:
             return FALSE;
         }
 
-		EnumChromeWindowsCallbackData* cbData = reinterpret_cast<EnumChromeWindowsCallbackData*>(userParam);
-		if(!cbData) {
-			return FALSE;
-		}
+        EnumChromeWindowsCallbackData* cbData = reinterpret_cast<EnumChromeWindowsCallbackData*>(userParam);
+        if(!cbData) {
+            return FALSE;
+        }
         
         //Find the path that opened this window
         DWORD processId = 0;
         ::GetWindowThreadProcessId(hwnd, &processId);
         
-        HANDLE	processHandle = ::OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+        HANDLE processHandle = ::OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
         if( !processHandle ) { 
             return TRUE;
         }
@@ -388,14 +388,14 @@ public:
             return TRUE;
         }
         
-		cbData->numberOfFoundWindows++;
-		//This window belongs to the instance of the browser we're interested in, tell it to close
+        cbData->numberOfFoundWindows++;
+        //This window belongs to the instance of the browser we're interested in, tell it to close
 
-		if( cbData->postCloseMessage ) {
-			//we'll wait 
-			UINT timeoutInMS = 500;
-			::SendMessageTimeout(hwnd, WM_CLOSE, NULL, NULL, SMTO_ABORTIFHUNG, timeoutInMS, NULL );
-		}
+        if( cbData->postCloseMessage ) {
+            //we'll wait 
+            UINT timeoutInMS = 500;
+            ::SendMessageTimeout(hwnd, WM_CLOSE, NULL, NULL, SMTO_ABORTIFHUNG, timeoutInMS, NULL );
+        }
         
          return TRUE;
     }
@@ -404,17 +404,17 @@ public:
         CefRefPtr<CefV8Value>& retval,
         CefString& exception)
     {
-		EnumChromeWindowsCallbackData cbData = {0};
+        EnumChromeWindowsCallbackData cbData = {0};
 
-		cbData.numberOfFoundWindows = 0;
-		cbData.postCloseMessage = true;
+        cbData.numberOfFoundWindows = 0;
+        cbData.postCloseMessage = true;
         ::EnumWindows(EnumChromeWindowsCallback, (LPARAM)&cbData);
-		if( cbData.numberOfFoundWindows == 0 ) {
-			return NO_ERROR; //no windows found to close
+        if( cbData.numberOfFoundWindows == 0 ) {
+            return NO_ERROR; //no windows found to close
         }
 
-		cbData.numberOfFoundWindows = 0;
-		cbData.postCloseMessage = false;
+        cbData.numberOfFoundWindows = 0;
+        cbData.postCloseMessage = false;
         ::EnumWindows(EnumChromeWindowsCallback, (LPARAM)&cbData);
         if( cbData.numberOfFoundWindows == 0 ) {
             return NO_ERROR; //windows are closed after we tried
