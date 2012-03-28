@@ -300,7 +300,7 @@ if (!brackets.app)
      *        Possible error values:
      *          NO_ERROR
      *          ERR_INVALID_PARAMS - invalid parameters
-	 *          ERR_UNKNOWN - unable to launch the browser
+     *          ERR_UNKNOWN - unable to launch the browser
      *
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
