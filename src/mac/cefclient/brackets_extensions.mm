@@ -41,18 +41,7 @@ public:
     }
     
     virtual ~BracketsExtensionHandler() {
-        if (m_chromeTerminateObserver) {
-            [[[NSWorkspace sharedWorkspace] notificationCenter] removeObserver:m_chromeTerminateObserver];
-            [m_chromeTerminateObserver release];
-            m_chromeTerminateObserver = nil;
-        }
-        
-        if (m_closeLiveBrowserTimeoutTimer) {
-            [m_closeLiveBrowserTimeoutTimer invalidate];
-            [m_closeLiveBrowserTimeoutTimer release];
-            m_closeLiveBrowserTimeoutTimer = nil;
-        }
-        
+        CloseLiveBrowserKillTimers();        
         s_instance = nil;
     }
     
