@@ -37,8 +37,13 @@ static const int ERR_NOT_DIRECTORY          = 9;
 class BracketsExtensionHandler : public CefV8Handler
 {
 public:
-    BracketsExtensionHandler() : lastError(0) {}
-    virtual ~BracketsExtensionHandler() {}
+    BracketsExtensionHandler() : lastError(0), m_closeLiveBrowserHeartbeatTimerId(0), m_closeLiveBrowserTimeoutTimerId(0) {
+        ASSERT(s_instance == NULL);
+        s_instance = this;
+    }
+    virtual ~BracketsExtensionHandler() {
+        s_instance = NULL;
+    }
     
     // Execute with the specified argument list and return value.  Return true if
     // the method was handled.
@@ -69,10 +74,13 @@ public:
             // CloseLiveBrowser()
             //
             // Inputs:
-            //  none
+            //  callback - the function to callback when the window has closed or timed out
             //
             // Error:
-            //  NO_ERROR
+            //  NO_ERROR - retuned by the function it means the windows where told to close, returned
+            //             in the callback it means the windows are closed
+            //  ERR_INVALID_PARAMS - invalid parameters (the callback is either null or must be a function)
+            //  ERR_UNKNOWN - the timeout expired without the windows closing
 
             errorCode = CloseLiveBrowser(arguments, retval, exception);
         }
@@ -344,8 +352,46 @@ public:
         return NO_ERROR;
     }
 
+    static bool IsChromeWindow(HWND hwnd)
+    {
+        if( !hwnd ) {
+            return false;
+        }
+
+        //Find the path that opened this window
+        DWORD processId = 0;
+        ::GetWindowThreadProcessId(hwnd, &processId);
+
+        HANDLE processHandle = ::OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
+        if( !processHandle ) { 
+            return false;
+        }
+
+        DWORD modulePathBufSize = _MAX_PATH+1;
+        WCHAR modulePathBuf[_MAX_PATH+1];
+        DWORD modulePathSize = ::GetModuleFileNameEx(processHandle, NULL, modulePathBuf, modulePathBufSize );
+        ::CloseHandle(processHandle);
+        processHandle = NULL;
+
+        std::wstring modulePath(modulePathBuf, modulePathSize);
+
+        //See if this path is the same as what we want to launch
+        std::wstring appPath = GetPathToLiveBrowser();
+
+        if( !ConvertToShortPathName(modulePath) || !ConvertToShortPathName(appPath) ) {
+            return false;
+        }
+
+        if(0 != _wcsicmp(appPath.c_str(), modulePath.c_str()) ){
+            return false;
+        }
+
+        //looks good
+        return true;
+    }
+
     struct EnumChromeWindowsCallbackData {
-        bool    postCloseMessage;
+        bool    closeWindow;
         int     numberOfFoundWindows;
     };
 
@@ -359,68 +405,139 @@ public:
         if(!cbData) {
             return FALSE;
         }
-        
-        //Find the path that opened this window
-        DWORD processId = 0;
-        ::GetWindowThreadProcessId(hwnd, &processId);
-        
-        HANDLE processHandle = ::OpenProcess( PROCESS_QUERY_INFORMATION | PROCESS_VM_READ, FALSE, processId);
-        if( !processHandle ) { 
+
+        if (!IsChromeWindow(hwnd)) {
             return TRUE;
         }
 
-        DWORD modulePathBufSize = _MAX_PATH+1;
-        WCHAR modulePathBuf[_MAX_PATH+1];
-        DWORD modulePathSize = ::GetModuleFileNameEx(processHandle, NULL, modulePathBuf, modulePathBufSize );
-        ::CloseHandle(processHandle);
-        processHandle = NULL;
-        
-        std::wstring modulePath(modulePathBuf, modulePathSize);
-        
-        //See if this path is the same as what we want to launch
-        std::wstring appPath = GetPathToLiveBrowser();
-        
-        if( !ConvertToShortPathName(modulePath) || !ConvertToShortPathName(appPath) ) {
-            return TRUE;
-        }
-        
-        if(0 != _wcsicmp(appPath.c_str(), modulePath.c_str()) ){
-            return TRUE;
-        }
-        
         cbData->numberOfFoundWindows++;
         //This window belongs to the instance of the browser we're interested in, tell it to close
-
-        if( cbData->postCloseMessage ) {
-            //we'll wait 
-            UINT timeoutInMS = 500;
-            ::SendMessageTimeout(hwnd, WM_CLOSE, NULL, NULL, SMTO_ABORTIFHUNG, timeoutInMS, NULL );
+        if( cbData->closeWindow ) {
+            ::SendMessageCallback(hwnd, WM_CLOSE, NULL, NULL, CloseLiveBrowserAsyncCallback, NULL);
         }
-        
-         return TRUE;
+
+        return TRUE;
+    }
+
+    static bool IsAnyChromeWindowsRunning() {
+        EnumChromeWindowsCallbackData cbData = {0};
+        cbData.numberOfFoundWindows = 0;
+        cbData.closeWindow = false;
+        ::EnumWindows(EnumChromeWindowsCallback, (LPARAM)&cbData);
+        return( cbData.numberOfFoundWindows != 0 );
+    }
+
+    void CloseLiveBrowserKillTimers()
+    {
+        if (m_closeLiveBrowserHeartbeatTimerId) {
+            ::KillTimer(NULL, m_closeLiveBrowserHeartbeatTimerId);
+            m_closeLiveBrowserHeartbeatTimerId = 0;
+        }
+
+        if (m_closeLiveBrowserTimeoutTimerId) {
+            ::KillTimer(NULL, m_closeLiveBrowserTimeoutTimerId);
+            m_closeLiveBrowserTimeoutTimerId = 0;
+        }
+    }
+
+    void CloseLiveBrowserFireCallback(int valToSend) {
+        if (!m_closeLiveBrowserCallback.get() || !g_handler.get()) {
+            return;
+        }
+
+        //kill the timers
+        CloseLiveBrowserKillTimers();
+
+        CefRefPtr<CefV8Context> context = g_handler->GetBrowser()->GetMainFrame()->GetV8Context();
+        CefRefPtr<CefV8Value> objectForThis = context->GetGlobal();
+        CefV8ValueList args;
+        args.push_back( CefV8Value::CreateInt( valToSend ) );
+        CefRefPtr<CefV8Value> r;
+        CefRefPtr<CefV8Exception> e;
+
+        m_closeLiveBrowserCallback->ExecuteFunctionWithContext( context , objectForThis, args, r, e, false );
+
+        m_closeLiveBrowserCallback = NULL;
+    }
+
+    static void CALLBACK CloseLiveBrowserTimerCallback( HWND hwnd, UINT uMsg, UINT idEvent, DWORD dwTime)
+    {        
+        if( !s_instance ) {
+            ::KillTimer(NULL, idEvent);
+            return;
+        }
+
+        int retVal =  NO_ERROR;
+        if( IsAnyChromeWindowsRunning() )
+        {
+            retVal = ERR_UNKNOWN;
+            //if this is the heartbeat timer, wait for another beat
+            if (idEvent == s_instance->m_closeLiveBrowserHeartbeatTimerId) {
+                return;
+            }
+        }
+
+        //notify back to the app
+        s_instance->CloseLiveBrowserFireCallback(retVal);
+    }
+
+    static void CALLBACK CloseLiveBrowserAsyncCallback( HWND hwnd, UINT uMsg, ULONG_PTR dwData, LRESULT lResult )
+    {
+        if( !s_instance ) {
+            return;
+        }
+
+        //If there are no more versions of chrome, then fire the callback
+        if( !IsAnyChromeWindowsRunning() ) {
+            s_instance->CloseLiveBrowserFireCallback(NO_ERROR);
+        }
+        else if(s_instance->m_closeLiveBrowserHeartbeatTimerId == 0){
+            //start a heartbeat timer to see if it closes after the message returned
+            s_instance->m_closeLiveBrowserHeartbeatTimerId = ::SetTimer(NULL, 0, 30, CloseLiveBrowserTimerCallback);
+        }
     }
 
     int CloseLiveBrowser(const CefV8ValueList& arguments,
         CefRefPtr<CefV8Value>& retval,
         CefString& exception)
     {
+        //We can only handle a single async callback at a time. If there is already one that hasn't fired then
+        //we kill it now and get ready for the next. 
+        m_closeLiveBrowserCallback = NULL;
+
+        if (arguments.size() > 0) {
+            if( !arguments[0]->IsFunction() ) {
+                return ERR_INVALID_PARAMS;
+            }
+            //Currently, brackets is mainly designed around a single main browser instance. We only support calling
+            //back this function in that context. When we add support for multiple browser instances this will need
+            //to update to get the correct context and track it's lifespan accordingly.
+            if(!g_handler.get()) {
+                return ERR_UNKNOWN;
+            }
+
+            if( ! g_handler->GetBrowser()->GetMainFrame()->GetV8Context()->IsSame(CefV8Context::GetCurrentContext()) ) {
+                ASSERT(FALSE); //Getting called from not the main browser window.
+                return ERR_UNKNOWN;
+            }
+
+            m_closeLiveBrowserCallback = arguments[0];
+        }
+
         EnumChromeWindowsCallbackData cbData = {0};
 
         cbData.numberOfFoundWindows = 0;
-        cbData.postCloseMessage = true;
+        cbData.closeWindow = true;
         ::EnumWindows(EnumChromeWindowsCallback, (LPARAM)&cbData);
-        if( cbData.numberOfFoundWindows == 0 ) {
-            return NO_ERROR; //no windows found to close
+
+        //set a timeout for up to 3 minutes to close the browser 
+        UINT timeoutInMS = (cbData.numberOfFoundWindows == 0 ? USER_TIMER_MINIMUM : 3 * 60 * 1000);
+
+        if( m_closeLiveBrowserCallback ) {
+            m_closeLiveBrowserTimeoutTimerId = ::SetTimer(NULL, 0, timeoutInMS, CloseLiveBrowserTimerCallback);
         }
 
-        cbData.numberOfFoundWindows = 0;
-        cbData.postCloseMessage = false;
-        ::EnumWindows(EnumChromeWindowsCallback, (LPARAM)&cbData);
-        if( cbData.numberOfFoundWindows == 0 ) {
-            return NO_ERROR; //windows are closed after we tried
-        }
-
-        return ERR_UNKNOWN; // we tried to close windows but they didn't close...
+         return NO_ERROR;
     }
 
     static int CALLBACK SetInitialPathCallback(HWND hWnd, UINT uMsg, LPARAM lParam, LPARAM lpData)
@@ -905,8 +1022,15 @@ public:
 
 private:
     int lastError;
+    UINT                    m_closeLiveBrowserHeartbeatTimerId;
+    UINT                    m_closeLiveBrowserTimeoutTimerId;
+    CefRefPtr<CefV8Value>   m_closeLiveBrowserCallback;
+    static BracketsExtensionHandler* s_instance;
+
     IMPLEMENT_REFCOUNTING(BracketsExtensionHandler);
 };
+
+BracketsExtensionHandler* BracketsExtensionHandler::s_instance = NULL;
 
 void InitBracketsExtensions()
 {

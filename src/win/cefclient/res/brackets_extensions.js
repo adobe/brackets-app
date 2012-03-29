@@ -331,12 +331,7 @@ if (!brackets.app)
      */
     native function CloseLiveBrowser();
     brackets.app.closeLiveBrowser = function(callback) {
-        setTimeout(function() {
-            CloseLiveBrowser();
-            if( callback ) {
-                callback(getLastError());
-            }
-        }, 0);
+        CloseLiveBrowser(callback);
     };
 
 })();;
