@@ -4,15 +4,20 @@
 // Note: All file native file i/o functions are synchronous, but are exposed
 // here as asynchronous calls. 
 
-var brackets;
-if (!brackets)
-   brackets = {};
-if (!brackets.fs)
-    brackets.fs = {};
-if (!brackets.app)
-    brackets.app = {};
+/*jslint vars: true, plusplus: true, devel: true, browser: true, nomen: true, indent: 4, forin: true, maxerr: 50, regexp: true */
+/*global define, native */
 
-(function() {
+var brackets;
+if (!brackets) {
+   brackets = {};
+}
+if (!brackets.fs) {
+    brackets.fs = {};
+}
+if (!brackets.app) {
+    brackets.app = {};
+}
+(function () {
     // Internal function to get the last error code.
     native function GetLastError();
     function getLastError() {
@@ -78,6 +83,27 @@ if (!brackets.app)
     brackets.fs.ERR_NOT_DIRECTORY           = 9;
     
     /**
+     * Invoke a callback function.
+     *
+     * If the variable "brackets.forceAsyncCallbacks" is true, the callback is called after a 10
+     * ms timer is run. If brackets.forceAsyncCallbacks is false, the callback is called
+     * immediately.
+     */
+    function invokeCallback(callback) {
+        var args = [].splice.call(arguments, 1);
+    
+        function doCallback() {
+            callback.apply(this, args);
+        }
+        
+        if (brackets.forceAsyncCallbacks) {
+            setTimeout(doCallback, 10);
+        } else {
+            doCallback();
+        }
+    }
+    
+    /**
      * Display the OS File Open dialog, allowing the user to select
      * files or directories.
      *
@@ -99,10 +125,10 @@ if (!brackets.app)
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
     native function ShowOpenDialog();
-    brackets.fs.showOpenDialog = function(allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback) {
-        setTimeout(function() {
-           var resultString = ShowOpenDialog(allowMultipleSelection, chooseDirectory, 
-                                             title || 'Open', initialPath || '', 
+    brackets.fs.showOpenDialog = function (allowMultipleSelection, chooseDirectory, title, initialPath, fileTypes, callback) {
+        setTimeout(function () {
+            var resultString = ShowOpenDialog(allowMultipleSelection, chooseDirectory,
+                                             title || 'Open', initialPath || '',
                                              fileTypes ? fileTypes.join(' ') : '');
            var result = JSON.parse(resultString || '[]');
            invokeCallback(callback, getLastError(), result);
@@ -126,7 +152,7 @@ if (!brackets.app)
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
     native function ReadDir();
-    brackets.fs.readdir = function(path, callback) {
+    brackets.fs.readdir = function (path, callback) {
         var resultString = ReadDir(path);
         var result = JSON.parse(resultString || '[]');
         invokeCallback(callback, getLastError(), result);
@@ -148,27 +174,25 @@ if (!brackets.app)
      */
     native function IsDirectory();
     native function GetFileModificationTime();
-    brackets.fs.stat = function(path, callback) {
+    brackets.fs.stat = function (path, callback) {
         var isDir = IsDirectory(path);
         var modtime = GetFileModificationTime(path);
-
         invokeCallback(callback, getLastError(), {
-            isFile: function() {
+            isFile: function () {
                 return !isDir;
             },
-            isDirectory: function() {
+            isDirectory: function () {
                 return isDir;
             },
             mtime: modtime
         });
     };
 
-
     /**
-     * Performs native quit
+     * Quits native shell application
      */
      native function QuitApplication();
-     brackets.app.quit = function() {
+    brackets.app.quit = function () {
         QuitApplication();
      };
     
@@ -190,7 +214,7 @@ if (!brackets.app)
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
     native function ReadFile();
-    brackets.fs.readFile = function(path, encoding, callback) {
+    brackets.fs.readFile = function (path, encoding, callback) {
         var contents = ReadFile(path, encoding);
         invokeCallback(callback, getLastError(), contents);
     };
@@ -213,10 +237,11 @@ if (!brackets.app)
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
     native function WriteFile();
-    brackets.fs.writeFile = function(path, data, encoding, callback) {
+    brackets.fs.writeFile = function (path, data, encoding, callback) {
         WriteFile(path, data, encoding);
-        if (callback)
+        if (callback) {
             invokeCallback(callback, getLastError());
+        }
     };
     
     /**
@@ -234,7 +259,7 @@ if (!brackets.app)
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
     native function SetPosixPermissions();
-    brackets.fs.chmod = function(path, mode, callback) {
+    brackets.fs.chmod = function (path, mode, callback) {
         SetPosixPermissions(path, mode);
         invokeCallback(callback, getLastError());
     };
@@ -255,10 +280,10 @@ if (!brackets.app)
      */
     native function DeleteFileOrDirectory();
     native function IsDirectory();
-    brackets.fs.unlink = function(path, callback) {
+    brackets.fs.unlink = function (path, callback) {
         // Unlink can only delete files
         if (IsDirectory(path)) {
-            callback(brackets.fs.ERR_NOT_FILE);
+            invokeCallback(callback, brackets.fs.ERR_NOT_FILE);
             return;
         }
         DeleteFileOrDirectory(path);
@@ -270,31 +295,10 @@ if (!brackets.app)
      * was launched. 
      */
     native function GetElapsedMilliseconds();
-    brackets.app.getElapsedMilliseconds = function() {
+    brackets.app.getElapsedMilliseconds = function () {
         return GetElapsedMilliseconds();
     }
 
-    /**
-     * Invoke a callback function.
-     *
-     * If the variable "brackets.forceAsyncCallbacks" is true, the callback is called after a 10
-     * ms timer is run. If brackets.forceAsyncCallbacks is false, the callback is called
-     * immediately.
-     */
-    function invokeCallback(callback /* callback args */) {
-        var args = [].splice.call(arguments, 1);
-    
-        function doCallback() {
-            callback.apply(this, args);
-        }
-        
-        if (brackets.forceAsyncCallbacks) {
-            setTimeout(doCallback, 10);
-        } else {
-            doCallback();
-        }        
-    }
-        
     /**
      * Open the live browser
      *
@@ -309,7 +313,7 @@ if (!brackets.app)
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
     native function OpenLiveBrowser();
-    brackets.app.openLiveBrowser = function(url, callback) {
+    brackets.app.openLiveBrowser = function (url, callback) {
         setTimeout(function() {
             OpenLiveBrowser(url);
             callback(getLastError());
@@ -330,7 +334,7 @@ if (!brackets.app)
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
     native function CloseLiveBrowser();
-    brackets.app.closeLiveBrowser = function(callback) {
+    brackets.app.closeLiveBrowser = function (callback) {
         CloseLiveBrowser(callback);
     };
 
