@@ -282,15 +282,10 @@ public:
     static std::wstring GetPathToLiveBrowser() 
     {
         // Chrome.exe is at C:\Users\{USERNAME}\AppData\Local\Google\Chrome\Application\chrome.exe
-        PWSTR localAppPath = NULL;
-        SHGetKnownFolderPath(FOLDERID_LocalAppData, 0, NULL, &localAppPath);
+		TCHAR localAppPath[MAX_PATH] = {0};
+        SHGetFolderPath(NULL, CSIDL_LOCAL_APPDATA, NULL, SHGFP_TYPE_CURRENT, localAppPath);
         std::wstring appPath(localAppPath);
         appPath += L"\\Google\\Chrome\\Application\\chrome.exe";
-        
-        if( localAppPath ) {
-            CoTaskMemFree(localAppPath);
-            localAppPath = NULL;
-        }
         
         return appPath;
     }
