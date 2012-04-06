@@ -8,8 +8,38 @@ We're *very* early in development, so many of the features you would
 expect in a code editor are missing, and some existing features might be
 incomplete or not as useful as you might like.
 
-Here's what you can do in the current build of Brackets. **We strongly
-suggest you read through this before using it.**
+This README describes what we've added recently, followed by a list of what
+you can currently do in Brackets. **We strongly suggest you read through this 
+before using it.**
+
+If you use Brackets, please subscribe to the **DL-Brackets Stakeholders**
+mailing list. We'll send out announcements of new builds there, and you can
+also send feedback to that list.
+
+What's new in Sprint 6
+----------------------
+
+Inline CSS editors are much more useful.
+
+* Inline editors show a list of all rules that might apply to the currently
+  selected tag/class/ID in all CSS files in the current project. You can click
+  on rules or use Alt-Up/Down Arrow to switch between them.
+* Edits in multiple open inline editors synchronize with each other as well as
+  the main document they refer to.
+
+We've started our first cut at live development.
+
+* There is a "Go Live" button in the toolbar that lets you preview the current
+  HTML file in Chrome.
+* While your HTML file is live in Chrome, edits you make to CSS files referenced
+  by that HTML file will instantly update the preview in Chrome.
+
+We also took our first contribution from outside the Brackets team!
+
+* Ryan Stewart contributed Debug > Hide/Show Sidebar to hide/show the project
+  panel.
+
+See below for more information on these new features.
 
 Basic usage
 -----------
@@ -51,26 +81,56 @@ Inline editors
 One of the goals of Brackets is to make it easy to make quick edits to
 different bits of code without having to jump around between files.
 
-Currently, we have a *very early* implementation of this. If you're in an HTML
+Currently, we have an early implementation of this. If you're in an HTML
 file, and you put the cursor inside a class or id attribute or a tag name,
 you can hit Cmd-E (for "edit"). Brackets will search the CSS files in the file 
-tree and show a matching rule in an inline editor. You can make changes in the 
-inline editor and save them, then close the editor by hitting Cmd-E again.
+tree for relevant rules, then open up an inline editor embedded in the HTML
+file that lets you make quick tweaks to one of the rules.
 
-This feature is very incomplete and not very useful on real-world sites right now:
+**(New!)** On the right side of the inline editor, Brackets shows the list of
+all rules that might be relevant to the selected tag/class/id. You can switch 
+between the rules by clicking on them in the list, or using Alt-Up/Down Arrow.
 
-* Brackets doesn't take the cascade, tag context, etc. into account, it doesn't
-  check to see which CSS files are linked into the current HTML file, and it only
-  shows the first rule it finds. So it may very well show a rule other than the one 
-  you actually want to edit.
-* Changes you make in an inline editor will be mirrored into the main editor for
-  the same file, but not vice versa, and are not synced across multiple inline
-  editors. So if you have multiple inline editors open on the same style file
-  and you make edits in one, the other editors will close. Similarly, if you make
-  an edit in the main editor for a style file, any other inline editors pointing
-  at that file will close.
+You can make changes in the inline editor and save them, then close the editor 
+by hitting Cmd-E again. Edits you make in the inline editor will be properly
+applied in Live Development mode (see below).
 
-(Did I mention that we're still early in development?)
+Some things to note about this feature:
+
+* Brackets doesn't take the cascade, tag context, etc. into account.
+* Brackets doesn't check to see which CSS files are linked into the current HTML 
+  file--it searches all files in the file tree.
+
+*(New!)* Live development
+-------------------------
+
+Another goal of Brackets is to bridge the gap between code editing and in-browser
+inspection. Currently, developers use tools like Firebug or the WebKit Web
+Inspector to inspect their page, debug problems, and try out quick tweaks to
+CSS properties in order to fix layout issues. Once they're done, they then have
+to remember what they did and then go back to their editor to fix the problems
+in the source code.
+
+With Live Development, we want to tie Brackets more closely to the browser, so
+that you can make changes and debug from Brackets itself, and see the results
+instantly in the browser.
+
+Our initial implementation of this is for CSS editing. If you open an HTML
+file, and then click the "Go Live" button in the toolbar, Brackets will open
+the HTML file in Chrome. If you then make edits to CSS files used by that
+HTML file (either in an inline editor or just by opening up the CSS file), your
+edits will be instantly reflected in Chrome as you type.
+
+Some limitations of our current implementation:
+
+* It only works with Chrome.
+* It relies on the remote debugging features in Chrome, which are enabled by
+  a command-line flag. If you're already running Chrome when you hit the Go Live
+  button, Brackets will ask if you want to restart Chrome with remote debugging
+  enabled, and if you say yes, it will go ahead and do it for you.
+* Only one HTML file can have a live connection to the browser at a time--if you
+  switch to a different HTML file, we'll close the original preview and open one
+  for the new file.
 
 Unofficial features
 -------------------
@@ -94,6 +154,8 @@ don't have final UI, haven't been fully tested, etc.).
   field, then down-arrow or use the mouse to select one of the files that 
   matches. You can also type ":" followed by a number in the field to go to 
   that line in the current file.
+* The Debug menu contains other useful unofficial features, as well as the
+  unit test runner.
 
 Known issues
 ------------
@@ -116,9 +178,10 @@ Future features
 
 Here are some things we're planning to do over the next few sprints:
 
-* Make inline CSS editors actually useful by showing multiple rules and
-  being smarter about which ones we show first
-* Preview your file in a browser and update it live as you make CSS edits
+* *Done!* ~~Make inline CSS editors actually useful by showing multiple rules and
+  being smarter about which ones we show first~~
+* *Done!* ~~Preview your file in a browser and update it live as you make CSS edits~~
+* Implement an awesome new look for the UI designed by the Adobe XD team
 * Let you set breakpoints in JS directly from Brackets
 * Add other kinds of inline editors, like for tweaking CSS gradients
 * Add replace functionality (and make the find feature more official)
@@ -127,7 +190,8 @@ Feedback
 --------
 
 If you find bugs or have feedback on things you'd like to see in Brackets,
-please post them as comments on the Wiki page where you downloaded the build.
+please subscribe to **DL-Brackets Stakeholders** and send feedback there, or
+post your feedback as comments on the Wiki page where you downloaded the build.
 Eventually we'll have an open bugbase.
 
 Hacking on Brackets
