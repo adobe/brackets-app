@@ -303,6 +303,7 @@ if (!brackets.app) {
      * Open the live browser
      *
      * @param {string} url
+     * @param {boolean} enableRemoteDebugging
      * @param {function(err)} callback Asynchronous callback function with one argument (the error)
      *        Possible error values:
      *          NO_ERROR
@@ -313,7 +314,8 @@ if (!brackets.app) {
      * @return None. This is an asynchronous call that sends all return information to the callback.
      */
     native function OpenLiveBrowser();
-    brackets.app.openLiveBrowser = function (url, callback) {
+    brackets.app.openLiveBrowser = function (url, enableRemoteDebugging, callback) {
+        // enableRemoteDebugging flag is ignored on mac
         setTimeout(function() {
             OpenLiveBrowser(url);
             callback(getLastError());

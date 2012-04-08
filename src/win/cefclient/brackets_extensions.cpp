@@ -308,9 +308,10 @@ public:
                                CefString& exception)
     {
         // Parse the arguments
-        if (arguments.size() != 1 || !arguments[0]->IsString())
+        if (arguments.size() != 2 || !arguments[0]->IsString() || !arguments[1]->IsBool())
             return ERR_INVALID_PARAMS;
         std::wstring argURL = StringToWString(arguments[0]->GetStringValue());
+        bool enableRemoteDebugging = arguments[1]->GetBoolValue();
 
         std::wstring appPath = GetPathToLiveBrowser();
 
@@ -323,7 +324,10 @@ public:
 
 
         std::wstring args = appPath;
-        args += L" --remote-debugging-port=9222 --allow-file-access-from-files ";
+        if (enableRemoteDebugging)
+            args += L" --remote-debugging-port=9222 --allow-file-access-from-files ";
+        else
+            args += L" ";
         args += argURL;
 
         // Args must be mutable
