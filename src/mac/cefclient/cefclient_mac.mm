@@ -390,9 +390,16 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 
 @end
 
+void deleteSpecialCharacters()
+{
+    [[NSUserDefaults standardUserDefaults]
+	 setBool:YES forKey:@"NSDisabledCharacterPaletteMenuItem"];
+}
 
 int main(int argc, char* argv[])
 {
+  deleteSpecialCharacters();
+	
   g_appStartupTime = CFAbsoluteTimeGetCurrent();
   
   // Retrieve the current working directory.
