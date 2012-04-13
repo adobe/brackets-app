@@ -390,15 +390,11 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 
 @end
 
-void deleteSpecialCharacters()
-{
-    [[NSUserDefaults standardUserDefaults]
-	 setBool:YES forKey:@"NSDisabledCharacterPaletteMenuItem"];
-}
-
 int main(int argc, char* argv[])
 {
-  deleteSpecialCharacters();
+  // Delete Special Characters Palette from Edit menu.
+  [[NSUserDefaults standardUserDefaults]
+   setBool:YES forKey:@"NSDisabledCharacterPaletteMenuItem"];
 	
   g_appStartupTime = CFAbsoluteTimeGetCurrent();
   
