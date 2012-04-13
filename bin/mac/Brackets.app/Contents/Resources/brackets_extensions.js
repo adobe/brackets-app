@@ -195,7 +195,15 @@ if (!brackets.app) {
     brackets.app.quit = function () {
         QuitApplication();
     };
-    
+
+    /**
+     * Invokes developer tools application
+     */
+    native function ShowDeveloperTools();
+    brackets.app.showDeveloperTools = function () {
+        ShowDeveloperTools();
+    };
+
     /**
      * Reads the entire contents of a file. 
      *
