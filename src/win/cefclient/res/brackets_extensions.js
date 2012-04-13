@@ -191,10 +191,15 @@ if (!brackets.app) {
     /**
      * Quits native shell application
      */
-     native function QuitApplication();
+    native function QuitApplication();
     brackets.app.quit = function () {
         QuitApplication();
      };
+
+    native function ShowDeveloperTools();
+    brackets.app.showDeveloperTools = function () {
+        ShowDeveloperTools();
+    }
     
     /**
      * Reads the entire contents of a file. 

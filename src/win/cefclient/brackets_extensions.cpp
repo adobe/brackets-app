@@ -250,6 +250,10 @@ public:
             // Output: none
             errorCode = ExecuteQuitApplication(arguments, retval, exception);
         }
+        else if (name == "ShowDeveloperTools")
+        {
+            errorCode = ExecuteShowDeveloperTools(arguments, retval, exception);
+        }
         else if (name == "GetElapsedMilliseconds")
         {
             // Get
@@ -837,6 +841,17 @@ public:
       }
     }
     PostQuitMessage(0);
+
+    return NO_ERROR;
+  }
+
+  int ExecuteShowDeveloperTools(const CefV8ValueList& arguments,
+                             CefRefPtr<CefV8Value>& retval,
+                             CefString& exception)
+  {
+    if (g_handler.get()) {
+        g_handler->GetBrowser()->ShowDevTools();;
+    }
 
     return NO_ERROR;
   }
