@@ -390,9 +390,12 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
 
 @end
 
-
 int main(int argc, char* argv[])
 {
+  // Delete Special Characters Palette from Edit menu.
+  [[NSUserDefaults standardUserDefaults]
+   setBool:YES forKey:@"NSDisabledCharacterPaletteMenuItem"];
+	
   g_appStartupTime = CFAbsoluteTimeGetCurrent();
   
   // Retrieve the current working directory.
