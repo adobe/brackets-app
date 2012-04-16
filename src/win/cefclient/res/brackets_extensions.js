@@ -196,10 +196,13 @@ if (!brackets.app) {
         QuitApplication();
      };
 
+    /**
+     * Invokes developer tools application
+     */
     native function ShowDeveloperTools();
     brackets.app.showDeveloperTools = function () {
         ShowDeveloperTools();
-    }
+    };
     
     /**
      * Reads the entire contents of a file. 

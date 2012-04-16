@@ -850,7 +850,7 @@ public:
                              CefString& exception)
   {
     if (g_handler.get()) {
-        g_handler->GetBrowser()->ShowDevTools();;
+        g_handler->GetBrowser()->ShowDevTools();
     }
 
     return NO_ERROR;
