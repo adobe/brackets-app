@@ -885,7 +885,7 @@ bool BracketsShellAPI::DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& b
  */
 const std::string BracketsShellAPI::FILE_QUIT = "file.quit";
 const std::string BracketsShellAPI::FILE_CLOSE_WINDOW = "file.close_window";
-const std::string BracketsShellAPI::FILE_RELOAD = "file.reload";
+const std::string BracketsShellAPI::FILE_RELOAD = "debug.refreshWindow";
 
 
 
