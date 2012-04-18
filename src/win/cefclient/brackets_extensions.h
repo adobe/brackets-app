@@ -7,7 +7,7 @@
 // Register the Brackets extension handler.
 void InitBracketsExtensions();
 
-typedef const std::string BracketsCommandName;
+typedef const std::wstring BracketsCommandName;
 
 /**
  * BracketsShellAPI contains functionality for making calls from native code to JavaScript
