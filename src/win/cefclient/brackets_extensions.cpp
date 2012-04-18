@@ -1121,11 +1121,11 @@ bool BracketsShellAPI::DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& b
 
 /**
  * Event constants for TriggerBracketsJSEvent
- * These constants should be kept in sync with Commands.js
+ * These constants must MATCH the strings in Commands.js
  */
 const std::wstring BracketsShellAPI::FILE_QUIT = L"file.quit";
 const std::wstring BracketsShellAPI::FILE_CLOSE_WINDOW = L"file.close_window";
-const std::wstring BracketsShellAPI::FILE_RELOAD = L"file.reload";
+const std::wstring BracketsShellAPI::FILE_RELOAD = L"debug.refreshWindow";
 
 
 
@@ -1135,7 +1135,7 @@ const std::wstring BracketsShellAPI::FILE_RELOAD = L"file.reload";
  * call CommandManager.execute(commandName) in JavaScript. 
  * The bool return is the same as the W3 dispatchEvent:
  * The return value of dispatchEvent indicates whether any of the listeners 
- * which handled the event called preventDefault. If preventDefault was called 
+ * which handled the event called preventDefault. If preventDefault was called
  * the value is false, else the value is true.
  */
 bool BracketsShellAPI::DispatchBracketsJSCommand(const CefRefPtr<CefBrowser>& browser, BracketsCommandName &command){
