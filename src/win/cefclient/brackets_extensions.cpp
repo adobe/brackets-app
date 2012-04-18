@@ -314,7 +314,7 @@ public:
         // Parse the arguments
         if (arguments.size() != 2 || !arguments[0]->IsString() || !arguments[1]->IsBool())
             return ERR_INVALID_PARAMS;
-        std::wstring argURL = StringToWString(arguments[0]->GetStringValue());
+        std::wstring argURL = arguments[0]->GetStringValue();
         bool enableRemoteDebugging = arguments[1]->GetBoolValue();
 
         std::wstring appPath = GetPathToLiveBrowser();
@@ -564,8 +564,8 @@ public:
         bool allowsMultipleSelection = arguments[0]->GetBoolValue();
         bool canChooseDirectories = arguments[1]->GetBoolValue();
         bool canChooseFiles = !canChooseDirectories;
-        std::wstring wtitle = StringToWString(arguments[2]->GetStringValue());
-        std::wstring initialPath = StringToWString(arguments[3]->GetStringValue());
+        std::wstring wtitle = arguments[2]->GetStringValue();
+        std::wstring initialPath = arguments[3]->GetStringValue();
         std::wstring fileTypesStr = arguments[4]->GetStringValue();
         std::wstring selectedFilenames = L"";
         std::wstring result = L"";
@@ -872,7 +872,7 @@ public:
         /* Alternative implementation
         WIN32_FILE_ATTRIBUTE_DATA attribData;
         GET_FILEEX_INFO_LEVELS FileInfosLevel;
-        GetFileAttributesEx( StringToWString(pathStr).c_str(), GetFileExInfoStandard, &attribData);*/
+        GetFileAttributesEx( pathStr.c_str(), GetFileExInfoStandard, &attribData);*/
 
 
         struct _stat buffer;
