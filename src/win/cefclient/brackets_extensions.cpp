@@ -314,7 +314,7 @@ public:
         // Parse the arguments
         if (arguments.size() != 2 || !arguments[0]->IsString() || !arguments[1]->IsBool())
             return ERR_INVALID_PARAMS;
-        std::wstring argURL = StringToWString(arguments[0]->GetStringValue());
+        std::wstring argURL = arguments[0]->GetStringValue();
         bool enableRemoteDebugging = arguments[1]->GetBoolValue();
 
         std::wstring appPath = GetPathToLiveBrowser();
@@ -564,11 +564,11 @@ public:
         bool allowsMultipleSelection = arguments[0]->GetBoolValue();
         bool canChooseDirectories = arguments[1]->GetBoolValue();
         bool canChooseFiles = !canChooseDirectories;
-        std::wstring wtitle = StringToWString(arguments[2]->GetStringValue());
-        std::wstring initialPath = StringToWString(arguments[3]->GetStringValue());
-        std::string fileTypesStr = arguments[4]->GetStringValue();
-        std::string selectedFilenames = "";
-        std::string result = "";
+        std::wstring wtitle = arguments[2]->GetStringValue();
+        std::wstring initialPath = arguments[3]->GetStringValue();
+        std::wstring fileTypesStr = arguments[4]->GetStringValue();
+        std::wstring selectedFilenames = L"";
+        std::wstring result = L"";
 
         FixFilename(initialPath);
 
@@ -606,7 +606,7 @@ public:
             if (pidl != 0) {
                 if (SHGetPathFromIDList(pidl, szFile)) {
                     std::wstring strFoldername(szFile);
-                    selectedFilenames = WStringToString(strFoldername);
+                    selectedFilenames = strFoldername; 
                 }
                 IMalloc* pMalloc = NULL;
                 SHGetMalloc(&pMalloc);
@@ -637,18 +637,18 @@ public:
 
             if (GetOpenFileName(&ofn)) {
                 std::wstring strFilename(szFile);
-                selectedFilenames = WStringToString(strFilename);
+                selectedFilenames = strFilename; 
             }
         }
 
         // TODO (issue #65) Handle multiple select
         if (selectedFilenames.length() > 0) {
-            std::string escapedFilenames;
+            std::wstring escapedFilenames;
             EscapeJSONString(selectedFilenames, escapedFilenames);
-            result = "[\"" + escapedFilenames + "\"]";
+            result = L"[\"" + escapedFilenames + L"\"]";
         }
         else {
-            result = "[]";
+            result = L"[]";
         }
 
         retval = CefV8Value::CreateString(result);
@@ -663,17 +663,17 @@ public:
         if (arguments.size() != 1 || !arguments[0]->IsString())
             return ERR_INVALID_PARAMS;
         
-        std::string pathStr = arguments[0]->GetStringValue();
-        std::string resultDirs;
-        std::string resultFiles;
+        std::wstring pathStr = arguments[0]->GetStringValue();
+        std::wstring resultDirs;
+        std::wstring resultFiles;
         bool addedOneDir = false;
         bool addedOneFile = false;
 
         FixFilename(pathStr);
-        pathStr += "\\*";
+        pathStr += L"\\*";
 
         WIN32_FIND_DATA ffd;
-        HANDLE hFind = FindFirstFile(StringToWString(pathStr).c_str(), &ffd);
+        HANDLE hFind = FindFirstFile(pathStr.c_str(), &ffd);
 
         if (hFind != INVALID_HANDLE_VALUE) 
         {
@@ -683,25 +683,25 @@ public:
                 if (!wcscmp(ffd.cFileName, L".") || !wcscmp(ffd.cFileName, L".."))
                     continue;
 
-                std::string filename;
-                EscapeJSONString(WStringToString(ffd.cFileName), filename);
+                std::wstring filename;
+                EscapeJSONString(ffd.cFileName, filename);
 
                 // Collect file and directory names separately
                 if (ffd.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY)
                 {
                     if (addedOneDir)
-                        resultDirs += ",";
+                        resultDirs += L",";
                     else
                         addedOneDir = true;
-                    resultDirs += "\"" + filename + "\"";
+                    resultDirs += L"\"" + filename + L"\"";
                 }
                 else
                 {
                     if (addedOneFile)
-                        resultFiles += ",";
+                        resultFiles += L",";
                     else
                         addedOneFile = true;
-                    resultFiles += "\"" + filename + "\"";
+                    resultFiles += L"\"" + filename + L"\"";
                 }
             }
             while (FindNextFile(hFind, &ffd) != 0);
@@ -713,16 +713,16 @@ public:
         }
 
         // On Windows, list directories first, then files
-        std::string result = "[";
+        std::wstring result = L"[";
         if (addedOneDir)
         {
             result += resultDirs;
             if (addedOneFile)
-                result += ",";
+                result += L",";
         }
         if (addedOneFile)
             result += resultFiles;
-        result += "]";
+        result += L"]";
         retval = CefV8Value::CreateString(result);
         return NO_ERROR;
     }
@@ -734,10 +734,10 @@ public:
         if (arguments.size() != 1 || !arguments[0]->IsString())
             return ERR_INVALID_PARAMS;
         
-        std::string pathStr = arguments[0]->GetStringValue();
+        std::wstring pathStr = arguments[0]->GetStringValue();
         FixFilename(pathStr);
 
-        DWORD dwAttr = GetFileAttributes(StringToWString(pathStr).c_str());
+        DWORD dwAttr = GetFileAttributes(pathStr.c_str());
 
         if (dwAttr == INVALID_FILE_ATTRIBUTES) {
             return ConvertWinErrorCode(GetLastError()); 
@@ -754,25 +754,23 @@ public:
         if (arguments.size() != 2 || !arguments[0]->IsString() || !arguments[1]->IsString())
             return ERR_INVALID_PARAMS;
 
-        std::string pathStr = arguments[0]->GetStringValue();
-        std::string encodingStr = arguments[1]->GetStringValue();
+        std::wstring pathStr = arguments[0]->GetStringValue();
+        std::wstring encodingStr = arguments[1]->GetStringValue();
 
-        if (encodingStr != "utf8")
+        if (encodingStr != L"utf8")
             return ERR_UNSUPPORTED_ENCODING;
 
         FixFilename(pathStr);
         
-        std::wstring wPathStr = StringToWString(pathStr);
-
         DWORD dwAttr;
-        dwAttr = GetFileAttributes(wPathStr.c_str());
+        dwAttr = GetFileAttributes(pathStr.c_str());
         if (INVALID_FILE_ATTRIBUTES == dwAttr)
             return ConvertWinErrorCode(GetLastError());
 
         if (dwAttr & FILE_ATTRIBUTE_DIRECTORY)
             return ERR_CANT_READ;
 
-        HANDLE hFile = CreateFile(wPathStr.c_str(), GENERIC_READ,
+        HANDLE hFile = CreateFile(pathStr.c_str(), GENERIC_READ,
             0, NULL, OPEN_EXISTING, FILE_ATTRIBUTE_NORMAL, NULL);
         int error = NO_ERROR;
 
@@ -806,15 +804,15 @@ public:
         if (arguments.size() != 3 || !arguments[0]->IsString() || !arguments[1]->IsString() || !arguments[2]->IsString())
             return ERR_INVALID_PARAMS;
 
-        std::string pathStr = arguments[0]->GetStringValue();
-        std::string contentsStr = arguments[1]->GetStringValue();
-        std::string encodingStr = arguments[2]->GetStringValue();
+        std::wstring pathStr = arguments[0]->GetStringValue();
+        std::wstring contentsStr = arguments[1]->GetStringValue();
+        std::wstring encodingStr = arguments[2]->GetStringValue();
         FixFilename(pathStr);
 
-        if (encodingStr != "utf8")
+        if (encodingStr != L"utf8")
             return ERR_UNSUPPORTED_ENCODING;
 
-        HANDLE hFile = CreateFile(StringToWString(pathStr).c_str(), GENERIC_WRITE,
+        HANDLE hFile = CreateFile(pathStr.c_str(), GENERIC_WRITE,
             0, NULL, CREATE_ALWAYS, FILE_ATTRIBUTE_NORMAL, NULL);
         DWORD dwBytesWritten;
         int error = NO_ERROR;
@@ -863,7 +861,7 @@ public:
         if (arguments.size() != 1 || !arguments[0]->IsString())
             return ERR_INVALID_PARAMS;
 
-        std::string pathStr = arguments[0]->GetStringValue();
+        std::wstring pathStr = arguments[0]->GetStringValue();
         FixFilename(pathStr);
 
     // Remove trailing "\", if present. _wstat will fail with a "file not found"
@@ -874,11 +872,11 @@ public:
         /* Alternative implementation
         WIN32_FILE_ATTRIBUTE_DATA attribData;
         GET_FILEEX_INFO_LEVELS FileInfosLevel;
-        GetFileAttributesEx( StringToWString(pathStr).c_str(), GetFileExInfoStandard, &attribData);*/
+        GetFileAttributesEx( pathStr.c_str(), GetFileExInfoStandard, &attribData);*/
 
 
         struct _stat buffer;
-        if(_wstat(StringToWString(pathStr).c_str(), &buffer) == -1) {
+        if(_wstat(pathStr.c_str(), &buffer) == -1) {
             return ConvertErrnoCode(errno); 
         }
 
@@ -894,13 +892,13 @@ public:
         if (arguments.size() != 2 || !arguments[0]->IsString() || !arguments[1]->IsInt())
             return ERR_INVALID_PARAMS;
         
-        std::string pathStr = arguments[0]->GetStringValue();
+        std::wstring pathStr = arguments[0]->GetStringValue();
         int mode = arguments[1]->GetIntValue();
         FixFilename(pathStr);
 
         // Note, Windows cannot set read-only on directories.
         // See http://support.microsoft.com/kb/326549
-        DWORD dwAttr = GetFileAttributes(StringToWString(pathStr).c_str());
+        DWORD dwAttr = GetFileAttributes(pathStr.c_str());
         if (dwAttr == INVALID_FILE_ATTRIBUTES) {
             return ConvertWinErrorCode(GetLastError()); 
         }
@@ -916,7 +914,7 @@ public:
 
         // Note _wchmod only supports setting FILE_ATTRIBUTE_READONLY so 
         // _S_IREAD is ignored.
-        if (_wchmod(StringToWString(pathStr).c_str(), mask) == -1) {
+        if (_wchmod(pathStr.c_str(), mask) == -1) {
             return ConvertErrnoCode(errno); 
         }
 
@@ -930,10 +928,10 @@ public:
         if (arguments.size() != 1 || !arguments[0]->IsString())
             return ERR_INVALID_PARAMS;
         
-        std::string pathStr = arguments[0]->GetStringValue();
+        std::wstring pathStr = arguments[0]->GetStringValue();
         FixFilename(pathStr);
 
-        if (!DeleteFile(StringToWString(pathStr).c_str()))
+        if (!DeleteFile(pathStr.c_str()))
             return ConvertWinErrorCode(GetLastError());
 
         return NO_ERROR;
@@ -973,21 +971,21 @@ public:
     }
 
     // Escapes characters that have special meaning in JSON
-    void EscapeJSONString(const std::string& str, std::string& finalResult) {
-        std::string result;
+    void EscapeJSONString(const std::wstring& str, std::wstring& finalResult) {
+        std::wstring result;
         
         for(size_t pos = 0; pos != str.size(); ++pos) {
             switch(str[pos]) {
-                case '\a':  result.append("\\a");   break;
-                case '\b':  result.append("\\b");   break;
-                case '\f':  result.append("\\f");   break;
-                case '\n':  result.append("\\n");   break;
-                case '\r':  result.append("\\r");   break;
-                case '\t':  result.append("\\t");   break;
-                case '\v':  result.append("\\v");   break;
+                case '\a':  result.append(L"\\a");   break;
+                case '\b':  result.append(L"\\b");   break;
+                case '\f':  result.append(L"\\f");   break;
+                case '\n':  result.append(L"\\n");   break;
+                case '\r':  result.append(L"\\r");   break;
+                case '\t':  result.append(L"\\t");   break;
+                case '\v':  result.append(L"\\v");   break;
                 // Note: single quotes are OK for JSON
-                case '\"':  result.append("\\\"");  break; // double quote
-                case '\\':  result.append("/");     break; // backslash                        
+                case '\"':  result.append(L"\\\"");  break; // double quote
+                case '\\':  result.append(L"/");     break; // backslash                        
                         
                 default:   result.append(1, str[pos]); break;
             }
@@ -1125,9 +1123,9 @@ bool BracketsShellAPI::DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& b
  * Event constants for TriggerBracketsJSEvent
  * These constants must MATCH the strings in Commands.js
  */
-const std::string BracketsShellAPI::FILE_QUIT = "file.quit";
-const std::string BracketsShellAPI::FILE_CLOSE_WINDOW = "file.close_window";
-const std::string BracketsShellAPI::FILE_RELOAD = "debug.refreshWindow";
+const std::wstring BracketsShellAPI::FILE_QUIT = L"file.quit";
+const std::wstring BracketsShellAPI::FILE_CLOSE_WINDOW = L"file.close_window";
+const std::wstring BracketsShellAPI::FILE_RELOAD = L"debug.refreshWindow";
 
 
 
