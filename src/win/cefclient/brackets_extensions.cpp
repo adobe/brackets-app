@@ -805,7 +805,7 @@ public:
             return ERR_INVALID_PARAMS;
 
         std::wstring pathStr = arguments[0]->GetStringValue();
-        std::wstring contentsStr = arguments[1]->GetStringValue();
+        std::string contentsStr = arguments[1]->GetStringValue();
         std::wstring encodingStr = arguments[2]->GetStringValue();
         FixFilename(pathStr);
 
