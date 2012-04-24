@@ -843,16 +843,16 @@ public:
     return NO_ERROR;
   }
 
-  int ExecuteShowDeveloperTools(const CefV8ValueList& arguments,
-                             CefRefPtr<CefV8Value>& retval,
-                             CefString& exception)
-  {
-    if (g_handler.get()) {
-        g_handler->GetBrowser()->ShowDevTools();
-    }
+    int ExecuteShowDeveloperTools(const CefV8ValueList& arguments,
+                        CefRefPtr<CefV8Value>& retval,
+                        CefString& exception)
+    {
+		CefRefPtr<CefBrowser> browser = GetCurrentBrowser();
+		if (browser)
+			browser->ShowDevTools();
 
-    return NO_ERROR;
-  }
+        return NO_ERROR;
+    }
 
     int ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
                                        CefRefPtr<CefV8Value>& retval,
@@ -969,6 +969,29 @@ public:
         std::copy(s.begin(), s.end(), temp.begin());
         return temp;
     }
+
+	// Get browser for current context
+	CefRefPtr<CefBrowser> GetCurrentBrowser()
+	{
+		CefRefPtr<CefBrowser> browser;
+
+		if (g_handler.get())
+		{
+			ClientHandler::BrowserWindowMap browsers( g_handler->GetOpenBrowserWindowMap() );
+			ClientHandler::BrowserWindowMap::const_iterator it;
+
+			for (it = browsers.begin(); it != browsers.end(); it++)
+			{
+				if (it->second->GetMainFrame()->GetV8Context()->IsSame(CefV8Context::GetCurrentContext()))
+				{
+					browser = it->second;
+					break;
+				}
+			}
+		}
+
+		return browser;
+	}
 
     // Escapes characters that have special meaning in JSON
     void EscapeJSONString(const std::wstring& str, std::wstring& finalResult) {
