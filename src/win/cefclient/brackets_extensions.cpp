@@ -866,16 +866,18 @@ public:
     return NO_ERROR;
   }
 
-  int ExecuteShowDeveloperTools(const CefV8ValueList& arguments,
-                             CefRefPtr<CefV8Value>& retval,
-                             CefString& exception)
-  {
-    if (g_handler.get()) {
-        g_handler->GetBrowser()->ShowDevTools();
-    }
+    int ExecuteShowDeveloperTools(const CefV8ValueList& arguments,
+                        CefRefPtr<CefV8Value>& retval,
+                        CefString& exception)
+    {
+		HWND hwnd = GetActiveWindow();
+		if (hwnd)
+		{
+			PostMessage(hwnd, WM_COMMAND, ID_TESTS_DEVTOOLS_SHOW, 0);
+		}
 
-    return NO_ERROR;
-  }
+        return NO_ERROR;
+    }
 
     int ExecuteGetFileModificationTime(const CefV8ValueList& arguments,
                                        CefRefPtr<CefV8Value>& retval,

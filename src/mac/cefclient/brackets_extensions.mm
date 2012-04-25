@@ -717,10 +717,8 @@ public:
                                   CefRefPtr<CefV8Value>& retval,
                                   CefString& exception)
     {
-        if (g_handler.get()) {
-            g_handler->GetBrowser()->ShowDevTools();
-        }
-
+        // Forward to the app delegate
+        [[NSApp delegate] performSelector: @selector(showDevTools:) withObject: nil];
         return NO_ERROR;
     }
 
