@@ -1,3 +1,6 @@
+#ifndef _BRACKETS_EXTENSIONS_H
+#define _BRACKETS_EXTENSIONS_H
+
 /*
  * Copyright (c) 2012 Adobe Systems Incorporated. All rights reserved.
  *  
@@ -21,8 +24,6 @@
  * 
  */ 
 
-
-#define _BRACKETS_EXTENSIONS_H
 #include "include/cef.h"
 
 
