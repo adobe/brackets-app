@@ -1,0 +1,14 @@
+{ "name" : "cocoanode-webserver"
+, "description" : "something whitty"
+, "version" : "0.0.1"
+, "author" : "Joel Brandt <joelrbrandt@gmail.com>"
+, "engines" : {"node" : ">=0.7.8"}
+, "main" : "webserver.js"
+, "directories" : 
+  { "public" : "./public"
+  }
+, "dependencies" : 
+  { "connect": ">= 0.0.1"
+  , "ws": ">= 0.0.1"
+  }
+}
