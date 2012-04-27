@@ -41,7 +41,6 @@
 		210676BE14BE76C9000D7BCF /* libcef_dll_wrapper2.cc in Sources */ = {isa = PBXBuildFile; fileRef = 210676BD14BE76C9000D7BCF /* libcef_dll_wrapper2.cc */; };
 		214293BB149002FF006DE3C0 /* Resources in Copy to $(BUILT_PRODUCTS_DIR)/cefclient.app/Contents/ */ = {isa = PBXBuildFile; fileRef = D43BA9971C6D68D7C2647EEE /* Resources */; };
 		214293BD149002FF006DE3C0 /* libcef.dylib in Copy to $(BUILT_PRODUCTS_DIR)/cefclient.app/Contents/MacOS/ */ = {isa = PBXBuildFile; fileRef = 14C755C1706AFCF7A5AA44A3 /* libcef.dylib */; };
-		214293BE149002FF006DE3C0 /* ffmpegsumo.so in Copy to $(BUILT_PRODUCTS_DIR)/cefclient.app/Contents/MacOS/ */ = {isa = PBXBuildFile; fileRef = 3A04266D94A7F9E5C56BB5A1 /* ffmpegsumo.so */; };
 		214293C0149002FF006DE3C0 /* data in Resources */ = {isa = PBXBuildFile; fileRef = 885912036AB1B5573D32DF62 /* data */; };
 		214293C1149002FF006DE3C0 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 5DA671E2506F9FCD24865649 /* InfoPlist.strings */; };
 		214293C2149002FF006DE3C0 /* MainMenu.xib in Resources */ = {isa = PBXBuildFile; fileRef = 7C436EE49324AFE846F24254 /* MainMenu.xib */; };
@@ -94,7 +93,6 @@
 		891727775506108307C1A1ED /* task_cpptoc.cc in Sources */ = {isa = PBXBuildFile; fileRef = 2FE8D5DF6F62CB6B385281D2 /* task_cpptoc.cc */; };
 		8B17B72C33188DC68DD89434 /* client_handler_mac.mm in Sources */ = {isa = PBXBuildFile; fileRef = 19278B9518779BA0FEFA9573 /* client_handler_mac.mm */; };
 		92ED798A6DF15E02A8502F69 /* client_popup_handler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = EA5DB48FA3C580460E64E799 /* client_popup_handler.cpp */; };
-		983E4B23430D12D330F00013 /* ffmpegsumo.so in Copy to $(BUILT_PRODUCTS_DIR)/cefclient.app/Contents/MacOS/ */ = {isa = PBXBuildFile; fileRef = 3A04266D94A7F9E5C56BB5A1 /* ffmpegsumo.so */; };
 		9A725754F2FE541D1DEDD4D2 /* v8context_ctocpp.cc in Sources */ = {isa = PBXBuildFile; fileRef = FAC05D6E2543D90CFBF53774 /* v8context_ctocpp.cc */; };
 		9AB7BAE066C1FE6519A6A430 /* transfer_util.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 53F9B8E65A0F4D7D858D488B /* transfer_util.cpp */; };
 		9D6E20229EC33C987B3FC64B /* download_handler.cpp in Sources */ = {isa = PBXBuildFile; fileRef = 3BF218B13B245293034D8EC9 /* download_handler.cpp */; };
@@ -173,7 +171,6 @@
 			dstSubfolderSpec = 16;
 			files = (
 				214293BD149002FF006DE3C0 /* libcef.dylib in Copy to $(BUILT_PRODUCTS_DIR)/cefclient.app/Contents/MacOS/ */,
-				214293BE149002FF006DE3C0 /* ffmpegsumo.so in Copy to $(BUILT_PRODUCTS_DIR)/cefclient.app/Contents/MacOS/ */,
 			);
 			name = "Copy to $(BUILT_PRODUCTS_DIR)/cefclient.app/Contents/MacOS/";
 			runOnlyForDeploymentPostprocessing = 0;
@@ -196,7 +193,6 @@
 			dstSubfolderSpec = 16;
 			files = (
 				EAE5586ADBEA5E1D5F7ED44F /* libcef.dylib in Copy to $(BUILT_PRODUCTS_DIR)/cefclient.app/Contents/MacOS/ */,
-				983E4B23430D12D330F00013 /* ffmpegsumo.so in Copy to $(BUILT_PRODUCTS_DIR)/cefclient.app/Contents/MacOS/ */,
 			);
 			name = "Copy to $(BUILT_PRODUCTS_DIR)/cefclient.app/Contents/MacOS/";
 			runOnlyForDeploymentPostprocessing = 0;
