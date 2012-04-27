@@ -424,7 +424,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         {
         case IDM_ABOUT:
           // Brackets: Delegate to JavaScript code to show an HTML version of the about box.
-          BracketsShellAPI::DispatchShowAboutToBracketsJS(browser);
+		  if(browser.get())
+            BracketsShellAPI::DispatchShowAboutToBracketsJS(browser);
           return 0;
         case IDM_EXIT:
           // Brackets: Delegate to JavaScript code to handle quit
