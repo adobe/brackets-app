@@ -65,6 +65,7 @@ CFTimeInterval g_appStartupTime;
 @interface ClientWindowDelegate : NSObject <NSWindowDelegate>
 - (IBAction)goBack:(id)sender;
 - (IBAction)goForward:(id)sender;
+- (IBAction)showAbout:(id)sender;
 - (IBAction)reload:(id)sender;
 - (IBAction)stopLoading:(id)sender;
 - (IBAction)takeURLStringValueFrom:(NSTextField *)sender;
@@ -84,6 +85,14 @@ CFTimeInterval g_appStartupTime;
 - (IBAction)goForward:(id)sender {
   if (g_handler.get() && g_handler->GetBrowserHwnd())
     g_handler->GetBrowser()->GoForward();
+}
+
+- (IBAction)showAbout:(id)sender {
+	if (g_handler.get() && g_handler->GetBrowserHwnd()) {
+		if( !BracketsShellAPI::DispatchShowAboutToBracketsJS(g_handler->GetBrowser()) ) {
+			return;
+		}
+	}
 }
 
 - (IBAction)reload:(id)sender {
