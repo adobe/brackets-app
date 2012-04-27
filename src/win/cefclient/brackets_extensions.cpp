@@ -1144,6 +1144,11 @@ bool BracketsShellAPI::DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& b
   return DispatchBracketsJSCommand(browser, FILE_RELOAD);
 }
 
+bool BracketsShellAPI::DispatchShowAboutToBracketsJS(const CefRefPtr<CefBrowser>& browser)
+{
+  return DispatchBracketsJSCommand(browser, HELP_ABOUT);
+}
+
 /**
  * Event constants for TriggerBracketsJSEvent
  * These constants must MATCH the strings in Commands.js
@@ -1151,6 +1156,7 @@ bool BracketsShellAPI::DispatchReloadToBracketsJS(const CefRefPtr<CefBrowser>& b
 const std::wstring BracketsShellAPI::FILE_QUIT = L"file.quit";
 const std::wstring BracketsShellAPI::FILE_CLOSE_WINDOW = L"file.close_window";
 const std::wstring BracketsShellAPI::FILE_RELOAD = L"debug.refreshWindow";
+const std::wstring BracketsShellAPI::HELP_ABOUT = L"help.about";
 
 
 
