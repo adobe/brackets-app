@@ -423,7 +423,8 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
         switch (wmId)
         {
         case IDM_ABOUT:
-          DialogBox(hInst, MAKEINTRESOURCE(IDD_ABOUTBOX), hWnd, About);
+          // Brackets: Delegate to JavaScript code to show an HTML version of the about box.
+          BracketsShellAPI::DispatchShowAboutToBracketsJS(browser);
           return 0;
         case IDM_EXIT:
           // Brackets: Delegate to JavaScript code to handle quit
