@@ -63,7 +63,7 @@ BEGIN
     END
     POPUP "&View"
     BEGIN
-        MENUITEM "&Refresh",                    IDC_NAV_RELOAD
+        MENUITEM "&Reload Brackets",            IDC_NAV_RELOAD
         MENUITEM "&Show Developer Tools",       ID_TESTS_DEVTOOLS_SHOW
    END
     POPUP "&Help"
@@ -80,7 +80,7 @@ BEGIN
     END
     POPUP "&View"
     BEGIN
-        MENUITEM "&Refresh",                    IDC_NAV_RELOAD
+        MENUITEM "&Reload Brackets",            IDC_NAV_RELOAD
         MENUITEM "&Show Developer Tools",       ID_TESTS_DEVTOOLS_SHOW
     END
 END
