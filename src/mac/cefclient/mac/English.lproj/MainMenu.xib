@@ -238,7 +238,7 @@
 								<bool key="EncodedWithXMLCoder">YES</bool>
 								<object class="NSMenuItem" id="467575825">
 									<reference key="NSMenu" ref="466310130"/>
-									<string key="NSTitle">Reload Brackets</string>
+									<string key="NSTitle">Reload Window</string>
 									<string key="NSKeyEquiv">r</string>
 									<int key="NSKeyEquivModMask">1048576</int>
 									<int key="NSMnemonicLoc">2147483647</int>
