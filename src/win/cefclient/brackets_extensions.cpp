@@ -591,8 +591,7 @@ public:
         std::wstring wtitle = arguments[2]->GetStringValue();
         std::wstring initialPath = arguments[3]->GetStringValue();
         std::wstring fileTypesStr = arguments[4]->GetStringValue();
-        std::vector<std::wstring> selected;
-        std::wstring result = L"";
+        std::wstring results = L"[";
 
         FixFilename(initialPath);
 
@@ -629,7 +628,11 @@ public:
             LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
             if (pidl != 0) {
                 if (SHGetPathFromIDList(pidl, szFile)) {
-                    selected.push_back(std::wstring(szFile));
+					// Escape the directory path and add it to the JSON array
+					std::wstring dirPath(szFile);
+					std::wstring escaped;
+					EscapeJSONString(dirPath, escaped);
+					results += L"\"" + escaped + L"\"";
                 }
                 IMalloc* pMalloc = NULL;
                 SHGetMalloc(&pMalloc);
@@ -669,11 +672,15 @@ public:
                     // Check for two null terminators, which signal that only one file
                     // was selected
                     if (szFile[dir.length() + 1] == '\0') {
-                        selected.push_back(dir);
+						// Escape the single file path and add it to the JSON array
+						std::wstring escaped;
+						EscapeJSONString(dir, escaped);
+						results += L"\"" + escaped + L"\"";
                     } else {
                         // Multiple files are selected
 
                         wchar_t fullPath[MAX_PATH];
+						bool firstFile = true;
                         for (int i = dir.length() + 1;;) {
                             // Get the next file name
                             std::wstring file(&szFile[i]);
@@ -685,34 +692,34 @@ public:
                             // The filename is relative to the directory that was specified as
                             // the first string
                             if (PathCombine(fullPath, dir.c_str(), file.c_str()) != NULL)
-                                selected.push_back(std::wstring(fullPath));
+							{
+								// Append a comma separator if it is not the first file in the list
+								if (firstFile)
+									firstFile = false;
+								else
+									results += L",";
+
+								// Escape the path and add it to the list
+								std::wstring escaped;
+								EscapeJSONString(std::wstring(fullPath), escaped);
+								results += L"\"" + escaped + L"\"";
+							}
 
                             // Go to the start of the next file name
                             i += file.length() + 1;
                         }
                     }
                 } else {
-                    // If multiple files are not allowed, add the file name normally
-                    selected.push_back(std::wstring(szFile));
+                    // If multiple files are not allowed, add the single file
+					std::wstring escaped;
+					EscapeJSONString(std::wstring(szFile), escaped);
+					results += L"\"" + escaped + L"\"";
                 }
             }
         }
 
-        // Encode the result
-        result += L"[";
-        // Add all the files to the array
-        for (size_t i = 0; i < selected.size(); i++) {
-            std::wstring escapedFilename;
-            EscapeJSONString(selected[i], escapedFilename);
-
-            if (i > 0) // Add separator if it is not the first item
-                result += L", ";
-
-            result += L"\"" + escapedFilename + L"\"";
-        }
-        result += L"]";
-
-        retval = CefV8Value::CreateString(result);
+        results += L"]";
+        retval = CefV8Value::CreateString(results);
 
         return NO_ERROR;
     }
