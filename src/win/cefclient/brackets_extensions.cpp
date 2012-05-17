@@ -30,6 +30,7 @@
 #include <sys/stat.h>
 #include <CommDlg.h>
 #include <ShlObj.h>
+#include <Shlwapi.h>
 #include <wchar.h>
 #include <algorithm>
 #include <list>
@@ -590,8 +591,7 @@ public:
         std::wstring wtitle = arguments[2]->GetStringValue();
         std::wstring initialPath = arguments[3]->GetStringValue();
         std::wstring fileTypesStr = arguments[4]->GetStringValue();
-        std::wstring selectedFilenames = L"";
-        std::wstring result = L"";
+        std::wstring results = L"[";
 
         FixFilename(initialPath);
 
@@ -628,8 +628,11 @@ public:
             LPITEMIDLIST pidl = SHBrowseForFolder(&bi);
             if (pidl != 0) {
                 if (SHGetPathFromIDList(pidl, szFile)) {
-                    std::wstring strFoldername(szFile);
-                    selectedFilenames = strFoldername; 
+                    // Escape the directory path and add it to the JSON array
+                    std::wstring dirPath(szFile);
+                    std::wstring escaped;
+                    EscapeJSONString(dirPath, escaped);
+                    results += L"\"" + escaped + L"\"";
                 }
                 IMalloc* pMalloc = NULL;
                 SHGetMalloc(&pMalloc);
@@ -654,27 +657,69 @@ public:
              ofn.lpstrFilter = L"All Files\0*.*\0Web Files\0*.js;*.css;*.htm;*.html\0\0";
            
             ofn.lpstrInitialDir = initialPath.c_str();
-            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST;
+            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER;
             if (allowsMultipleSelection)
                 ofn.Flags |= OFN_ALLOWMULTISELECT;
 
             if (GetOpenFileName(&ofn)) {
-                std::wstring strFilename(szFile);
-                selectedFilenames = strFilename; 
+                if (allowsMultipleSelection) {
+                    // Multiple selection encodes the files differently
+
+                    // If multiple files are selected, the first null terminator
+                    // signals end of directory that the files are all in
+                    std::wstring dir(szFile);
+
+                    // Check for two null terminators, which signal that only one file
+                    // was selected
+                    if (szFile[dir.length() + 1] == '\0') {
+                        // Escape the single file path and add it to the JSON array
+                        std::wstring escaped;
+                        EscapeJSONString(dir, escaped);
+                        results += L"\"" + escaped + L"\"";
+                    } else {
+                        // Multiple files are selected
+
+                        wchar_t fullPath[MAX_PATH];
+                        bool firstFile = true;
+                        for (int i = dir.length() + 1;;) {
+                            // Get the next file name
+                            std::wstring file(&szFile[i]);
+
+                            // Two adjacent null characters signal the end of the files
+                            if (file.length() == 0)
+                                break;
+
+                            // The filename is relative to the directory that was specified as
+                            // the first string
+                            if (PathCombine(fullPath, dir.c_str(), file.c_str()) != NULL)
+                            {
+                                // Append a comma separator if it is not the first file in the list
+                                if (firstFile)
+                                    firstFile = false;
+                                else
+                                    results += L",";
+
+                                // Escape the path and add it to the list
+                                std::wstring escaped;
+                                EscapeJSONString(std::wstring(fullPath), escaped);
+                                results += L"\"" + escaped + L"\"";
+                            }
+
+                            // Go to the start of the next file name
+                            i += file.length() + 1;
+                        }
+                    }
+                } else {
+                    // If multiple files are not allowed, add the single file
+                    std::wstring escaped;
+                    EscapeJSONString(std::wstring(szFile), escaped);
+                    results += L"\"" + escaped + L"\"";
+                }
             }
         }
 
-        // TODO (issue #65) Handle multiple select
-        if (selectedFilenames.length() > 0) {
-            std::wstring escapedFilenames;
-            EscapeJSONString(selectedFilenames, escapedFilenames);
-            result = L"[\"" + escapedFilenames + L"\"]";
-        }
-        else {
-            result = L"[]";
-        }
-
-        retval = CefV8Value::CreateString(result);
+        results += L"]";
+        retval = CefV8Value::CreateString(results);
 
         return NO_ERROR;
     }
@@ -870,11 +915,11 @@ public:
                         CefRefPtr<CefV8Value>& retval,
                         CefString& exception)
     {
-		HWND hwnd = GetActiveWindow();
-		if (hwnd)
-		{
-			PostMessage(hwnd, WM_COMMAND, ID_TESTS_DEVTOOLS_SHOW, 0);
-		}
+        HWND hwnd = GetActiveWindow();
+        if (hwnd)
+        {
+            PostMessage(hwnd, WM_COMMAND, ID_TESTS_DEVTOOLS_SHOW, 0);
+        }
 
         return NO_ERROR;
     }
