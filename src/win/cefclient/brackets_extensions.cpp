@@ -657,7 +657,7 @@ public:
              ofn.lpstrFilter = L"All Files\0*.*\0Web Files\0*.js;*.css;*.htm;*.html\0\0";
            
             ofn.lpstrInitialDir = initialPath.c_str();
-            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_EXPLORER;
+            ofn.Flags = OFN_PATHMUSTEXIST | OFN_FILEMUSTEXIST | OFN_NOCHANGEDIR | OFN_EXPLORER;
             if (allowsMultipleSelection)
                 ofn.Flags |= OFN_ALLOWMULTISELECT;
 
