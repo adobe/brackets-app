@@ -27,7 +27,7 @@ public class Frame: WebView {
         js_set_function(ctx, "simple_func", js_simple_func);
         /*js_set_function(ctx, "GetLastError", js_last_error);*/
         /*js_set_function(ctx, "ShowOpenDialog", js_show_open_dialog);*/
-        /*js_set_function(ctx, "ReadDir", js_read_dir);*/
+        js_set_function(ctx, "ReadDir", js_read_dir);
         /*js_set_function(ctx, "IsDirectory", js_is_directory);*/
         /*js_set_function(ctx, "GetFileModificationTime", js_get_file_modification_time);*/
         /*js_set_function(ctx, "QuitApplication", js_quit_application);*/
@@ -48,21 +48,53 @@ public class Frame: WebView {
         global.set_property (ctx, s, f, 0, null);
     }
 
-    /*public static JSCore.Value js_read_dir (Context ctx,*/
-    /*        JSCore.Object function,*/
-    /*        JSCore.Object thisObject,*/
-    /*        JSCore.Value[] arguments,*/
-    /*        out JSCore.Value exception) {*/
+    public static JSCore.Value js_read_dir (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
 
-    /*    JSCore.Value[1] dirs = {*/
-    /*        new JSCore.Value.string( ctx, new String.with_utf8_c_string ("a") )*/
-    /*    };*/
-    /*    dirs += new JSCore.Value.string( ctx, new String.with_utf8_c_string ("a") );*/
-    /*    dirs += new JSCore.Value.string( ctx, new String.with_utf8_c_string ("b") );*/
-    /*    JSCore.Value err = new JSCore.Value.null( ctx );*/
+        if (arguments.length < 1) {
+            return ctx.evaluate_script(new String.with_utf8_c_string("[]" ), null, null, 0, null);
+        }
 
-    /*    return new JSCore.Object.array( ctx, 2, dirs, out err);*/
-    /*}*/
+        string name;
+        var s = arguments[0].to_string_copy(ctx, null);
+        char[] buffer = new char[s.get_length() + 1];
+        s.get_utf8_c_string (buffer, buffer.length);
+        string dirname = (string)buffer;
+
+        StringBuilder json = new StringBuilder();
+        json.assign("[");
+
+        try{
+            var dir = Dir.open(dirname);
+
+            while(true) {
+                name = dir.read_name();
+                if (name == null) {
+                    break;
+                }
+
+                json.append("'%s'".printf(name));
+            }
+
+            if (json.str [json.len - 1] == ',') {
+                json.erase (json.len - 1, 1);
+            }
+            json.append("]");
+            s = new String.with_utf8_c_string(json.str);
+        }
+        catch(Error e){
+            return ctx.evaluate_script(new String.with_utf8_c_string("[]" ), null, null, 0, null);
+        }
+
+        var r = ctx.evaluate_script(s, null, null, 0, null);
+        s = null;
+        buffer = null;
+
+        return r;
+    }
 
     public static JSCore.Value js_simple_func (Context ctx,
             JSCore.Object function,

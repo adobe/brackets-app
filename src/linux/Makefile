@@ -7,3 +7,6 @@ build:
 		--pkg javascriptcore \
 		-o ../../bin/linux/brackets \
 		main.vala frame.vala
+
+run:
+	../../bin/linux/brackets
