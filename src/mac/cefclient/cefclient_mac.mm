@@ -315,6 +315,11 @@ NSButton* MakeButton(NSRect* rect, NSString* title, NSView* parent) {
         filePath = appPath + "/../../../../brackets/src/index.html";
     else
         filePath = appPath + "/../../brackets/src/index.html";
+  
+    // Make sure the index.html file exists. If not, show the error page
+    if (![[NSFileManager defaultManager] fileExistsAtPath: [NSString stringWithUTF8String:filePath.c_str()]]) {
+      filePath = [[[NSBundle mainBundle] pathForResource:@"load_error" ofType:@"html"] UTF8String];
+    }
         
     initialUrl = "file://" + filePath;
   }
