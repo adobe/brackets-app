@@ -11,7 +11,7 @@ public class BracketsApp : Window {
 
     public BracketsApp (string basename) {
         this.title = BracketsApp.TITLE;
-        this.script_fname = basename + "/brackets_extensions.js";
+        this.script_fname = basename + "/../../src/linux/brackets_extensions.js";
         this.html_fname = basename + "/../../brackets/src/index.html";
         set_default_size (800, 600);
 

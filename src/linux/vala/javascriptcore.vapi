@@ -364,8 +364,7 @@ namespace JSCore {
 		                           ObjectCallAsConstructorCallback callAsConstructor);
 
 		[CCode (cname = "JSObjectMakeArray")]
-		public Object.array (Context ctx, size_t argument_count,
-		                     JSCore.Value[] arguments,
+		public Object.array (Context ctx, [CCode (array_length_pos=1.9, array_length_type="size_t")]JSCore.Value[] arguments,
 		                     out JSCore.Value exception);
 
 		[CCode (cname = "JSObjectMakeDate")]

@@ -1,6 +1,6 @@
 
 build:
-	valac --vapidir vala \
+	valac -v --vapidir vala \
 		--pkg gtk+-2.0 \
 		--pkg gio-2.0 \
 		--pkg webkit-1.0 \

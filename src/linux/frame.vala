@@ -58,7 +58,7 @@ public class Frame: WebView {
             return ctx.evaluate_script(new String.with_utf8_c_string("[]" ), null, null, 0, null);
         }
 
-        string name;
+        stdout.printf("123");
         var s = arguments[0].to_string_copy(ctx, null);
         char[] buffer = new char[s.get_length() + 1];
         s.get_utf8_c_string (buffer, buffer.length);
@@ -71,23 +71,24 @@ public class Frame: WebView {
             var dir = Dir.open(dirname);
 
             while(true) {
-                name = dir.read_name();
+                var name = dir.read_name();
                 if (name == null) {
                     break;
                 }
 
-                json.append("'%s'".printf(name));
+                json.append("'%s',".printf(name));
             }
 
             if (json.str [json.len - 1] == ',') {
                 json.erase (json.len - 1, 1);
             }
-            json.append("]");
-            s = new String.with_utf8_c_string(json.str);
         }
         catch(Error e){
             return ctx.evaluate_script(new String.with_utf8_c_string("[]" ), null, null, 0, null);
         }
+
+        json.append("]");
+        s = new String.with_utf8_c_string(json.str);
 
         var r = ctx.evaluate_script(s, null, null, 0, null);
         s = null;
