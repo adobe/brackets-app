@@ -31,7 +31,7 @@ public class Frame: WebView {
         /*js_set_function(ctx, "IsDirectory", js_is_directory);*/
         /*js_set_function(ctx, "GetFileModificationTime", js_get_file_modification_time);*/
         js_set_function(ctx, "QuitApplication", js_quit_application);
-        /*js_set_function(ctx, "ShowDeveloperTools", js_show_developer_tools);*/
+        js_set_function(ctx, "ShowDeveloperTools", js_show_developer_tools);
         js_set_function(ctx, "ReadFile", js_read_file);
         /*js_set_function(ctx, "WriteFile", js_write_file);*/
         /*js_set_function(ctx, "SetPosixPermissions", js_set_posix_permissions);*/
@@ -69,6 +69,15 @@ public class Frame: WebView {
         var res = new String.with_utf8_c_string(script);
 
         return new JSCore.Value.string(ctx, res);
+    }
+
+    //there is no developer tools in api, so we just do a stub
+    public static JSCore.Value js_show_developer_tools (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+        return new JSCore.Value.undefined(ctx);
     }
 
     public static JSCore.Value js_quit_application (Context ctx,
