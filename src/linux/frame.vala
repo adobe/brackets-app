@@ -32,7 +32,7 @@ public class Frame: WebView {
         /*js_set_function(ctx, "GetFileModificationTime", js_get_file_modification_time);*/
         js_set_function(ctx, "QuitApplication", js_quit_application);
         /*js_set_function(ctx, "ShowDeveloperTools", js_show_developer_tools);*/
-        /*js_set_function(ctx, "ReadFile", js_read_file);*/
+        js_set_function(ctx, "ReadFile", js_read_file);
         /*js_set_function(ctx, "WriteFile", js_write_file);*/
         /*js_set_function(ctx, "SetPosixPermissions", js_set_posix_permissions);*/
         /*js_set_function(ctx, "DeleteFileOrDirectory", js_delete_file_or_directory);*/
@@ -46,6 +46,29 @@ public class Frame: WebView {
         var f = new JSCore.Object.function_with_callback (ctx, s, func);
         var global = ctx.get_global_object();
         global.set_property (ctx, s, f, 0, null);
+    }
+
+    public static JSCore.Value js_read_file (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+        string script;
+        ulong len;
+
+        if (arguments.length < 1) {
+            return new JSCore.Value.string(ctx, new String.with_utf8_c_string(""));
+        }
+
+        var s = arguments[0].to_string_copy(ctx, null);
+        char[] buffer = new char[s.get_length() + 1];
+        s.get_utf8_c_string (buffer, buffer.length);
+        string fname = (string)buffer;
+
+        GLib.FileUtils.get_contents(fname, out script, out len);
+        var res = new String.with_utf8_c_string(script);
+
+        return new JSCore.Value.string(ctx, res);
     }
 
     public static JSCore.Value js_quit_application (Context ctx,
@@ -75,7 +98,6 @@ public class Frame: WebView {
             return ctx.evaluate_script(new String.with_utf8_c_string("[]" ), null, null, 0, null);
         }
 
-        stdout.printf("123");
         var s = arguments[0].to_string_copy(ctx, null);
         char[] buffer = new char[s.get_length() + 1];
         s.get_utf8_c_string (buffer, buffer.length);
