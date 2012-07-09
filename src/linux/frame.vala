@@ -25,7 +25,7 @@ public class Frame: WebView {
 
     private void js_set_bindings(GlobalContext ctx) {
         js_set_function(ctx, "simple_func", js_simple_func);
-        /*js_set_function(ctx, "GetLastError", js_last_error);*/
+        js_set_function(ctx, "GetLastError", js_last_error);
         /*js_set_function(ctx, "ShowOpenDialog", js_show_open_dialog);*/
         js_set_function(ctx, "ReadDir", js_read_dir);
         /*js_set_function(ctx, "IsDirectory", js_is_directory);*/
@@ -46,6 +46,14 @@ public class Frame: WebView {
         var f = new JSCore.Object.function_with_callback (ctx, s, func);
         var global = ctx.get_global_object();
         global.set_property (ctx, s, f, 0, null);
+    }
+
+    public static JSCore.Value js_last_error (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+        return new JSCore.Value.number (ctx, 0);
     }
 
     public static JSCore.Value js_read_dir (Context ctx,
