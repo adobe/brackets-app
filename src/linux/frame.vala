@@ -26,7 +26,7 @@ public class Frame: WebView {
     private void js_set_bindings(GlobalContext ctx) {
         js_set_function(ctx, "simple_func", js_simple_func);
         js_set_function(ctx, "GetLastError", js_last_error);
-        /*js_set_function(ctx, "ShowOpenDialog", js_show_open_dialog);*/
+        js_set_function(ctx, "ShowOpenDialog", js_show_open_dialog);
         js_set_function(ctx, "ReadDir", js_read_dir);
         js_set_function(ctx, "IsDirectory", js_is_directory);
         /*js_set_function(ctx, "GetFileModificationTime", js_get_file_modification_time);*/
@@ -46,6 +46,34 @@ public class Frame: WebView {
         var f = new JSCore.Object.function_with_callback (ctx, s, func);
         var global = ctx.get_global_object();
         global.set_property (ctx, s, f, 0, null);
+    }
+
+    public static JSCore.Value js_show_open_dialog (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        /*var s = arguments[0].to_string_copy(ctx, null);*/
+        /*char[] buffer = new char[s.get_length() + 1];*/
+        /*s.get_utf8_c_string (buffer, buffer.length);*/
+        /*string fname = (string)buffer;*/
+
+        string selected_fname = "";
+
+                                                                //possibly need an object here
+        var file_chooser = new FileChooserDialog ("Open File", null,
+                                      FileChooserAction.OPEN,
+                                      Stock.CANCEL, ResponseType.CANCEL,
+                                      Stock.OPEN, ResponseType.ACCEPT);
+
+        if (file_chooser.run () == ResponseType.ACCEPT) {
+            selected_fname =  file_chooser.get_filename();
+        }
+        var res = new String.with_utf8_c_string(selected_fname);
+
+        file_chooser.destroy();
+        return new JSCore.Value.string(ctx, res);
     }
 
     public static JSCore.Value js_read_file (Context ctx,
