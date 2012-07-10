@@ -28,7 +28,7 @@ public class Frame: WebView {
         js_set_function(ctx, "GetLastError", js_last_error);
         /*js_set_function(ctx, "ShowOpenDialog", js_show_open_dialog);*/
         js_set_function(ctx, "ReadDir", js_read_dir);
-        /*js_set_function(ctx, "IsDirectory", js_is_directory);*/
+        js_set_function(ctx, "IsDirectory", js_is_directory);
         /*js_set_function(ctx, "GetFileModificationTime", js_get_file_modification_time);*/
         js_set_function(ctx, "QuitApplication", js_quit_application);
         js_set_function(ctx, "ShowDeveloperTools", js_show_developer_tools);
@@ -78,6 +78,24 @@ public class Frame: WebView {
             JSCore.Value[] arguments,
             out JSCore.Value exception) {
         return new JSCore.Value.undefined(ctx);
+    }
+
+    public static JSCore.Value js_is_directory (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+
+        if (arguments.length < 1) {
+            return new JSCore.Value.boolean(ctx, false);
+        }
+
+        var s = arguments[0].to_string_copy(ctx, null);
+        char[] buffer = new char[s.get_length() + 1];
+        s.get_utf8_c_string (buffer, buffer.length);
+        string fname = (string)buffer;
+
+        return new JSCore.Value.boolean(ctx, GLib.FileUtils.test(fname, GLib.FileTest.IS_DIR));
     }
 
     public static JSCore.Value js_quit_application (Context ctx,
