@@ -72,6 +72,7 @@
 #define IDS_EXTENSIONPERF               1009
 #define IDS_TRANSPARENCY                1010
 #define IDS_BRACKETS_EXTENSIONS			1011
+#define IDS_BRACKETS_LOAD_ERROR         1012
 
 // Avoid files associated with MacOS
 #define _X86_

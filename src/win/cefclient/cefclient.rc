@@ -40,6 +40,7 @@ IDS_MODALDIALOG BINARY				"res\\modaldialog.html"
 IDS_EXTENSIONPERF BINARY			"res\\extensionperf.html"
 IDS_TRANSPARENCY BINARY				"res\\transparency.html"
 IDS_BRACKETS_EXTENSIONS BINARY		"res\\brackets_extensions.js"
+IDS_BRACKETS_LOAD_ERROR BINARY      "res\\load_error.html"
 
 /////////////////////////////////////////////////////////////////////////////
 //

@@ -197,6 +197,13 @@ bool ClientHandler::OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
   REQUIRE_IO_THREAD();
 
   std::string url = request->GetURL();
+  if (url == "http://brackets/load_error") {
+    // Show the load error page
+    resourceStream = GetBinaryResourceReader(IDS_BRACKETS_LOAD_ERROR);
+    response->SetMimeType("text/html");
+    response->SetStatus(200);
+  }
+  /*
   if(url == "http://tests/request") {
     // Show the request contents
     std::string dump;
@@ -268,6 +275,7 @@ bool ClientHandler::OnBeforeResourceLoad(CefRefPtr<CefBrowser> browser,
     response->SetMimeType("text/html");
     response->SetStatus(200);
   }
+  */
 
   return false;
 }

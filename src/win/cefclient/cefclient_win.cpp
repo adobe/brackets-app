@@ -404,6 +404,13 @@ LRESULT CALLBACK WndProc(HWND hWnd, UINT message, WPARAM wParam, LPARAM lParam)
 			pStr++;
 		}
 
+        // Make sure the file exists
+        if (GetFileAttributes(initialUrl) == INVALID_FILE_ATTRIBUTES) {
+            // Load the special "brackets/load_error" url. This will be
+            // redirected to the error page in ClientHandler::OnBeforeResourceLoad().
+            wcscpy(initialUrl, L"http://brackets/load_error");
+        }
+
         // Create the new child browser window
         CefBrowser::CreateBrowser(info,
             static_cast<CefRefPtr<CefClient> >(g_handler),
