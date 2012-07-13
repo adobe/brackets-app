@@ -29,14 +29,14 @@ public class Frame: WebView {
         js_set_function(ctx, "ShowOpenDialog", js_show_open_dialog);
         js_set_function(ctx, "ReadDir", js_read_dir);
         js_set_function(ctx, "IsDirectory", js_is_directory);
-        /*js_set_function(ctx, "GetFileModificationTime", js_get_file_modification_time);*/
+        js_set_function(ctx, "GetFileModificationTime", js_get_file_modification_time);
         js_set_function(ctx, "QuitApplication", js_quit_application);
         js_set_function(ctx, "ShowDeveloperTools", js_show_developer_tools);
         js_set_function(ctx, "ReadFile", js_read_file);
         /*js_set_function(ctx, "WriteFile", js_write_file);*/
         /*js_set_function(ctx, "SetPosixPermissions", js_set_posix_permissions);*/
         /*js_set_function(ctx, "DeleteFileOrDirectory", js_delete_file_or_directory);*/
-        /*js_set_function(ctx, "GetElapsedMilliseconds", js_get_elapsed_milliseconds);*/
+        js_set_function(ctx, "GetElapsedMilliseconds", js_get_elapsed_milliseconds);
         /*js_set_function(ctx, "OpenLiveBrowser", js_open_live_browser);*/
         /*js_set_function(ctx, "CloseLiveBrowser", js_close_live_browser);*/
     }
@@ -133,6 +133,22 @@ public class Frame: WebView {
             out JSCore.Value exception) {
         Gtk.main_quit();
         return new JSCore.Value.undefined(ctx);
+    }
+
+    public static JSCore.Value js_get_file_modification_time (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+        return new JSCore.Value.number (ctx, 100);
+    }
+
+    public static JSCore.Value js_get_elapsed_milliseconds (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments,
+            out JSCore.Value exception) {
+        return new JSCore.Value.number (ctx, 100);
     }
 
     public static JSCore.Value js_last_error (Context ctx,
