@@ -70,7 +70,7 @@ public class Frame: WebView {
         if (file_chooser.run () == ResponseType.ACCEPT) {
             selected_fname =  file_chooser.get_filename();
         }
-        var res = new String.with_utf8_c_string(selected_fname);
+        var res = new String.with_utf8_c_string("[" + selected_fname + "]");
 
         file_chooser.destroy();
         return new JSCore.Value.string(ctx, res);
@@ -166,7 +166,7 @@ public class Frame: WebView {
             out JSCore.Value exception) {
 
         if (arguments.length < 1) {
-            return ctx.evaluate_script(new String.with_utf8_c_string("[]" ), null, null, 0, null);
+            return new JSCore.Value.string(ctx, new String.with_utf8_c_string("[]" ));
         }
 
         var s = arguments[0].to_string_copy(ctx, null);
@@ -186,7 +186,7 @@ public class Frame: WebView {
                     break;
                 }
 
-                json.append("'%s',".printf(name));
+                json.append("\"%s\",".printf(name));
             }
 
             if (json.str [json.len - 1] == ',') {
@@ -194,17 +194,13 @@ public class Frame: WebView {
             }
         }
         catch(Error e){
-            return ctx.evaluate_script(new String.with_utf8_c_string("[]" ), null, null, 0, null);
+            return new JSCore.Value.string(ctx, new String.with_utf8_c_string("[]" ));
         }
 
         json.append("]");
         s = new String.with_utf8_c_string(json.str);
 
-        var r = ctx.evaluate_script(s, null, null, 0, null);
-        s = null;
-        buffer = null;
-
-        return r;
+        return new JSCore.Value.string(ctx, s);
     }
 
     public static JSCore.Value js_simple_func (Context ctx,
