@@ -88,7 +88,7 @@ public class Frame: WebView {
             GLib.FileUtils.get_contents(fname, out script, out len);
             execute_script (script);
         } catch(FileError err) {
-            stderr.printf("Warn: %s has not been executed", fname);
+            stderr.printf("Warn: %s has not been executed\n", fname);
         }
     }
 
@@ -102,8 +102,8 @@ public class Frame: WebView {
         js_set_function(ctx, "ShowDeveloperTools", js_show_developer_tools);
         js_set_function(ctx, "ReadFile", js_read_file);
         js_set_function(ctx, "WriteFile", js_write_file);
-        /*js_set_function(ctx, "SetPosixPermissions", js_set_posix_permissions);*/
-        /*js_set_function(ctx, "DeleteFileOrDirectory", js_delete_file_or_directory);*/
+        js_set_function(ctx, "SetPosixPermissions", js_set_posix_permissions);
+        js_set_function(ctx, "DeleteFileOrDirectory", js_delete_file_or_directory);
         js_set_function(ctx, "GetElapsedMilliseconds", js_get_elapsed_milliseconds);
         js_set_function(ctx, "OpenLiveBrowser", js_open_live_browser);
         js_set_function(ctx, "CloseLiveBrowser", js_close_live_browser);
@@ -291,6 +291,61 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
         Gtk.main_quit();
+        return new JSCore.Value.undefined(ctx);
+    }
+
+    public static JSCore.Value js_set_posix_permissions (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments) {
+
+        Frame instance = Frame.instance;
+
+        if (arguments.length < 2) {
+            instance.lastError = Errors.ERR_INVALID_PARAMS;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        string fname = JSUtils.valueToString(ctx, arguments[0]);
+        /*int perms = JSUtils.valueToString(ctx, arguments[0]);*/ //need proper casting here
+
+        /**
+            changing permissions
+        */
+        stderr.printf("set_permissions function has not been fully implemented yet\n", fname);
+
+        if (!(GLib.FileUtils.test(fname, GLib.FileTest.EXISTS))) {
+            instance.lastError = Errors.ERR_NOT_FOUND;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        return new JSCore.Value.undefined(ctx);
+    }
+
+    public static JSCore.Value js_delete_file_or_directory (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments) {
+
+        Frame instance = Frame.instance;
+
+        if (arguments.length < 1) {
+            instance.lastError = Errors.ERR_INVALID_PARAMS;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        string fname = JSUtils.valueToString(ctx, arguments[0]);
+
+        if (!(GLib.FileUtils.test(fname, GLib.FileTest.EXISTS))) {
+            instance.lastError = Errors.ERR_NOT_FOUND;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        /**
+            perform deletion here
+        */
+        stderr.printf("DeleteFileOrDirectory has not been implemented yet\n", fname);
+
         return new JSCore.Value.undefined(ctx);
     }
 
