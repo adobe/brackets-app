@@ -4,7 +4,35 @@ using JSCore;
 
 public class Frame: WebView {
 
-    public Frame(string script_url) {
+    private static Frame _instance = null;
+    private bool initDone = false;
+    private bool inspectorVisible = false;
+
+    /* We need singleton because it's an only reasonable way to get
+        widget instance inside the js function
+    */
+    public static Frame instance {
+        get {
+            if (_instance == null) {
+                _instance = new Frame();
+            }
+
+            return _instance;
+        }
+        private set {
+        }
+    }
+
+    public signal void toggle_developer_tools(bool show);
+
+    private Frame() { }
+
+    public void init(string script_url, WebView inspector_view) {
+        if (initDone == true) {
+            return;
+        }
+
+        initDone = true;
         attachScript(script_url);
 
         this.window_object_cleared.connect ((source, frame, context, window_object) => {
@@ -12,7 +40,13 @@ public class Frame: WebView {
         });
         WebSettings settings = new WebSettings();
         settings.enable_file_access_from_file_uris = true;
+        settings.enable_developer_extras = true;
         this.set_settings(settings);
+
+        WebInspector inspector =  this.get_inspector();
+        inspector.inspect_web_view.connect ((view) => {
+            return inspector_view;
+        });
     }
 
     private void attachScript(string fname) {
@@ -24,7 +58,6 @@ public class Frame: WebView {
     }
 
     private void js_set_bindings(GlobalContext ctx) {
-        js_set_function(ctx, "simple_func", js_simple_func);
         js_set_function(ctx, "GetLastError", js_last_error);
         js_set_function(ctx, "ShowOpenDialog", js_show_open_dialog);
         js_set_function(ctx, "ReadDir", js_read_dir);
@@ -105,6 +138,18 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments,
             out JSCore.Value exception) {
+
+        Frame instance = Frame.instance;
+        WebInspector inspector =  instance.get_inspector();
+
+        instance.toggle_developer_tools(!instance.inspectorVisible);
+
+        if (instance.inspectorVisible == false) {
+            inspector.show();
+        }
+
+        instance.inspectorVisible = !instance.inspectorVisible;
+
         return new JSCore.Value.undefined(ctx);
     }
 
@@ -201,14 +246,5 @@ public class Frame: WebView {
         s = new String.with_utf8_c_string(json.str);
 
         return new JSCore.Value.string(ctx, s);
-    }
-
-    public static JSCore.Value js_simple_func (Context ctx,
-            JSCore.Object function,
-            JSCore.Object thisObject,
-            JSCore.Value[] arguments,
-            out JSCore.Value exception) {
-
-        return new JSCore.Value.boolean (ctx, true);
     }
 }

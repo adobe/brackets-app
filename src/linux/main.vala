@@ -1,4 +1,5 @@
 using Gtk;
+using WebKit;
 
 public class BracketsApp : Window {
 
@@ -8,6 +9,7 @@ public class BracketsApp : Window {
 
     private Entry script_input;
     private Frame web_view;
+    private WebView web_inspector;
 
     public BracketsApp (string basename) {
         this.title = BracketsApp.TITLE;
@@ -16,27 +18,42 @@ public class BracketsApp : Window {
         set_default_size (800, 600);
 
         create_widgets ();
-        connect_signals ();
         this.script_input.grab_focus ();
     }
 
     private void create_widgets () {
         this.script_input = new Entry ();
-        this.web_view = new Frame (this.script_fname);
+        this.web_inspector = new WebView();
+        this.web_view = Frame.instance;
+        this.web_view.init(this.script_fname, this.web_inspector);
         var scrolled_window = new ScrolledWindow (null, null);
+
         scrolled_window.set_policy (PolicyType.AUTOMATIC, PolicyType.AUTOMATIC);
         scrolled_window.add (this.web_view);
+
+        var scrolled_inspector_window = new ScrolledWindow (null, null);
+
+        scrolled_inspector_window.set_policy (PolicyType.AUTOMATIC, PolicyType.AUTOMATIC);
+        scrolled_inspector_window.add (this.web_inspector);
+
         var vbox = new VBox (false, 0);
         vbox.pack_start (this.script_input, false, true, 0);
         vbox.add (scrolled_window);
         add (vbox);
-    }
 
-    private void connect_signals () {
         this.destroy.connect (Gtk.main_quit);
         this.script_input.activate.connect (on_activate);
         this.web_view.title_changed.connect ((source, frame, title) => {
             this.title = "%s - %s".printf (title, BracketsApp.TITLE);
+        });
+
+        this.web_view.toggle_developer_tools.connect ((source, do_show) => {
+            if (do_show) {
+                vbox.add (scrolled_inspector_window);
+                scrolled_inspector_window.show();
+            } else {
+                vbox.remove (scrolled_inspector_window);
+            }
         });
     }
 
