@@ -136,21 +136,44 @@ public class Frame: WebView {
             JSCore.Object function,
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
+
+        if (arguments.length < 1) {
+            instance.lastError = Errors.ERR_INVALID_PARAMS;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        string fname = JSUtils.valueToString(ctx, arguments[0]);
+        /*string encoding = JSUtils.valueToString(ctx, arguments[1]);*/
+
+        /* seems like there are no checks for encoding in the editor */
+        /*if (encoding != "utf-8") {*/
+        /*    instance.lastError = Errors.ERR_UNSUPPORTED_ENCODING;*/
+        /*    return new JSCore.Value.undefined(ctx);*/
+        /*}*/
+
+        if (!(GLib.FileUtils.test(fname, GLib.FileTest.EXISTS))) {
+            instance.lastError = Errors.ERR_NOT_FOUND;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        if (!(GLib.FileUtils.test(fname, GLib.FileTest.IS_REGULAR))) {
+            instance.lastError = Errors.ERR_NOT_FILE;
+            return new JSCore.Value.undefined(ctx);
+        }
+
         string script;
         ulong len;
 
-        if (arguments.length < 1) {
-            return new JSCore.Value.string(ctx, new String.with_utf8_c_string(""));
+        try {
+            GLib.FileUtils.get_contents(fname, out script, out len);
+        } catch(Error e) {
+            instance.lastError = Errors.ERR_CANT_READ;
+            return new JSCore.Value.undefined(ctx);
         }
 
-        var s = arguments[0].to_string_copy(ctx, null);
-        char[] buffer = new char[s.get_length() + 1];
-        s.get_utf8_c_string (buffer, buffer.length);
-        string fname = (string)buffer;
-
-        GLib.FileUtils.get_contents(fname, out script, out len);
         var res = new String.with_utf8_c_string(script);
 
+        instance.lastError = Errors.NO_ERROR;
         return new JSCore.Value.string(ctx, res);
     }
 
