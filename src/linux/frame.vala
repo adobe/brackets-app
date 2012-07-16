@@ -112,8 +112,7 @@ public class Frame: WebView {
     public static JSCore.Value js_read_file (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
-            JSCore.Value[] arguments,
-            out JSCore.Value exception) {
+            JSCore.Value[] arguments) {
         string script;
         ulong len;
 
@@ -136,8 +135,7 @@ public class Frame: WebView {
     public static JSCore.Value js_show_developer_tools (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
-            JSCore.Value[] arguments,
-            out JSCore.Value exception) {
+            JSCore.Value[] arguments) {
 
         Frame instance = Frame.instance;
         WebInspector inspector =  instance.get_inspector();
@@ -156,8 +154,7 @@ public class Frame: WebView {
     public static JSCore.Value js_is_directory (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
-            JSCore.Value[] arguments,
-            out JSCore.Value exception) {
+            JSCore.Value[] arguments) {
 
         if (arguments.length < 1) {
             return new JSCore.Value.boolean(ctx, false);
@@ -174,8 +171,7 @@ public class Frame: WebView {
     public static JSCore.Value js_quit_application (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
-            JSCore.Value[] arguments,
-            out JSCore.Value exception) {
+            JSCore.Value[] arguments) {
         Gtk.main_quit();
         return new JSCore.Value.undefined(ctx);
     }
@@ -183,32 +179,28 @@ public class Frame: WebView {
     public static JSCore.Value js_get_file_modification_time (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
-            JSCore.Value[] arguments,
-            out JSCore.Value exception) {
+            JSCore.Value[] arguments) {
         return new JSCore.Value.number (ctx, 100);
     }
 
     public static JSCore.Value js_get_elapsed_milliseconds (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
-            JSCore.Value[] arguments,
-            out JSCore.Value exception) {
+            JSCore.Value[] arguments) {
         return new JSCore.Value.number (ctx, 100);
     }
 
     public static JSCore.Value js_last_error (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
-            JSCore.Value[] arguments,
-            out JSCore.Value exception) {
+            JSCore.Value[] arguments) {
         return new JSCore.Value.number (ctx, 0);
     }
 
     public static JSCore.Value js_read_dir (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
-            JSCore.Value[] arguments,
-            out JSCore.Value exception) {
+            JSCore.Value[] arguments) {
 
         if (arguments.length < 1) {
             return new JSCore.Value.string(ctx, new String.with_utf8_c_string("[]" ));
