@@ -2,11 +2,25 @@ using Gtk;
 using WebKit;
 using JSCore;
 
+enum Errors {
+    NO_ERROR = 0,
+    ERR_UNKNOWN = 1,
+    ERR_INVALID_PARAMS = 2,
+    ERR_NOT_FOUND = 3,
+    ERR_CANT_READ = 4,
+    ERR_UNSUPPORTED_ENCODING = 5,
+    ERR_CANT_WRITE = 6,
+    ERR_OUT_OF_SPACE = 7,
+    ERR_NOT_FILE = 8,
+    ERR_NOT_DIRECTORY = 9
+}
+
 public class Frame: WebView {
 
     private static Frame _instance = null;
     private bool initDone = false;
     private bool inspectorVisible = false;
+    private int lastError = Errors.NO_ERROR;
 
     /* We need singleton because it's an only reasonable way to get
         widget instance inside the js function
@@ -194,7 +208,7 @@ public class Frame: WebView {
             JSCore.Object function,
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
-        return new JSCore.Value.number (ctx, 0);
+        return new JSCore.Value.number (ctx, Frame.instance.lastError);
     }
 
     public static JSCore.Value js_read_dir (Context ctx,
