@@ -22,6 +22,11 @@ public class JSUtils {
         s.get_utf8_c_string (buffer, buffer.length);
         return (string)buffer;
     }
+
+    public static uint64 getMillisecondsFromDate(DateTime d) {
+        //Is seconds precisem whereas should be ms precise
+        return d.to_unix() * 1000;
+    }
 }
 
 public class Frame: WebView {
@@ -30,6 +35,7 @@ public class Frame: WebView {
     private bool initDone = false;
     private bool inspectorVisible = false;
     private int lastError = Errors.NO_ERROR;
+    private uint64 startTime = 0;
 
     /* We need singleton because it's an only reasonable way to get
         widget instance inside the js function
@@ -48,7 +54,9 @@ public class Frame: WebView {
 
     public signal void toggle_developer_tools(bool show);
 
-    private Frame() { }
+    private Frame() {
+        startTime = JSUtils.getMillisecondsFromDate(new DateTime.now_local());
+    }
 
     public void init(string script_url, WebView inspector_view) {
         if (initDone == true) {
@@ -289,7 +297,10 @@ public class Frame: WebView {
             JSCore.Object function,
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
-        return new JSCore.Value.number (ctx, 100);
+        Frame instance = Frame.instance;
+        uint64 diff = JSUtils.getMillisecondsFromDate(new DateTime.now_local()) - instance.startTime;
+
+        return new JSCore.Value.number (ctx, diff);
     }
 
     public static JSCore.Value js_last_error (Context ctx,
