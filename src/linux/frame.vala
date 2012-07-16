@@ -84,8 +84,12 @@ public class Frame: WebView {
         string script;
         ulong len;
 
-        GLib.FileUtils.get_contents(fname, out script, out len);
-        execute_script (script);
+        try {
+            GLib.FileUtils.get_contents(fname, out script, out len);
+            execute_script (script);
+        } catch(FileError err) {
+            stderr.printf("Warn: %s has not been executed", fname);
+        }
     }
 
     private void js_set_bindings(GlobalContext ctx) {
@@ -115,8 +119,7 @@ public class Frame: WebView {
     public static JSCore.Value js_show_open_dialog (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
-            JSCore.Value[] arguments,
-            out JSCore.Value exception) {
+            JSCore.Value[] arguments) {
 
         /*var s = arguments[0].to_string_copy(ctx, null);*/
         /*char[] buffer = new char[s.get_length() + 1];*/
@@ -289,9 +292,14 @@ public class Frame: WebView {
         }
 
         var f = File.new_for_path(fname);
-        var info = f.query_info("*", FileQueryInfoFlags.NONE);
-
-        TimeVal time = info.get_modification_time();
+        TimeVal time;
+        try {
+            var info = f.query_info("*", FileQueryInfoFlags.NONE);
+            time = info.get_modification_time();
+        } catch(Error err) {
+            instance.lastError = Errors.ERR_UNKNOWN;
+            return new JSCore.Value.undefined(ctx);
+        }
 
         instance.lastError = Errors.NO_ERROR;
         return new JSCore.Value.number(ctx, time.tv_sec);
