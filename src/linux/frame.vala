@@ -89,7 +89,7 @@ public class Frame: WebView {
         js_set_function(ctx, "QuitApplication", js_quit_application);
         js_set_function(ctx, "ShowDeveloperTools", js_show_developer_tools);
         js_set_function(ctx, "ReadFile", js_read_file);
-        /*js_set_function(ctx, "WriteFile", js_write_file);*/
+        js_set_function(ctx, "WriteFile", js_write_file);
         /*js_set_function(ctx, "SetPosixPermissions", js_set_posix_permissions);*/
         /*js_set_function(ctx, "DeleteFileOrDirectory", js_delete_file_or_directory);*/
         js_set_function(ctx, "GetElapsedMilliseconds", js_get_elapsed_milliseconds);
@@ -146,7 +146,7 @@ public class Frame: WebView {
         /*string encoding = JSUtils.valueToString(ctx, arguments[1]);*/
 
         /* seems like there are no checks for encoding in the editor */
-        /*if (encoding != "utf-8") {*/
+        /*if (encoding != "utf8") {*/
         /*    instance.lastError = Errors.ERR_UNSUPPORTED_ENCODING;*/
         /*    return new JSCore.Value.undefined(ctx);*/
         /*}*/
@@ -166,7 +166,8 @@ public class Frame: WebView {
 
         try {
             GLib.FileUtils.get_contents(fname, out script, out len);
-        } catch(Error e) {
+        } catch(FileError e) {
+            //need to check for specific errors here
             instance.lastError = Errors.ERR_CANT_READ;
             return new JSCore.Value.undefined(ctx);
         }
@@ -175,6 +176,38 @@ public class Frame: WebView {
 
         instance.lastError = Errors.NO_ERROR;
         return new JSCore.Value.string(ctx, res);
+    }
+
+    public static JSCore.Value js_write_file (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments) {
+
+        if (arguments.length < 2) {
+            instance.lastError = Errors.ERR_INVALID_PARAMS;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        string fname = JSUtils.valueToString(ctx, arguments[0]);
+        string data = JSUtils.valueToString(ctx, arguments[1]);
+        /*string encoding = JSUtils.valueToString(ctx, arguments[2]);*/
+
+        /* seems like there are no checks for encoding in the editor */
+        /*if (encoding != "utf8") {*/
+        /*    instance.lastError = Errors.ERR_UNSUPPORTED_ENCODING;*/
+        /*    return new JSCore.Value.undefined(ctx);*/
+        /*}*/
+
+        try {
+            GLib.FileUtils.set_contents(fname, data);
+        } catch(FileError e) {
+            //need to check for specific errors here
+            instance.lastError = Errors.ERR_CANT_WRITE;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        instance.lastError = Errors.NO_ERROR;
+        return new JSCore.Value.undefined(ctx);
     }
 
     //there is no developer tools in api, so we just do a stub
