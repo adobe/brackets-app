@@ -15,6 +15,15 @@ enum Errors {
     ERR_NOT_DIRECTORY = 9
 }
 
+public class JSUtils {
+    public static string valueToString(Context ctx, JSCore.Value val) {
+        var s = val.to_string_copy(ctx, null);
+        char[] buffer = new char[s.get_length() + 1];
+        s.get_utf8_c_string (buffer, buffer.length);
+        return (string)buffer;
+    }
+}
+
 public class Frame: WebView {
 
     private static Frame _instance = null;
@@ -171,14 +180,18 @@ public class Frame: WebView {
             JSCore.Value[] arguments) {
 
         if (arguments.length < 1) {
-            return new JSCore.Value.boolean(ctx, false);
+            instance.lastError = Errors.ERR_INVALID_PARAMS;
+            return new JSCore.Value.undefined(ctx);
         }
 
-        var s = arguments[0].to_string_copy(ctx, null);
-        char[] buffer = new char[s.get_length() + 1];
-        s.get_utf8_c_string (buffer, buffer.length);
-        string fname = (string)buffer;
+        string fname = JSUtils.valueToString(ctx, arguments[0]);
 
+        if (!(GLib.FileUtils.test(fname, GLib.FileTest.EXISTS))) {
+            instance.lastError = Errors.ERR_NOT_FOUND;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        instance.lastError = Errors.NO_ERROR;
         return new JSCore.Value.boolean(ctx, GLib.FileUtils.test(fname, GLib.FileTest.IS_DIR));
     }
 
@@ -194,7 +207,26 @@ public class Frame: WebView {
             JSCore.Object function,
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
-        return new JSCore.Value.number (ctx, 100);
+
+        if (arguments.length < 1) {
+            instance.lastError = Errors.ERR_INVALID_PARAMS;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        string fname = JSUtils.valueToString(ctx, arguments[0]);
+
+        if (!(GLib.FileUtils.test(fname, GLib.FileTest.EXISTS))) {
+            instance.lastError = Errors.ERR_NOT_FOUND;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        var f = File.new_for_path(fname);
+        var info = f.query_info("*", FileQueryInfoFlags.NONE);
+
+        TimeVal time = info.get_modification_time();
+
+        instance.lastError = Errors.NO_ERROR;
+        return new JSCore.Value.number(ctx, time.tv_sec);
     }
 
     public static JSCore.Value js_get_elapsed_milliseconds (Context ctx,
@@ -222,11 +254,7 @@ public class Frame: WebView {
         }
 
         Frame instance = Frame.instance;
-
-        var s = arguments[0].to_string_copy(ctx, null);
-        char[] buffer = new char[s.get_length() + 1];
-        s.get_utf8_c_string (buffer, buffer.length);
-        string dirname = (string)buffer;
+        string dirname = JSUtils.valueToString(ctx, arguments[0]);
 
         if (!(GLib.FileUtils.test(dirname, GLib.FileTest.EXISTS))) {
             instance.lastError = Errors.ERR_NOT_FOUND;
@@ -263,7 +291,7 @@ public class Frame: WebView {
         }
 
         json.append("]");
-        s = new String.with_utf8_c_string(json.str);
+        var s = new String.with_utf8_c_string(json.str);
 
         instance.lastError = Errors.NO_ERROR;
         return new JSCore.Value.string(ctx, s);
