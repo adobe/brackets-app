@@ -105,8 +105,8 @@ public class Frame: WebView {
         /*js_set_function(ctx, "SetPosixPermissions", js_set_posix_permissions);*/
         /*js_set_function(ctx, "DeleteFileOrDirectory", js_delete_file_or_directory);*/
         js_set_function(ctx, "GetElapsedMilliseconds", js_get_elapsed_milliseconds);
-        /*js_set_function(ctx, "OpenLiveBrowser", js_open_live_browser);*/
-        /*js_set_function(ctx, "CloseLiveBrowser", js_close_live_browser);*/
+        js_set_function(ctx, "OpenLiveBrowser", js_open_live_browser);
+        js_set_function(ctx, "CloseLiveBrowser", js_close_live_browser);
     }
 
     private void js_set_function(Context ctx, string func_name, ObjectCallAsFunctionCallback func) {
@@ -262,6 +262,28 @@ public class Frame: WebView {
 
         instance.lastError = Errors.NO_ERROR;
         return new JSCore.Value.boolean(ctx, GLib.FileUtils.test(fname, GLib.FileTest.IS_DIR));
+    }
+
+    /**
+    * This function is just stub for future
+    */
+    public static JSCore.Value js_open_live_browser (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments) {
+        stderr.printf("openLiveBrowser has not been implemented yet\n");
+        return new JSCore.Value.undefined(ctx);
+    }
+
+    /**
+    * This function is just stub for future
+    */
+    public static JSCore.Value js_close_live_browser (Context ctx,
+            JSCore.Object function,
+            JSCore.Object thisObject,
+            JSCore.Value[] arguments) {
+        stderr.printf("closeLiveBrowser has not been implemented yet\n");
+        return new JSCore.Value.undefined(ctx);
     }
 
     public static JSCore.Value js_quit_application (Context ctx,
