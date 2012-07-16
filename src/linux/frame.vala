@@ -217,13 +217,26 @@ public class Frame: WebView {
             JSCore.Value[] arguments) {
 
         if (arguments.length < 1) {
-            return new JSCore.Value.string(ctx, new String.with_utf8_c_string("[]" ));
+            instance.lastError = Errors.ERR_INVALID_PARAMS;
+            return new JSCore.Value.undefined(ctx);
         }
+
+        Frame instance = Frame.instance;
 
         var s = arguments[0].to_string_copy(ctx, null);
         char[] buffer = new char[s.get_length() + 1];
         s.get_utf8_c_string (buffer, buffer.length);
         string dirname = (string)buffer;
+
+        if (!(GLib.FileUtils.test(dirname, GLib.FileTest.EXISTS))) {
+            instance.lastError = Errors.ERR_NOT_FOUND;
+            return new JSCore.Value.undefined(ctx);
+        }
+
+        if (!(GLib.FileUtils.test(dirname, GLib.FileTest.IS_DIR))) {
+            instance.lastError = Errors.ERR_NOT_DIRECTORY;
+            return new JSCore.Value.undefined(ctx);
+        }
 
         StringBuilder json = new StringBuilder();
         json.assign("[");
@@ -245,12 +258,14 @@ public class Frame: WebView {
             }
         }
         catch(Error e){
-            return new JSCore.Value.string(ctx, new String.with_utf8_c_string("[]" ));
+            instance.lastError = Errors.ERR_CANT_READ;
+            return new JSCore.Value.undefined(ctx);
         }
 
         json.append("]");
         s = new String.with_utf8_c_string(json.str);
 
+        instance.lastError = Errors.NO_ERROR;
         return new JSCore.Value.string(ctx, s);
     }
 }
