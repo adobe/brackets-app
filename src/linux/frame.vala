@@ -145,6 +145,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
+        Frame instance = Frame.instance;
         if (arguments.length < 1) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
@@ -191,6 +192,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
+        Frame instance = Frame.instance;
         if (arguments.length < 2) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
@@ -218,7 +220,6 @@ public class Frame: WebView {
         return new JSCore.Value.undefined(ctx);
     }
 
-    //there is no developer tools in api, so we just do a stub
     public static JSCore.Value js_show_developer_tools (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
@@ -243,6 +244,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
+        Frame instance = Frame.instance;
         if (arguments.length < 1) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
@@ -271,6 +273,8 @@ public class Frame: WebView {
             JSCore.Object function,
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
+
+        Frame instance = Frame.instance;
 
         if (arguments.length < 1) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
@@ -315,12 +319,12 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
+        Frame instance = Frame.instance;
         if (arguments.length < 1) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
         }
 
-        Frame instance = Frame.instance;
         string dirname = JSUtils.valueToString(ctx, arguments[0]);
 
         if (!(GLib.FileUtils.test(dirname, GLib.FileTest.EXISTS))) {
