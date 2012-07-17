@@ -27,6 +27,25 @@ public class JSUtils {
         //Is seconds precisem whereas should be ms precise
         return d.to_unix() * 1000;
     }
+
+    public static JSCore.Value stringArrToValue(Context ctx, string[] arr) {
+        StringBuilder json = new StringBuilder();
+        json.assign("[");
+
+        if (arr.length != 0) {
+            for (int i = 0; i < arr.length; ++i) {
+                if (i > 0) {
+                    json.append(",");
+                }
+
+                json.append("\"%s\"".printf(arr[i].replace("\"", "\\\"")));
+            }
+        }
+
+        json.append("]");
+
+        return new JSCore.Value.string(ctx, new String.with_utf8_c_string(json.str));
+    }
 }
 
 public class Frame: WebView {
@@ -121,26 +140,55 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
-        /*var s = arguments[0].to_string_copy(ctx, null);*/
-        /*char[] buffer = new char[s.get_length() + 1];*/
-        /*s.get_utf8_c_string (buffer, buffer.length);*/
-        /*string fname = (string)buffer;*/
+        Frame instance = Frame.instance;
 
-        string selected_fname = "";
+        if (arguments.length < 5) {
+            instance.lastError = Errors.ERR_INVALID_PARAMS;
+            return new JSCore.Value.undefined(ctx);
+        }
 
-                                                                //possibly need an object here
-        var file_chooser = new FileChooserDialog ("Open File", null,
-                                      FileChooserAction.OPEN,
+        bool multiple_selection = arguments[0].to_boolean(ctx);
+        bool choose_directory = arguments[1].to_boolean(ctx);
+        string title = JSUtils.valueToString(ctx, arguments[2]);
+        string initial_path = JSUtils.valueToString(ctx, arguments[3]);
+        string ext_str = JSUtils.valueToString(ctx, arguments[4]);
+
+        var file_chooser = new FileChooserDialog (title, null,
+                                      choose_directory ? FileChooserAction.SELECT_FOLDER :
+                                                            FileChooserAction.OPEN,
                                       Stock.CANCEL, ResponseType.CANCEL,
                                       Stock.OPEN, ResponseType.ACCEPT);
 
-        if (file_chooser.run () == ResponseType.ACCEPT) {
-            selected_fname =  file_chooser.get_filename();
+        file_chooser.select_multiple = multiple_selection;
+
+        if (initial_path != "") {
+            file_chooser.set_current_folder(initial_path);
         }
-        var res = new String.with_utf8_c_string("[" + selected_fname + "]");
+
+        if (!choose_directory && ext_str.length > 0) {
+            string[] exts = ext_str.split(" ");
+
+            if (exts.length > 0) {
+                FileFilter filter = new FileFilter();
+                for (int i = 0; i < exts.length; ++i) {
+                    filter.add_pattern("*." + exts[i]);
+                }
+
+                filter.set_name(ext_str.replace(" ", ", "));
+                file_chooser.add_filter(filter);
+            }
+        }
+
+        string[] selection = {};
+        if (file_chooser.run() == ResponseType.ACCEPT) {
+            file_chooser.get_filenames()
+                    .foreach((str) => { selection += str; });
+        }
 
         file_chooser.destroy();
-        return new JSCore.Value.string(ctx, res);
+        instance.lastError = Errors.NO_ERROR;
+
+        return JSUtils.stringArrToValue(ctx, selection);
     }
 
     public static JSCore.Value js_read_file (Context ctx,
@@ -312,7 +360,7 @@ public class Frame: WebView {
         /**
             changing permissions
         */
-        stderr.printf("set_permissions function has not been fully implemented yet\n", fname);
+        stderr.printf("set_permissions function has not been fully implemented yet\n");
 
         if (!(GLib.FileUtils.test(fname, GLib.FileTest.EXISTS))) {
             instance.lastError = Errors.ERR_NOT_FOUND;
@@ -344,7 +392,7 @@ public class Frame: WebView {
         /**
             perform deletion here
         */
-        stderr.printf("DeleteFileOrDirectory has not been implemented yet\n", fname);
+        stderr.printf("DeleteFileOrDirectory has not been implemented yet\n");
 
         return new JSCore.Value.undefined(ctx);
     }
@@ -422,8 +470,7 @@ public class Frame: WebView {
             return new JSCore.Value.undefined(ctx);
         }
 
-        StringBuilder json = new StringBuilder();
-        json.assign("[");
+        string[] fnames = {};
 
         try{
             var dir = Dir.open(dirname);
@@ -434,22 +481,15 @@ public class Frame: WebView {
                     break;
                 }
 
-                json.append("\"%s\",".printf(name));
+                fnames += name;
             }
 
-            if (json.str [json.len - 1] == ',') {
-                json.erase (json.len - 1, 1);
-            }
-        }
-        catch(Error e){
+        } catch(Error e) {
             instance.lastError = Errors.ERR_CANT_READ;
             return new JSCore.Value.undefined(ctx);
         }
 
-        json.append("]");
-        var s = new String.with_utf8_c_string(json.str);
-
         instance.lastError = Errors.NO_ERROR;
-        return new JSCore.Value.string(ctx, s);
+        return JSUtils.stringArrToValue(ctx, fnames);
     }
 }
