@@ -7,7 +7,6 @@ public class BracketsApp : Window {
     private string script_fname;
     private string html_fname;
 
-    private Entry script_input;
     private Frame web_view;
     private WebView web_inspector;
 
@@ -18,11 +17,9 @@ public class BracketsApp : Window {
         set_default_size (800, 600);
 
         create_widgets ();
-        this.script_input.grab_focus ();
     }
 
     private void create_widgets () {
-        this.script_input = new Entry ();
         this.web_inspector = new WebView();
         this.web_view = Frame.instance;
         this.web_view.init(this.script_fname, this.web_inspector);
@@ -37,12 +34,10 @@ public class BracketsApp : Window {
         scrolled_inspector_window.add (this.web_inspector);
 
         var vbox = new VBox (false, 0);
-        vbox.pack_start (this.script_input, false, true, 0);
         vbox.add (scrolled_window);
         add (vbox);
 
         this.destroy.connect (Gtk.main_quit);
-        this.script_input.activate.connect (on_activate);
         this.web_view.title_changed.connect ((source, frame, title) => {
             this.title = "%s - %s".printf (title, BracketsApp.TITLE);
         });
@@ -55,12 +50,6 @@ public class BracketsApp : Window {
                 vbox.remove (scrolled_inspector_window);
             }
         });
-    }
-
-    private void on_activate () {
-        var script = "console.log(" + this.script_input.text + ")";
-
-        this.web_view.execute_script (script);
     }
 
     public void start () {
