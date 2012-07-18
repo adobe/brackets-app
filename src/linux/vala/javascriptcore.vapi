@@ -332,7 +332,7 @@ namespace JSCore {
 		public bool to_boolean (Context ctx);
 
 		[CCode (cname = "JSValueToNumber", instance_pos=1.1)]
-		public bool to_number (Context ctx, Value *exception);
+		public int to_number (Context ctx, Value *exception);
 
 		[CCode (cname = "JSValueToStringCopy", instance_pos=1.1)]
 		public JSCore.String to_string_copy (Context ctx, Value *exception);
