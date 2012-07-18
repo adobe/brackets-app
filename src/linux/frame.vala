@@ -103,6 +103,7 @@ public class Frame: WebView {
         WebSettings settings = new WebSettings();
         settings.enable_file_access_from_file_uris = true;
         settings.enable_developer_extras = true;
+        settings.javascript_can_open_windows_automatically = true;
         this.set_settings(settings);
 
         WebInspector inspector =  this.get_inspector();
@@ -367,18 +368,16 @@ public class Frame: WebView {
         }
 
         string fname = JSUtils.valueToString(ctx, arguments[0]);
-        /*int perms = JSUtils.valueToString(ctx, arguments[0]);*/ //need proper casting here
-
-        /**
-            changing permissions
-        */
-        stderr.printf("set_permissions function has not been fully implemented yet\n");
+        int perms = arguments[1].to_number(ctx, null);
 
         if (!(GLib.FileUtils.test(fname, GLib.FileTest.EXISTS))) {
             instance.lastError = Errors.ERR_NOT_FOUND;
             return new JSCore.Value.undefined(ctx);
         }
 
+        int ret = GLib.FileUtils.chmod(fname, perms);
+
+        instance.lastError = ret == 0 ? Errors.NO_ERROR : Errors.ERR_UNKNOWN;
         return new JSCore.Value.undefined(ctx);
     }
 
