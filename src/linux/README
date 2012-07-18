@@ -1,0 +1,3 @@
+Linux client is written in vala language using webkit-gtk library.
+
+To build just type `make`.
