@@ -6,7 +6,7 @@ build:
 		--pkg webkit-1.0 \
 		--pkg javascriptcore \
 		-o ../../bin/linux/brackets \
-		main.vala frame.vala
+		main.vala frame.vala browser.vala bracketswindow.vala
 
 compile:
 	valac -v --vapidir vala \
@@ -15,7 +15,7 @@ compile:
 		--pkg webkit-1.0 \
 		--pkg javascriptcore \
 		-o ../../bin/linux/brackets \
-		-C main.vala frame.vala
+		-C main.vala frame.vala browser.vala bracketswindow.vala
 
 run:
 	../../bin/linux/brackets

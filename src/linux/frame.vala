@@ -50,44 +50,75 @@ public class JSUtils {
 
 public class Frame: WebView {
 
-    private static Frame _instance = null;
+    private static Frame[] frames = {};
+    /*private static Frame _instance = null;*/
     private bool initDone = false;
     private bool inspectorVisible = false;
     private int lastError = Errors.NO_ERROR;
     private uint64 startTime = 0;
+    private int frameid;
 
     /* We need singleton because it's an only reasonable way to get
         widget instance inside the js function
     */
-    public static Frame instance {
-        get {
-            if (_instance == null) {
-                _instance = new Frame();
-            }
+    /*public static Frame instance {*/
+    /*    get {*/
+    /*        if (_instance == null) {*/
+    /*            _instance = new Frame();*/
+    /*        }*/
 
-            return _instance;
+    /*        return _instance;*/
+    /*    }*/
+    /*    private set {*/
+    /*    }*/
+    /*}*/
+
+    public static Frame create() {
+        int newid = frames.length + 1;
+        var frame = new Frame(newid);
+
+        frames += frame;
+
+        return frame;
+    }
+
+    public static Frame getByContext(Context ctx) {
+        var script = new String.with_utf8_c_string("window.top.__frame_id");
+        int id = ctx.evaluate_script(script, null, null, 0, null).to_number(ctx, null);
+        /*stderr.printf("id = %d", id);*/
+        foreach(Frame frame in frames) {
+            if (frame.frameid == id) {
+                /*stderr.printf("return frame\n");*/
+                return frame;
+            }
         }
-        private set {
-        }
+
+        /*stderr.printf("return null\n");*/
+        return null;
     }
 
     public signal void toggle_developer_tools(bool show);
 
-    private Frame() {
+    private Frame(int id) {
         startTime = JSUtils.getMillisecondsFromDate(new DateTime.now_local());
+        frameid = id;
     }
 
+    /*public void init(string script_url, WebView inspector_view) {*/
     public void init(string script_url, WebView inspector_view) {
         if (initDone == true) {
             return;
         }
 
         initDone = true;
-        attachScript(script_url);
 
-        this.window_object_cleared.connect ((source, frame, context, window_object) => {
-            this.js_set_bindings((JSCore.GlobalContext) context);
+        this.window_object_cleared.connect ((source, frame, ctx, window_object) => {
+            this.js_set_bindings((JSCore.GlobalContext) ctx);
+            //the only way found to identify widget by js context
+            execute_script("window.top.__frame_id = %d".printf(frameid));
+            attachScript(script_url);
         });
+
         WebSettings settings = new WebSettings();
         settings.enable_file_access_from_file_uris = true;
         settings.enable_developer_extras = true;
@@ -140,7 +171,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
-        Frame instance = Frame.instance;
+        Frame instance = Frame.getByContext(ctx);
 
         if (arguments.length < 5) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
@@ -196,7 +227,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
-        Frame instance = Frame.instance;
+        Frame instance = Frame.getByContext(ctx);
         if (arguments.length < 1) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
@@ -243,7 +274,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
-        Frame instance = Frame.instance;
+        Frame instance = Frame.getByContext(ctx);
         if (arguments.length < 2) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
@@ -276,7 +307,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
-        Frame instance = Frame.instance;
+        Frame instance = Frame.getByContext(ctx);
         WebInspector inspector =  instance.get_inspector();
 
         instance.toggle_developer_tools(!instance.inspectorVisible);
@@ -295,7 +326,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
-        Frame instance = Frame.instance;
+        Frame instance = Frame.getByContext(ctx);
         if (arguments.length < 1) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
@@ -347,7 +378,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
-        Frame instance = Frame.instance;
+        Frame instance = Frame.getByContext(ctx);
 
         if (arguments.length < 2) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
@@ -375,7 +406,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
-        Frame instance = Frame.instance;
+        Frame instance = Frame.getByContext(ctx);
 
         if (arguments.length < 1) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
@@ -402,7 +433,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
-        Frame instance = Frame.instance;
+        Frame instance = Frame.getByContext(ctx);
 
         if (arguments.length < 1) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
@@ -427,14 +458,14 @@ public class Frame: WebView {
         }
 
         instance.lastError = Errors.NO_ERROR;
-        return new JSCore.Value.number(ctx, time.tv_sec);
+        return new JSCore.Value.number(ctx, time.tv_sec * 1000);
     }
 
     public static JSCore.Value js_get_elapsed_milliseconds (Context ctx,
             JSCore.Object function,
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
-        Frame instance = Frame.instance;
+        Frame instance = Frame.getByContext(ctx);
         uint64 diff = JSUtils.getMillisecondsFromDate(new DateTime.now_local()) - instance.startTime;
 
         return new JSCore.Value.number (ctx, diff);
@@ -444,7 +475,7 @@ public class Frame: WebView {
             JSCore.Object function,
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
-        return new JSCore.Value.number (ctx, Frame.instance.lastError);
+        return new JSCore.Value.number (ctx, Frame.getByContext(ctx).lastError);
     }
 
     public static JSCore.Value js_read_dir (Context ctx,
@@ -452,7 +483,7 @@ public class Frame: WebView {
             JSCore.Object thisObject,
             JSCore.Value[] arguments) {
 
-        Frame instance = Frame.instance;
+        Frame instance = Frame.getByContext(ctx);
         if (arguments.length < 1) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
