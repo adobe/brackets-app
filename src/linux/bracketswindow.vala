@@ -48,6 +48,11 @@ public class BracketsWindow : Browser {
             return this.new_window();
         });
 
+        this.web_view.close_web_view.connect((source) => {
+            this.destroy();
+            return true;
+        });
+
         (this.web_view as Frame).toggle_developer_tools.connect ((source, do_show) => {
             if (do_show) {
                 vbox.add (inspector_container);
