@@ -51,27 +51,19 @@ public class JSUtils {
 public class Frame: WebView {
 
     private static Frame[] frames = {};
-    /*private static Frame _instance = null;*/
+
     private bool initDone = false;
     private bool inspectorVisible = false;
     private int lastError = Errors.NO_ERROR;
     private uint64 startTime = 0;
     private int frameid;
 
-    /* We need singleton because it's an only reasonable way to get
-        widget instance inside the js function
-    */
-    /*public static Frame instance {*/
-    /*    get {*/
-    /*        if (_instance == null) {*/
-    /*            _instance = new Frame();*/
-    /*        }*/
+    public signal void toggle_developer_tools(bool show);
 
-    /*        return _instance;*/
-    /*    }*/
-    /*    private set {*/
-    /*    }*/
-    /*}*/
+    private Frame(int id) {
+        startTime = JSUtils.getMillisecondsFromDate(new DateTime.now_local());
+        frameid = id;
+    }
 
     public static Frame create() {
         int newid = frames.length + 1;
@@ -85,26 +77,15 @@ public class Frame: WebView {
     public static Frame getByContext(Context ctx) {
         var script = new String.with_utf8_c_string("window.top.__frame_id");
         int id = ctx.evaluate_script(script, null, null, 0, null).to_number(ctx, null);
-        /*stderr.printf("id = %d", id);*/
         foreach(Frame frame in frames) {
             if (frame.frameid == id) {
-                /*stderr.printf("return frame\n");*/
                 return frame;
             }
         }
 
-        /*stderr.printf("return null\n");*/
         return null;
     }
 
-    public signal void toggle_developer_tools(bool show);
-
-    private Frame(int id) {
-        startTime = JSUtils.getMillisecondsFromDate(new DateTime.now_local());
-        frameid = id;
-    }
-
-    /*public void init(string script_url, WebView inspector_view) {*/
     public void init(string script_url, WebView inspector_view) {
         if (initDone == true) {
             return;
