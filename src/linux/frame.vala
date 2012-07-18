@@ -210,19 +210,17 @@ public class Frame: WebView {
             JSCore.Value[] arguments) {
 
         Frame instance = Frame.getByContext(ctx);
-        if (arguments.length < 1) {
+        if (arguments.length < 1 || !arguments[0].is_string(ctx)) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
         }
 
         string fname = JSUtils.valueToString(ctx, arguments[0]);
-        /*string encoding = JSUtils.valueToString(ctx, arguments[1]);*/
-
-        /* seems like there are no checks for encoding in the editor */
-        /*if (encoding != "utf8") {*/
-        /*    instance.lastError = Errors.ERR_UNSUPPORTED_ENCODING;*/
-        /*    return new JSCore.Value.undefined(ctx);*/
-        /*}*/
+        if (arguments.length == 2 && ( !arguments[1].is_string(ctx) ||
+                        JSUtils.valueToString(ctx, arguments[1]) != "utf8")) {
+            instance.lastError = Errors.ERR_UNSUPPORTED_ENCODING;
+            return new JSCore.Value.undefined(ctx);
+        }
 
         if (!(GLib.FileUtils.test(fname, GLib.FileTest.EXISTS))) {
             instance.lastError = Errors.ERR_NOT_FOUND;
@@ -230,7 +228,7 @@ public class Frame: WebView {
         }
 
         if (!(GLib.FileUtils.test(fname, GLib.FileTest.IS_REGULAR))) {
-            instance.lastError = Errors.ERR_NOT_FILE;
+            instance.lastError = Errors.ERR_CANT_READ;
             return new JSCore.Value.undefined(ctx);
         }
 
@@ -257,7 +255,7 @@ public class Frame: WebView {
             JSCore.Value[] arguments) {
 
         Frame instance = Frame.getByContext(ctx);
-        if (arguments.length < 2) {
+        if (arguments.length < 2 || !arguments[0].is_string(ctx)) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
         }
@@ -309,7 +307,7 @@ public class Frame: WebView {
             JSCore.Value[] arguments) {
 
         Frame instance = Frame.getByContext(ctx);
-        if (arguments.length < 1) {
+        if (arguments.length < 1 || !arguments[0].is_string(ctx)) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
         }
@@ -388,7 +386,7 @@ public class Frame: WebView {
 
         Frame instance = Frame.getByContext(ctx);
 
-        if (arguments.length < 1) {
+        if (arguments.length < 1 || !arguments[0].is_string(ctx)) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
         }
@@ -400,10 +398,8 @@ public class Frame: WebView {
             return new JSCore.Value.undefined(ctx);
         }
 
-        /**
-            perform deletion here
-        */
-        stderr.printf("DeleteFileOrDirectory has not been implemented yet\n");
+        int ret = GLib.FileUtils.remove(fname);
+        instance.lastError = ret == 0 ? Errors.NO_ERROR : Errors.ERR_UNKNOWN;
 
         return new JSCore.Value.undefined(ctx);
     }
@@ -415,7 +411,7 @@ public class Frame: WebView {
 
         Frame instance = Frame.getByContext(ctx);
 
-        if (arguments.length < 1) {
+        if (arguments.length < 1 || !arguments[0].is_string(ctx)) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
         }
@@ -464,7 +460,7 @@ public class Frame: WebView {
             JSCore.Value[] arguments) {
 
         Frame instance = Frame.getByContext(ctx);
-        if (arguments.length < 1) {
+        if (arguments.length < 1 || !arguments[0].is_string(ctx)) {
             instance.lastError = Errors.ERR_INVALID_PARAMS;
             return new JSCore.Value.undefined(ctx);
         }
