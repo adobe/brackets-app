@@ -207,7 +207,7 @@ if (!brackets.app) {
             isDirectory: function () {
                 return isDir;
             },
-            mtime: modtime
+            mtime: new Date(modtime)
         });
     };
 
