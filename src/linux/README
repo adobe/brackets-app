@@ -1,0 +1,13 @@
+Linux client is written in vala language using webkit-gtk library.
+
+Build instructions.
+
+In order to build the program you should install it's dependencies first:
+
+$ sudo apt-get install valac-0.16, build-essential, libgtk2.0-dev, libwebkitgtk-dev
+
+Packages are for latest ubuntu distribution.
+
+Make sure, that the folder brackets-app/bin/linux exists.
+
+To build just type `make`.
