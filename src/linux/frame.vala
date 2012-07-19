@@ -70,7 +70,6 @@ public class Frame: WebView {
     public signal void toggle_developer_tools(bool show);
 
     private Frame(int id) {
-        startTime = JSUtils.getMillisecondsFromDate(new DateTime.now_local());
         frameid = id;
     }
 
@@ -95,12 +94,13 @@ public class Frame: WebView {
         return null;
     }
 
-    public void init(string script_url, WebView inspector_view) {
+    public void init(string script_url, WebView inspector_view, DateTime startup_time) {
         if (initDone == true) {
             return;
         }
 
         initDone = true;
+        startTime = JSUtils.getMillisecondsFromDate(startup_time);
 
         this.window_object_cleared.connect ((source, frame, ctx, window_object) => {
             this.js_set_bindings((JSCore.GlobalContext) ctx);

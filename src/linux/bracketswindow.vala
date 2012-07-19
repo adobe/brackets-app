@@ -5,6 +5,7 @@ public class BracketsWindow : Browser {
 
     private string script_fname;
     private string html_fname;
+    private DateTime startup_time;
 
     private WebView web_inspector;
     private ScrolledWindow inspector_container;
@@ -12,16 +13,17 @@ public class BracketsWindow : Browser {
     public signal void close_window();
     public signal WebView new_window();
 
-    public BracketsWindow (string basename) {
+    public BracketsWindow (string basename, DateTime startup_time) {
         base();
 
+        this.startup_time = startup_time;
         this.script_fname = basename + "/../../src/linux/brackets_extensions.js";
         this.html_fname = basename + "/../../brackets/src/index.html";
     }
 
     protected override WebView createWebView() {
         Frame frame = Frame.create();
-        frame.init(this.script_fname, this.web_inspector);
+        frame.init(this.script_fname, this.web_inspector, this.startup_time);
 
         return frame;
     }

@@ -1,13 +1,15 @@
 public class WindowManager {
     private int win_counter = 0;
     private string basename = "";
+    private DateTime startup_time;
 
     public WindowManager(string basename) {
+        startup_time = new DateTime.now_local();
         this.basename = basename;
     }
 
     public BracketsWindow populate_window() {
-        var win = new BracketsWindow(basename);
+        var win = new BracketsWindow(basename, startup_time);
 
         win.close_window.connect((source) => {
             close_window(win);
