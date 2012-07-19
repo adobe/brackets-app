@@ -24,8 +24,17 @@ public class JSUtils {
     }
 
     public static uint64 getMillisecondsFromDate(DateTime d) {
-        //Is seconds precisem whereas should be ms precise
-        return d.to_unix() * 1000;
+        //Is seconds precise, whereas should be ms precise
+        uint64 tstamp = d.to_unix();
+        double msecs = d.get_seconds() - Math.round(d.get_seconds());
+
+        if (msecs < -0.001) { //tsamp was rounding to seconds and we recover information back
+            tstamp--;
+            msecs += 1.0;
+        }
+
+        uint64 ts = tstamp * 1000 + (uint64) (msecs * 1000.0);
+        return ts;
     }
 
     public static JSCore.Value stringArrToValue(Context ctx, string[] arr) {
