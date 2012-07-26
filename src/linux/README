@@ -8,6 +8,4 @@ $ sudo apt-get install valac-0.16, build-essential, libgtk2.0-dev, libwebkitgtk-
 
 Packages are for latest ubuntu distribution.
 
-Make sure, that the folder brackets-app/bin/linux exists.
-
 To build just type `make`.
