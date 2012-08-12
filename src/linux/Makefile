@@ -1,6 +1,6 @@
-
 build:
-	valac -v --vapidir vala \
+	mkdir -p ../../bin/linux
+	valac -X -lm -v --vapidir vala \
 		--pkg gtk+-2.0 \
 		--pkg gio-2.0 \
 		--pkg webkit-1.0 \
@@ -9,7 +9,8 @@ build:
 		main.vala frame.vala browser.vala bracketswindow.vala
 
 compile:
-	valac -v --vapidir vala \
+	mkdir -p ../../bin/linux
+	valac -X -lm -v --vapidir vala \
 		--pkg gtk+-2.0 \
 		--pkg gio-2.0 \
 		--pkg webkit-1.0 \
