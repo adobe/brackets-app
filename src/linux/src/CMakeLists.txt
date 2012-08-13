@@ -43,7 +43,7 @@ vala_precompile(VALA_C
         gio-2.0
         webkit-1.0
     OPTIONS
-        --vapidir ../vala
+        --vapidir ${PROJECT_SOURCE_DIR}/vala
         --pkg javascriptcore
 )
 
