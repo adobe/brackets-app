@@ -1,3 +1,6 @@
 [submodule "brackets"]
 	path = brackets
 	url = https://github.com/adobe/brackets.git
+[submodule "src/linux/cmake/Vala_CMake"]
+	path = src/linux/cmake/Vala_CMake
+	url = https://github.com/jakobwesthoff/Vala_CMake.git
