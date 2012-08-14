@@ -28,6 +28,9 @@ set(LIB_PATHS
 )
 link_directories(${LIB_PATHS})
 
+set(dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/linux)
+set(EXECUTABLE_OUTPUT_PATH ${dir} CACHE PATH "Build directory" FORCE)
+
 set(VALA_SRC
         main.vala
         frame.vala
