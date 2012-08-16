@@ -3,8 +3,7 @@ build: clean
 	cd build; make
 
 clean:
-	rm -rf build
-	rm src/config.vala
+	rm -rf build src/config.vala
 
 run:
 	../../bin/linux/brackets
