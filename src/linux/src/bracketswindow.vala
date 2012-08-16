@@ -17,8 +17,8 @@ public class BracketsWindow : Browser {
         base();
 
         this.startup_time = startup_time;
-        this.script_fname = basename + "/../../src/linux/brackets_extensions.js";
-        this.html_fname = basename + "/../../brackets/src/index.html";
+        this.script_fname = basename + Config.script_path;
+        this.html_fname = basename + Config.index_path;
     }
 
     protected override WebView createWebView() {
