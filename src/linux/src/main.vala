@@ -37,7 +37,11 @@ public class WindowManager {
     public static int main (string[] args) {
         Gtk.init (ref args);
 
-        string basename = GLib.Environment.get_current_dir() + "/" + GLib.Path.get_dirname(args[0]);
+        string basename = GLib.Path.get_dirname(args[0]);
+        if (!GLib.Path.is_absolute(basename)) {
+            basename = GLib.Environment.get_current_dir() + "/" + basename;
+        }
+
         var manager = new WindowManager(basename);
         var win = manager.populate_window();
 
