@@ -31,7 +31,10 @@ link_directories(${LIB_PATHS})
 set(dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/linux)
 set(EXECUTABLE_OUTPUT_PATH ${dir} CACHE PATH "Build directory" FORCE)
 
+CONFIGURE_FILE(config.vala.cmake ${CMAKE_CURRENT_SOURCE_DIR}/config.vala)
+
 set(VALA_SRC
+        config.vala
         main.vala
         frame.vala
         browser.vala

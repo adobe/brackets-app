@@ -4,6 +4,7 @@ build: clean
 
 clean:
 	rm -rf build
+	rm src/config.vala
 
 run:
 	../../bin/linux/brackets
