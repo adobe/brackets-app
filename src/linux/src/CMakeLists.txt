@@ -32,7 +32,6 @@ set(dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/linux)
 CONFIGURE_FILE(config.vala.cmake ${CMAKE_CURRENT_SOURCE_DIR}/config.vala)
 
 set(VALA_SRC
-        config.vala
         main.vala
         frame.vala
         browser.vala
@@ -41,6 +40,7 @@ set(VALA_SRC
 
 vala_precompile(VALA_C
     SOURCES
+        config.vala
         ${VALA_SRC}
     PACKAGES
         gtk+-2.0
