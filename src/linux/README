@@ -9,3 +9,8 @@ $ sudo apt-get install valac-0.16, build-essential, libgtk2.0-dev, libwebkitgtk-
 Packages are for latest ubuntu distribution.
 
 To build just type `make`.
+
+If you want to specify install target you may want to redefine INSTALL_PREFIX variable,
+which equals to `./bundle` by default
+
+`make INSTALL_PREFIX=/usr/local`
