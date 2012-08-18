@@ -7,4 +7,13 @@ find_package(Vala REQUIRED)
 include(${VALA_USE_FILE})
 
 add_subdirectory(src)
+
+INSTALL(DIRECTORY ../../brackets/src
+        DESTINATION "share/brackets")
+
+INSTALL(DIRECTORY ../../brackets/test
+        DESTINATION "share/brackets")
+
+INSTALL(FILES ../../brackets/LICENSE ../../brackets/README.md
+        DESTINATION "share/brackets")
         

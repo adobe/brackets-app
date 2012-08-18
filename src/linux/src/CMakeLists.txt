@@ -29,8 +29,6 @@ set(LIB_PATHS
 link_directories(${LIB_PATHS})
 
 set(dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/linux)
-set(EXECUTABLE_OUTPUT_PATH ${dir} CACHE PATH "Build directory" FORCE)
-
 CONFIGURE_FILE(config.vala.cmake ${CMAKE_CURRENT_SOURCE_DIR}/config.vala)
 
 set(VALA_SRC
@@ -55,11 +53,12 @@ vala_precompile(VALA_C
 
 add_executable(brackets ${VALA_C})
 
-install(TARGETS
-    brackets
-RUNTIME
-DESTINATION
-    bin
-)
+ADD_CUSTOM_COMMAND(
+    TARGET brackets
+    POST_BUILD
+    COMMAND cp ARGS ${CMAKE_CURRENT_BINARY_DIR}/brackets ${dir}
+    COMMENT "Copying brackets binary to the proper place..")
 
+INSTALL(TARGETS brackets
+        DESTINATION "bin")
 

@@ -1,5 +1,5 @@
 build: clean
-	cmake -H. -Bbuild
+	cmake -H. -Bbuild -DCMAKE_INSTALL_PREFIX=./bundle
 	cd build; make
 
 clean:
