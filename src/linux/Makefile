@@ -9,3 +9,6 @@ clean:
 
 run:
 	../../bin/linux/brackets
+
+install:
+	cd build; make install
