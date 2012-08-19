@@ -17,8 +17,13 @@ public class BracketsWindow : Browser {
         base();
 
         this.startup_time = startup_time;
-        this.script_fname = basename + Config.script_path;
-        this.html_fname = basename + Config.index_path;
+        if (!GLib.Path.is_absolute(basename)) {
+            this.script_fname = basename + Config.script_path;
+            this.html_fname = basename + Config.index_path;
+        } else {
+            this.script_fname = Config.script_path;
+            this.html_fname = Config.index_path;
+        }
     }
 
     protected override WebView createWebView() {

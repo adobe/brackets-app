@@ -37,14 +37,14 @@ endfunction(prepare_config)
 
 prepare_config(
     CONFIG_NAME "config.vala"
-    INDEX_PATH  "/../../brackets/src/index.html";
-    SCRIPT_PATH "/../../src/linux/brackets_extensions.js";
+    INDEX_PATH  "../../brackets/src/index.html";
+    SCRIPT_PATH "../../src/linux/brackets_extensions.js";
 )
 
 prepare_config(
     CONFIG_NAME "config_install.vala"
-    INDEX_PATH  "/../share/brackets/src/index.html";
-    SCRIPT_PATH "/../share/brackets/brackets_extensions.js";
+    INDEX_PATH  "${CMAKE_INSTALL_PREFIX}/share/brackets/src/index.html";
+    SCRIPT_PATH "${CMAKE_INSTALL_PREFIX}/share/brackets/brackets_extensions.js";
 )
 
 set(VALA_SRC
