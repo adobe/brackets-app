@@ -1,4 +1,4 @@
 namespace Config {
-    const string index_path = "/../../brackets/src/index.html";
-    const string script_path = "/../../src/linux/brackets_extensions.js";
+    const string index_path = "@ARGS_INDEX_PATH@";
+    const string script_path = "@ARGS_SCRIPT_PATH@";
 }

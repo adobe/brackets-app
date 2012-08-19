@@ -14,6 +14,8 @@ INSTALL(DIRECTORY ../../brackets/src
 INSTALL(DIRECTORY ../../brackets/test
         DESTINATION "share/brackets")
 
-INSTALL(FILES ../../brackets/LICENSE ../../brackets/README.md
+INSTALL(FILES ../../brackets/LICENSE
+              ../../brackets/README.md
+              brackets_extensions.js
         DESTINATION "share/brackets")
         

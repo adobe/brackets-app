@@ -28,8 +28,24 @@ set(LIB_PATHS
 )
 link_directories(${LIB_PATHS})
 
-set(dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/linux)
-CONFIGURE_FILE(config.vala.cmake ${CMAKE_CURRENT_SOURCE_DIR}/config.vala)
+include(CMakeParseArguments)
+
+function(prepare_config)
+    cmake_parse_arguments(ARGS "" "" "CONFIG_NAME;INDEX_PATH;SCRIPT_PATH" ${ARGN})
+    CONFIGURE_FILE(config.vala.cmake ${CMAKE_CURRENT_SOURCE_DIR}/${ARGS_CONFIG_NAME})
+endfunction(prepare_config)
+
+prepare_config(
+    CONFIG_NAME "config.vala"
+    INDEX_PATH  "/../../brackets/src/index.html";
+    SCRIPT_PATH "/../../src/linux/brackets_extensions.js";
+)
+
+prepare_config(
+    CONFIG_NAME "config_install.vala"
+    INDEX_PATH  "/../share/brackets/src/index.html";
+    SCRIPT_PATH "/../share/brackets/brackets_extensions.js";
+)
 
 set(VALA_SRC
         main.vala
@@ -53,12 +69,29 @@ vala_precompile(VALA_C
 
 add_executable(brackets ${VALA_C})
 
+vala_precompile(VALA_C
+    SOURCES
+        config_install.vala
+        ${VALA_SRC}
+    PACKAGES
+        gtk+-2.0
+        gio-2.0
+        webkit-1.0
+    OPTIONS
+        --vapidir ${PROJECT_SOURCE_DIR}/vala
+        --pkg javascriptcore
+)
+
+add_executable(bracketsapp ${VALA_C})
+
+set(dir ${CMAKE_CURRENT_SOURCE_DIR}/../../../bin/linux)
 ADD_CUSTOM_COMMAND(
     TARGET brackets
     POST_BUILD
     COMMAND cp ARGS ${CMAKE_CURRENT_BINARY_DIR}/brackets ${dir}
     COMMENT "Copying brackets binary to the proper place..")
 
-INSTALL(TARGETS brackets
+INSTALL(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/bracketsapp
+        RENAME "brackets"
         DESTINATION "bin")
 

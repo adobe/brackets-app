@@ -5,7 +5,7 @@ build: clean
 	cd build; make
 
 clean:
-	rm -rf build src/config.vala bundle
+	rm -rf build src/config.vala src/config_install.vala bundle
 
 run:
 	../../bin/linux/brackets
