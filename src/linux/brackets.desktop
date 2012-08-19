@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=Brackets editor
+Exec=brackets
+Icon=brackets
+Terminal=false
+Categories=Utility;TextEditor;
